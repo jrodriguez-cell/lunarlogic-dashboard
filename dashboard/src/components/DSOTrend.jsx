@@ -1,5 +1,6 @@
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, Label,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine,
+  ResponsiveContainer, Label,
 } from 'recharts';
 
 function fmtDate(iso) {
@@ -14,21 +15,34 @@ function CustomTooltip({ active, payload, label }) {
       <div className="tooltip-title">{fmtDate(label)}</div>
       <div className="tooltip-row">
         <span>DSO</span>
-        <span style={{ color: '#58a6ff' }}>{payload[0].value} days</span>
+        <span style={{ color: '#00d4e8' }}>{payload[0].value} days</span>
       </div>
     </div>
   );
 }
 
-export default function DSOTrend({ data, goLiveDate }) {
+export default function DSOTrend({ data, goLiveDate, preLiveDSO, currentDSO }) {
+  const improvement = preLiveDSO - currentDSO;
+
   return (
     <div className="card">
-      <h2>DSO Trend — 90 Days</h2>
-      <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+      <div className="card-header">
+        <h2>DSO Trend — 90 Days</h2>
+        <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
+          ▼ {improvement}d improvement
+        </span>
+      </div>
+      <ResponsiveContainer width="100%" height={190}>
+        <AreaChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+          <defs>
+            <linearGradient id="dsoGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#00d4e8" stopOpacity={0.2}/>
+              <stop offset="95%" stopColor="#00d4e8" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
           <XAxis
             dataKey="date"
-            tick={{ fill: '#8b949e', fontSize: 10 }}
+            tick={{ fill: '#5a7a9e', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={fmtDate}
@@ -36,24 +50,25 @@ export default function DSOTrend({ data, goLiveDate }) {
           />
           <YAxis
             domain={['auto', 'auto']}
-            tick={{ fill: '#8b949e', fontSize: 11 }}
+            tick={{ fill: '#5a7a9e', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}d`}
           />
           <Tooltip content={<CustomTooltip />} />
-          <ReferenceLine x={goLiveDate} stroke="#3fb950" strokeDasharray="4 3" strokeWidth={1.5}>
-            <Label value="go-live" position="insideTopRight" fill="#3fb950" fontSize={10} fontWeight={600} />
+          <ReferenceLine x={goLiveDate} stroke="#22c55e" strokeDasharray="4 3" strokeWidth={1.5}>
+            <Label value="go-live" position="insideTopRight" fill="#22c55e" fontSize={9} fontWeight={700} />
           </ReferenceLine>
-          <Line
+          <Area
             type="monotone"
             dataKey="dso"
-            stroke="#58a6ff"
+            stroke="#00d4e8"
             strokeWidth={2}
+            fill="url(#dsoGradient)"
             dot={false}
-            activeDot={{ r: 4, fill: '#58a6ff', strokeWidth: 0 }}
+            activeDot={{ r: 4, fill: '#00d4e8', strokeWidth: 0 }}
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

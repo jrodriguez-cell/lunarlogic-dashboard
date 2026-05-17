@@ -1,4 +1,4 @@
-import { dsoTrend, arAging, invoices, paymentBehavior, GO_LIVE_DATE } from '../data/mockData';
+import { getClientData } from '../data/mockData';
 
 // Real QB API integration: replace this function body with live calls.
 // QB OAuth tokens live in Google Sheets (see WF1A/1B OAuth refresh pattern).
@@ -7,6 +7,17 @@ import { dsoTrend, arAging, invoices, paymentBehavior, GO_LIVE_DATE } from '../d
 //   GET /v3/company/{realmId}/query?query=SELECT * FROM Invoice WHERE Balance > '0'
 //   GET /v3/company/{realmId}/query?query=SELECT * FROM Invoice (for DSO calc)
 // DSO formula: (Total AR / Total Revenue last 90 days) * 90
-export async function fetchDashboardData() {
-  return { dsoTrend, arAging, invoices, paymentBehavior, goLiveDate: GO_LIVE_DATE };
+export async function fetchDashboardData(clientId) {
+  const client = getClientData(clientId);
+  return {
+    clientName:           client.name,
+    industry:             client.industry,
+    dsoTrend:             client.dsoTrend,
+    arAging:              client.arAging,
+    invoices:             client.invoices,
+    paymentBehavior:      client.paymentBehavior,
+    goLiveDate:           client.goLiveDate,
+    preLiveDSO:           client.preLiveDSO,
+    collectionEfficiency: client.collectionEfficiency,
+  };
 }
