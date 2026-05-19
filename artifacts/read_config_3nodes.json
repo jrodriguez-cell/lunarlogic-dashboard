@@ -1,0 +1,91 @@
+{
+  "name": "LL — Read Config Pattern (paste nodes into any workflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_MASTER_CONFIG_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Client_Master_Config",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "aa000001-0000-0000-0000-000000000001",
+      "name": "Read Client_Master_Config",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [220, 480],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "SETUP: Replace YOUR_MASTER_CONFIG_SHEET_ID with the actual document ID of your master config sheet. Replace credential ID."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// ENFORCE SANDBOX + FILTER ACTIVE CLIENTS\n// Reads all rows from Client_Master_Config and:\n//   1. Keeps only rows where active = TRUE\n//   2. Derives correct QB and payment link base URLs\n//      based on environment column (sandbox vs production)\n// NEVER routes to production unless explicitly set.\n// ============================================================\n\nconst clients = $input.all()\n  .filter(item => String(item.json.active).toUpperCase() === 'TRUE')\n  .map(item => {\n    const cfg = item.json;\n    const isProd = cfg.environment === 'production';\n\n    // Enforce correct base URLs — sandbox by default\n    const qbBaseUrl = isProd\n      ? 'https://quickbooks.api.intuit.com'\n      : 'https://sandbox-quickbooks.api.intuit.com';\n\n    const qbPaymentLinkBase = isProd\n      ? 'https://app.qbo.intuit.com'\n      : 'https://sandbox.qbo.intuit.com';\n\n    return {\n      json: {\n        ...cfg,\n        qb_base_url: qbBaseUrl,\n        qb_payment_link_base: qbPaymentLinkBase,\n        effective_environment: cfg.environment || 'sandbox',\n        // Ensure minor version is a number\n        qb_minor_version: parseInt(cfg.qb_minor_version || '73', 10)\n      }\n    };\n  });\n\nif (clients.length === 0) {\n  throw new Error('No active clients found in Client_Master_Config. Check that active=TRUE for at least one row.');\n}\n\nconsole.log(`Processing ${clients.length} active client(s): ${clients.map(c => c.json.client_name).join(', ')}`);\n\nreturn clients;"
+      },
+      "id": "aa000002-0000-0000-0000-000000000002",
+      "name": "Enforce Sandbox & Filter Active",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 480]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "aa000003-0000-0000-0000-000000000003",
+      "name": "Loop: Process Each Client",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [780, 480],
+      "notes": "Output 0 (loop) connects to the first node of your workflow logic (e.g. Get OAuth Credentials). Output 1 (done) connects to a summary node or leave empty to terminate."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// MERGE CLIENT CONFIG + FRESH ACCESS TOKEN\n// Place this node AFTER Process & Store Fresh Token.\n// It merges the client config (from the loop) with the\n// access token so all downstream nodes have one clean object.\n// Reference in downstream nodes:\n//   $('Merge Config + Token').first().json.qb_realm_id\n//   $('Merge Config + Token').first().json.authorization_header\n//   $('Merge Config + Token').first().json.slack_ar_channel_id\n// ============================================================\n\nconst token = $input.first().json;\nconst config = $('Loop: Process Each Client').item.json;\n\nif (!token.access_token) {\n  throw new Error(`OAuth token missing for client: ${config.client_name}`);\n}\n\nreturn [{\n  json: {\n    // All client config fields\n    ...config,\n    // Token fields\n    access_token: token.access_token,\n    authorization_header: `Bearer ${token.access_token}`,\n    token_expires_at: token.expires_at,\n    token_retrieved_at: token.retrieved_at\n  }\n}];"
+      },
+      "id": "aa000004-0000-0000-0000-000000000004",
+      "name": "Merge Config + Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 480],
+      "notes": "PLACEMENT: Connect output of 'Process & Store Fresh Token' → this node → first QB API call node. After this node, all QB API URLs and Slack channels can use expressions like ={{ $('Merge Config + Token').first().json.qb_realm_id }}"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Read Client_Master_Config": {
+      "main": [
+        [{ "node": "Enforce Sandbox & Filter Active", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enforce Sandbox & Filter Active": {
+      "main": [
+        [{ "node": "Loop: Process Each Client", "type": "main", "index": 0 }]
+      ]
+    },
+    "Loop: Process Each Client": {
+      "main": [
+        [],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "notes": "INSTRUCTIONS: 1) Import this workflow. 2) Select all 4 nodes and copy them. 3) Open your target workflow and paste. 4) Replace YOUR_MASTER_CONFIG_SHEET_ID and credential ID in 'Read Client_Master_Config'. 5) Connect your Schedule Trigger → Read Client_Master_Config. 6) Connect Loop output 0 → your existing first node (e.g. Get OAuth Credentials). 7) Connect 'Process & Store Fresh Token' → Merge Config + Token → your first QB API call. 8) In all QB API nodes, replace hardcoded realm IDs and URLs with expressions referencing Merge Config + Token."
+  },
+  "tags": [{ "name": "LL-TEMPLATE" }]
+}

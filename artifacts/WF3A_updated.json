@@ -1,0 +1,602 @@
+{
+  "name": "AR Automation - WF3A: QB Payment Link Integration v2.1",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "*/5 * * * *" }]
+        }
+      },
+      "id": "26bd2526-5e18-4f0f-bba3-f400ee3dcb29",
+      "name": "Schedule: Check Every 5 Min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-900, 480]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_MASTER_CONFIG_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Client_Master_Config",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "aa000001-0000-0000-0000-000000000001",
+      "name": "Read Client_Master_Config",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-620, 480],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2t3ieg6Dmd1ZRdjt",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const clients = $input.all()\n  .filter(item => String(item.json.active).toUpperCase() === 'TRUE')\n  .map(item => {\n    const cfg = item.json;\n    const isProd = cfg.environment === 'production';\n    return { json: {\n      ...cfg,\n      qb_base_url: isProd ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com',\n      qb_payment_link_base: isProd ? 'https://app.qbo.intuit.com' : 'https://sandbox.qbo.intuit.com',\n      effective_environment: cfg.environment || 'sandbox',\n      qb_minor_version: parseInt(cfg.qb_minor_version || '73', 10)\n    }};\n  });\nif (!clients.length) throw new Error('No active clients in Client_Master_Config');\nconsole.log(`WF3A: Processing ${clients.length} client(s)`);\nreturn clients;"
+      },
+      "id": "aa000002-0000-0000-0000-000000000002",
+      "name": "Enforce Sandbox & Filter Active",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-340, 480]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "aa000003-0000-0000-0000-000000000003",
+      "name": "Loop: Process Each Client",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [-60, 480]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Loop: Process Each Client').item.json.qb_oauth_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop: Process Each Client').item.json.qb_oauth_sheet_gid }}",
+          "mode": "id"
+        },
+        "options": { "returnFirstMatch": true }
+      },
+      "id": "eee22b6b-c6f9-48a8-b0b8-6bbe05c6eec2",
+      "name": "Get OAuth Credentials",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [220, 480],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2t3ieg6Dmd1ZRdjt",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allCreds = $input.all();\nconst productionCreds = allCreds.filter(item => item.json.credential_name === 'production');\nif (productionCreds.length === 0) throw new Error('No production credential found in OAuth sheet');\nproductionCreds.sort((a, b) => new Date(b.json.last_updated || '2000-01-01') - new Date(a.json.last_updated || '2000-01-01'));\nconst latest = productionCreds[0];\nconsole.log('Using credential last updated:', latest.json.last_updated);\nreturn [latest];"
+      },
+      "id": "3f652f02-f244-4cc9-a6f2-a2bb5a14a6fd",
+      "name": "Get Latest Production Credential",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 480]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Loop: Process Each Client').item.json.qb_oauth_basic_auth }}"
+            },
+            { "name": "Content-Type", "value": "application/x-www-form-urlencoded" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "grant_type", "value": "refresh_token" },
+            { "name": "refresh_token", "value": "={{ $json.refresh_token }}" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      },
+      "id": "1f2de236-cf5f-4174-8d89-8dafa1694063",
+      "name": "Intuit OAuth: Refresh Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 480],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const oauthResponse = $input.first().json;\nconst accessToken = oauthResponse.access_token;\nconst refreshToken = oauthResponse.refresh_token;\nconst expiresIn = oauthResponse.expires_in;\nif (!accessToken) throw new Error('No access_token in OAuth response: ' + JSON.stringify(oauthResponse));\nconst expiresAt = new Date(Date.now() + (expiresIn * 1000));\nconsole.log('Token refreshed. Expires at:', expiresAt.toISOString());\nreturn [{ json: {\n  access_token: accessToken,\n  refresh_token: refreshToken,\n  token_type: 'Bearer',\n  expires_in: expiresIn,\n  expires_at: expiresAt.toISOString(),\n  retrieved_at: new Date().toISOString(),\n  authorization_header: `Bearer ${accessToken}`\n}}];"
+      },
+      "id": "74c71b89-4b31-42d5-96c1-94a13c1d586b",
+      "name": "Process & Store Fresh Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 480],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge client config + fresh token into one object for all downstream nodes.\n// Reference in downstream: $('Merge Config + Token').first().json.qb_realm_id\nconst token = $input.first().json;\nconst config = $('Loop: Process Each Client').item.json;\nif (!token.access_token) throw new Error(`OAuth token missing for ${config.client_name}`);\nreturn [{ json: { ...config, ...token, authorization_header: `Bearer ${token.access_token}` }}];"
+      },
+      "id": "aa000004-0000-0000-0000-000000000004",
+      "name": "Merge Config + Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 480]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Merge Config + Token').first().json.qb_base_url }}/v3/company/{{ $('Merge Config + Token').first().json.qb_realm_id }}/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=SELECT * FROM Invoice WHERE MetaData.CreateTime >= '{{ $now.minus({minutes: $('Merge Config + Token').first().json.invoice_lookback_minutes || 6}).toISO() }}' AND BillEmail IS NOT NULL AND EmailStatus = 'NeedToSend'"
+            },
+            {
+              "name": "minorversion",
+              "value": "={{ $('Merge Config + Token').first().json.qb_minor_version }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/json" },
+            { "name": "Authorization", "value": "={{ $('Merge Config + Token').first().json.authorization_header }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1c0e6071-0dc4-4fa3-a756-f35bc6c1444d",
+      "name": "Get Many Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1620, 480],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and flatten invoice data from QB response.\n// FIX: Added EmailStatus = NeedToSend filter in query above,\n// but this code also checks as a second safety layer.\nconst config = $('Merge Config + Token').first().json;\nconst items = $input.all();\nconst invoices = [];\n\nfor (const item of items) {\n  const responseData = Array.isArray(item.json) ? item.json[0] : item.json;\n  const queryResponse = responseData.QueryResponse;\n  if (queryResponse && queryResponse.Invoice) {\n    for (const invoice of queryResponse.Invoice) {\n      // Idempotency guard: skip if already sent\n      if (invoice.EmailStatus === 'EmailSent') {\n        console.log(`Skipping already-sent invoice: ${invoice.DocNumber}`);\n        continue;\n      }\n      if (!invoice.BillEmail?.Address) continue;\n\n      const qbPaymentLink = invoice.InvoiceLink ||\n        `${config.qb_payment_link_base}/qbo65/pay/invoice/${invoice.Id}`;\n\n      invoices.push({ json: {\n        invoice_id: invoice.Id,\n        invoice_number: invoice.DocNumber,\n        sync_token: invoice.SyncToken,\n        customer_name: invoice.CustomerRef?.name || 'Unknown',\n        customer_id: invoice.CustomerRef?.value || '',\n        customer_email: invoice.BillEmail.Address,\n        total_amount: parseFloat(invoice.TotalAmt || 0),\n        balance: parseFloat(invoice.Balance || 0),\n        currency: invoice.CurrencyRef?.value || 'USD',\n        invoice_date: invoice.TxnDate,\n        due_date: invoice.DueDate,\n        created_time: invoice.MetaData.CreateTime,\n        qb_payment_link: qbPaymentLink,\n        online_payments_enabled: invoice.AllowOnlinePayment !== false,\n        credit_card_enabled: invoice.AllowOnlineCreditCardPayment !== false,\n        ach_enabled: invoice.AllowOnlineACHPayment !== false,\n        email_status: invoice.EmailStatus || 'NeedToSend',\n        processed_timestamp: new Date().toISOString(),\n        // Pass client context forward\n        client_id: config.client_id,\n        client_name: config.client_name\n      }});\n    }\n  }\n}\n\nif (invoices.length === 0) {\n  return [{ json: { no_new_invoices: true, checked_at: new Date().toISOString(), client_id: config.client_id } }];\n}\n\nconsole.log(`Found ${invoices.length} invoice(s) to process for ${config.client_name}`);\nreturn invoices;"
+      },
+      "id": "e1d962cc-d28c-40b2-9bf5-0190c926be58",
+      "name": "Extract Invoice Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1900, 480]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "no-new-invoices-check",
+              "leftValue": "={{ $json.no_new_invoices }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f86164c1-c2a0-44ac-9630-40cc4007daa3",
+      "name": "Has New Invoices?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2180, 480],
+      "notes": "FIX: Output 0 (TRUE = no_new_invoices is true) = STOP. Output 1 (FALSE = invoices exist) = PROCESS. Connections are SWAPPED from v2.0."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log payment link data to Google Sheets.\n// FIX v2.1: upsert key changed from payment_link_id to qb_invoice_id.\nconst invoiceData = $input.first().json;\nreturn { json: {\n  timestamp: new Date().toISOString(),\n  qb_invoice_id: invoiceData.invoice_id,\n  qb_invoice_number: invoiceData.invoice_number,\n  customer_name: invoiceData.customer_name,\n  customer_email: invoiceData.customer_email,\n  amount: invoiceData.balance,\n  qb_payment_link: invoiceData.qb_payment_link,\n  status: 'sent',\n  created_date: new Date().toISOString().split('T')[0],\n  online_payments_enabled: invoiceData.online_payments_enabled,\n  payment_methods: [invoiceData.credit_card_enabled ? 'Credit Card' : null, invoiceData.ach_enabled ? 'ACH' : null].filter(Boolean).join(', '),\n  email_status: invoiceData.email_status,\n  client_id: invoiceData.client_id,\n  notes: 'QB tracks payment automatically via Balance field'\n}};"
+      },
+      "id": "c3a6406d-4b3b-44ca-a1c3-6a9b4448a600",
+      "name": "Prepare Tracking Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2460, 320]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Merge Config + Token').first().json.data_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Merge Config + Token').first().json.payment_tracking_gid }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": ["qb_invoice_id"],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8c5b3ffa-4e7a-406b-abe4-93e260a0427c",
+      "name": "Log Payment Link (Optional)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2740, 320],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2t3ieg6Dmd1ZRdjt",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const invoiceData = $input.item.json;\nconst invoiceNumber = invoiceData.invoice_number || 'N/A';\nconst balance = parseFloat(invoiceData.balance || 0);\nconst totalAmount = parseFloat(invoiceData.total_amount || 0);\nconst dueDate = invoiceData.due_date || 'N/A';\nconst txnDate = invoiceData.invoice_date || 'N/A';\nconst customerName = invoiceData.customer_name || 'Valued Customer';\nconst customerEmail = invoiceData.customer_email || '';\nconst qbPaymentLink = invoiceData.qb_payment_link || 'Contact us for payment details';\nconst creditCardEnabled = invoiceData.credit_card_enabled || false;\nconst achEnabled = invoiceData.ach_enabled || false;\n\nconst emailBody = `Dear ${customerName},\n\nThank you for your business! Your invoice is ready for payment.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📄 INVOICE DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nInvoice Number: ${invoiceNumber}\nAmount Due: $${balance.toFixed(2)}\nInvoice Date: ${txnDate}\nDue Date: ${dueDate}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔒 PAY SECURELY ONLINE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nClick here to pay now:\n${qbPaymentLink}\n\nAccepted Payment Methods:\n${creditCardEnabled ? '💳 Credit/Debit Card\\n' : ''}${achEnabled ? '🏦 ACH Bank Transfer\\n' : ''}\n✓ Secure payment powered by Intuit QuickBooks\n✓ Instant confirmation & receipt\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nAlternative Payment Methods:\n- Zelle: payments@lunarlogic.ai\n- Check: Mail to address on invoice\n\nQuestions? Reply to this email.\n\nBest regards,\nLunarLogic Accounting Team`;\n\nreturn { json: {\n  invoice_id: invoiceData.invoice_id,\n  invoice_number: invoiceNumber,\n  customer_email: customerEmail,\n  customer_name: customerName,\n  balance: balance.toFixed(2),\n  total_amount: totalAmount.toFixed(2),\n  invoice_date: txnDate,\n  due_date: dueDate,\n  subject: `Invoice ${invoiceNumber} - $${balance.toFixed(2)} Due ${dueDate}`,\n  email_body: emailBody,\n  qb_payment_link: qbPaymentLink,\n  invoice_id_for_url: invoiceData.invoice_id,\n  credit_card_enabled: creditCardEnabled,\n  ach_enabled: achEnabled\n}};"
+      },
+      "id": "cad0da7e-3f4b-42c2-9a1c-4fcdb05f95f5",
+      "name": "Build Email Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2460, 500]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.email_body }}",
+        "options": { "appendAttribution": false }
+      },
+      "id": "229e608a-7572-4d13-960c-24fdbc03c5c0",
+      "name": "Send Enhanced Invoice Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2740, 500],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "D33VoryAkhi516gH",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "MULTI-CLIENT NOTE: Gmail credential is static. For clients using Outlook, duplicate this node with an Outlook credential and route via a Switch node on invoice_email_provider from config."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Merge Config + Token').first().json.qb_base_url }}/v3/company/{{ $('Merge Config + Token').first().json.qb_realm_id }}/invoice/{{ $('Extract Invoice Data').first().json.invoice_id }}/send",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "sendTo", "value": "={{ $('Extract Invoice Data').first().json.customer_email }}" },
+            { "name": "minorversion", "value": "={{ $('Merge Config + Token').first().json.qb_minor_version }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/json" },
+            { "name": "Authorization", "value": "={{ $('Merge Config + Token').first().json.authorization_header }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4fd5be5b-d4ca-49f4-bd25-aa11d93e8234",
+      "name": "Mark QB Invoice as Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3020, 420],
+      "notes": "Sets EmailStatus=EmailSent in QB. This is the idempotency gate — prevents duplicate sends on next 5-min run."
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Merge Config + Token').first().json.slack_ar_channel_id }}",
+          "mode": "id"
+        },
+        "text": "=✅ *Invoice with Payment Link Sent*\n\n📄 *Invoice:* {{ $('Extract Invoice Data').first().json.invoice_number }}\n👤 *Customer:* {{ $('Extract Invoice Data').first().json.customer_name }}\n💰 *Amount Due:* ${{ $('Extract Invoice Data').first().json.balance.toFixed(2) }}\n📅 *Due Date:* {{ $('Extract Invoice Data').first().json.due_date }}\n📧 *Sent to:* {{ $('Extract Invoice Data').first().json.customer_email }}\n🏢 *Client:* {{ $('Merge Config + Token').first().json.client_name }}\n🌐 *Environment:* {{ $('Merge Config + Token').first().json.effective_environment }}\n\n🔗 *Payment Link:*\n{{ $('Extract Invoice Data').first().json.qb_payment_link }}\n\n💳 *Payment Methods:*\n{{ $('Extract Invoice Data').first().json.credit_card_enabled ? '✓ Credit Card' : '✗ Credit Card' }}\n{{ $('Extract Invoice Data').first().json.ach_enabled ? '✓ ACH Transfer' : '✗ ACH Transfer' }}\n\n_QB auto-updates invoice when payment received_",
+        "otherOptions": {}
+      },
+      "id": "567d98bd-ffc5-4eea-b4b1-4fa5e580ecc5",
+      "name": "Notify Slack (Success)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [3300, 420],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "vknsyvP5lzPzSr4Z",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+          "conditions": [
+            {
+              "id": "754b187f-81ac-4a50-997d-f79cb566c856",
+              "leftValue": "={{ $json.access_token !== undefined && $json.access_token !== null && $json.access_token !== '' }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "26555cd7-056a-41d8-b23b-b0fc9449bbf2",
+      "name": "Check Get Many Items Error",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1060, 900]
+    },
+    {
+      "parameters": {
+        "jsCode": "// FIX v2.1: Changed $('Calculate Invoice') to $('Extract Invoice Data').\n// That node does not exist in WF3A — previous version would crash on error path.\nconst errorData = $input.first().json.error;\nlet httpCode = errorData?.httpCode || errorData?.statusCode || 'unknown';\nconst errorMessage = errorData?.message || JSON.stringify(errorData);\nconst fullErrorStr = JSON.stringify(errorMessage).toLowerCase();\nconst hasInvalidGrant = fullErrorStr.includes('invalid_grant') || fullErrorStr.includes('invalid refresh token');\nconst hasAuthFailed = fullErrorStr.includes('authenticationfailed');\n\nif (httpCode === 'unknown' && fullErrorStr.includes('400')) httpCode = '400';\nelse if (fullErrorStr.includes('401')) httpCode = '401';\n\nlet errorType, isRetriable, severity, actionRequired;\nif (httpCode === '400' && hasInvalidGrant) {\n  errorType = 'OAUTH_REFRESH_TOKEN_EXPIRED'; isRetriable = false; severity = 'critical';\n  actionRequired = 'QuickBooks refresh token expired. Manually update token in the QB OAuth credentials sheet and retry.';\n} else if (httpCode === '401' || hasAuthFailed) {\n  errorType = 'AUTH_FAILED'; isRetriable = true; severity = 'error';\n  actionRequired = 'QB authentication failed. Retrying...';\n} else if (httpCode === '429') {\n  errorType = 'RATE_LIMIT'; isRetriable = true; severity = 'warning';\n  actionRequired = 'QB rate limit hit. Waiting for next run.';\n} else {\n  errorType = 'UNKNOWN'; isRetriable = false; severity = 'error';\n  actionRequired = 'Unknown error. Manual investigation required.';\n}\n\nconst clientCtx = $('Loop: Process Each Client').item?.json || {};\n\nreturn [{ json: {\n  error_type: errorType, http_code: httpCode,\n  error_message: errorMessage, is_retriable: isRetriable,\n  severity, action_required: actionRequired,\n  retry_count: 0,\n  client_id: clientCtx.client_id, client_name: clientCtx.client_name,\n  workflow: 'WF3A', timestamp: new Date().toISOString()\n}}];"
+      },
+      "id": "ccb81a2a-0f30-4619-b36a-2b886cdced08",
+      "name": "Analyze QB API Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 900]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Circuit breaker: max 3 retries before routing to Dead Letter Queue.\nconst errorInfo = $input.first().json;\nconst retryCount = (errorInfo.retry_count || 0) + 1;\nconst maxRetries = 3;\nreturn [{ json: {\n  ...errorInfo,\n  retry_count: retryCount,\n  circuit_breaker_tripped: retryCount >= maxRetries,\n  circuit_breaker_message: retryCount >= maxRetries\n    ? `Max retries (${maxRetries}) reached for error: ${errorInfo.error_type}`\n    : `Retry ${retryCount} of ${maxRetries}`\n}}];"
+      },
+      "id": "aa000005-0000-0000-0000-000000000005",
+      "name": "Check Retry Count",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 900]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+          "conditions": [
+            {
+              "id": "circuit-breaker-check",
+              "leftValue": "={{ $json.circuit_breaker_tripped === true || $json.is_retriable === false }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9946962a-cdaf-469b-91c4-111d18e64c2d",
+      "name": "Is Error Retriable",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1900, 900],
+      "notes": "FIX v2.1: Now also checks circuit_breaker_tripped. TRUE = send to DLQ. FALSE = retry (back to Get OAuth Credentials)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const errorInfo = $input.first().json;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  workflow: 'WF3A',\n  operation: 'QB Payment Link Integration',\n  error_type: errorInfo.error_type,\n  error_message: errorInfo.error_message,\n  http_code: errorInfo.http_code,\n  client_id: errorInfo.client_id,\n  client_name: errorInfo.client_name,\n  retry_count: errorInfo.retry_count,\n  action_required: errorInfo.action_required,\n  status: 'pending_manual_review',\n  resolved: false\n}}];"
+      },
+      "id": "2d9cd543-972d-49e8-a17a-acf7f8343b5d",
+      "name": "Log to Dead Letter Queue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2180, 820]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Loop: Process Each Client').item.json.data_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop: Process Each Client').item.json.error_log_gid }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "workflow": "={{ $json.workflow }}",
+            "node_name": "={{ $json.operation }}",
+            "error_type": "={{ $json.error_type }}",
+            "error_message": "={{ $json.error_message }}",
+            "context": "={{ $json.http_code }}",
+            "execution_id": "={{ $execution.id }}",
+            "severity": "={{ $json.status }}",
+            "resolved": "={{ $json.resolved }}",
+            "resolution_notes": ""
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "a1f7a9ce-1850-402b-b175-a462c059b3cc",
+      "name": "Log Error Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [2460, 820],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2t3ieg6Dmd1ZRdjt",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Loop: Process Each Client').item.json.slack_dev_channel_id }}",
+          "mode": "id"
+        },
+        "text": "=❌ *WF3A Error — {{ $json.error_type }}*\n\n🏢 *Client:* {{ $json.client_name }}\n📋 *Error:* {{ $json.error_message }}\n🔄 *Retries:* {{ $json.retry_count }}/3\n⚠️ *Action:* {{ $json.action_required }}\n\n_Execution ID: {{ $execution.id }}_",
+        "otherOptions": {}
+      },
+      "id": "1717a318-6392-4bdb-9d03-0fce85819297",
+      "name": "Send Error Message",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [2740, 820],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "vknsyvP5lzPzSr4Z",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## WF3A v2.1 — QB Payment Link Integration (Multi-Client)\n\n**Changes from v2.0:**\n• Multi-client: reads Client_Master_Config sheet\n• FIXED: Has New Invoices? IF logic was inverted\n• FIXED: Removed dead QB: Get New Invoices node\n• FIXED: Log Payment Link now upserts on qb_invoice_id\n• FIXED: Analyze QB API Error referenced wrong node\n• FIXED: Lookback window matches cron interval (6 min)\n• NEW: Circuit breaker — max 3 retries before DLQ\n• NEW: Merge Config + Token node for clean context\n• ALL QB URLs now dynamic from config\n• minorversion standardized to 73\n\n**Sandbox enforced:** All clients route to sandbox\nuntil environment = 'production' in config sheet.",
+        "height": 380,
+        "width": 480
+      },
+      "id": "40da0201-49e4-4c67-921b-81dfdf924348",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-900, 200]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule: Check Every 5 Min": {
+      "main": [[{ "node": "Read Client_Master_Config", "type": "main", "index": 0 }]]
+    },
+    "Read Client_Master_Config": {
+      "main": [[{ "node": "Enforce Sandbox & Filter Active", "type": "main", "index": 0 }]]
+    },
+    "Enforce Sandbox & Filter Active": {
+      "main": [[{ "node": "Loop: Process Each Client", "type": "main", "index": 0 }]]
+    },
+    "Loop: Process Each Client": {
+      "main": [
+        [{ "node": "Get OAuth Credentials", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Get OAuth Credentials": {
+      "main": [[{ "node": "Get Latest Production Credential", "type": "main", "index": 0 }]]
+    },
+    "Get Latest Production Credential": {
+      "main": [[{ "node": "Intuit OAuth: Refresh Token", "type": "main", "index": 0 }]]
+    },
+    "Intuit OAuth: Refresh Token": {
+      "main": [
+        [{ "node": "Process & Store Fresh Token", "type": "main", "index": 0 }],
+        [{ "node": "Check Get Many Items Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Process & Store Fresh Token": {
+      "main": [
+        [{ "node": "Merge Config + Token", "type": "main", "index": 0 }]
+      ]
+    },
+    "Merge Config + Token": {
+      "main": [[{ "node": "Get Many Items", "type": "main", "index": 0 }]]
+    },
+    "Get Many Items": {
+      "main": [[{ "node": "Extract Invoice Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Invoice Data": {
+      "main": [[{ "node": "Has New Invoices?", "type": "main", "index": 0 }]]
+    },
+    "Has New Invoices?": {
+      "main": [
+        [],
+        [
+          { "node": "Prepare Tracking Data", "type": "main", "index": 0 },
+          { "node": "Build Email Body", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Prepare Tracking Data": {
+      "main": [[{ "node": "Log Payment Link (Optional)", "type": "main", "index": 0 }]]
+    },
+    "Log Payment Link (Optional)": {
+      "main": [[{ "node": "Mark QB Invoice as Sent", "type": "main", "index": 0 }]]
+    },
+    "Build Email Body": {
+      "main": [[{ "node": "Send Enhanced Invoice Email", "type": "main", "index": 0 }]]
+    },
+    "Send Enhanced Invoice Email": {
+      "main": [[{ "node": "Mark QB Invoice as Sent", "type": "main", "index": 0 }]]
+    },
+    "Mark QB Invoice as Sent": {
+      "main": [[{ "node": "Notify Slack (Success)", "type": "main", "index": 0 }]]
+    },
+    "Notify Slack (Success)": {
+      "main": [[{ "node": "Loop: Process Each Client", "type": "main", "index": 0 }]]
+    },
+    "Check Get Many Items Error": {
+      "main": [
+        [],
+        [{ "node": "Analyze QB API Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Analyze QB API Error": {
+      "main": [[{ "node": "Check Retry Count", "type": "main", "index": 0 }]]
+    },
+    "Check Retry Count": {
+      "main": [[{ "node": "Is Error Retriable", "type": "main", "index": 0 }]]
+    },
+    "Is Error Retriable": {
+      "main": [
+        [{ "node": "Log to Dead Letter Queue", "type": "main", "index": 0 }],
+        [{ "node": "Get OAuth Credentials", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log to Dead Letter Queue": {
+      "main": [[{ "node": "Log Error Sheet", "type": "main", "index": 0 }]]
+    },
+    "Log Error Sheet": {
+      "main": [[{ "node": "Send Error Message", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "binaryMode": "separate" },
+  "versionId": "wf3a-v2-1-multilient",
+  "meta": { "templateCredsSetupCompleted": false },
+  "id": "WF3A-UPDATED-V21",
+  "tags": [{ "name": "AR-AUTOMATION" }, { "name": "SANDBOX" }]
+}

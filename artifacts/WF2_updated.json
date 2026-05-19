@@ -1,0 +1,785 @@
+{
+  "name": "LL — WF2 Proactive Payment Reminders v2.1 (Multi-Client)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 14 * * 1-5" }] }
+      },
+      "id": "b0000001-0000-0000-0000-000000000001",
+      "name": "Schedule: 9 AM ET Mon–Fri",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 480],
+      "notes": "CRON 0 14 * * 1-5 = 14:00 UTC = 9:00 AM ET (UTC-5 winter / UTC-4 summer — adjust to 0 13 * * 1-5 during DST if needed). All QB calls route to SANDBOX until environment=production is set in the master config sheet."
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": { "__rl": true, "value": "YOUR_MASTER_CONFIG_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Client_Master_Config", "mode": "name" },
+        "options": {}
+      },
+      "id": "b0000002-0000-0000-0000-000000000002",
+      "name": "Read Client_Master_Config",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [220, 480],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "SETUP: Replace YOUR_MASTER_CONFIG_SHEET_ID with the actual document ID of your master config sheet."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// ENFORCE SANDBOX + FILTER ACTIVE CLIENTS\n// NEVER routes to production unless environment='production'\n// ============================================================\n\nconst clients = $input.all()\n  .filter(item => String(item.json.active).toUpperCase() === 'TRUE')\n  .map(item => {\n    const cfg = item.json;\n    const isProd = cfg.environment === 'production';\n\n    const qbBaseUrl = isProd\n      ? 'https://quickbooks.api.intuit.com'\n      : 'https://sandbox-quickbooks.api.intuit.com';\n\n    const qbPaymentLinkBase = isProd\n      ? 'https://app.qbo.intuit.com'\n      : 'https://sandbox.qbo.intuit.com';\n\n    return {\n      json: {\n        ...cfg,\n        qb_base_url: qbBaseUrl,\n        qb_payment_link_base: qbPaymentLinkBase,\n        effective_environment: cfg.environment || 'sandbox',\n        qb_minor_version: parseInt(cfg.qb_minor_version || '73', 10)\n      }\n    };\n  });\n\nif (clients.length === 0) {\n  throw new Error('No active clients found in Client_Master_Config. Check that active=TRUE for at least one row.');\n}\n\nconsole.log(`WF2 running for ${clients.length} active client(s): ${clients.map(c => c.json.client_name).join(', ')}`);\nreturn clients;"
+      },
+      "id": "b0000003-0000-0000-0000-000000000003",
+      "name": "Enforce Sandbox & Filter Active",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 480]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "b0000004-0000-0000-0000-000000000004",
+      "name": "Loop: Process Each Client",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [660, 480],
+      "notes": "Output 0 (loop) → Get OAuth Credentials. Output 1 (done) → leave empty or connect to a final summary node."
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Loop: Process Each Client').item.json.qb_oauth_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "OAuth_Tokens",
+          "mode": "name"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "value1": "client_id",
+              "operation": "equals",
+              "value2": "={{ $('Loop: Process Each Client').item.json.client_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0000005-0000-0000-0000-000000000005",
+      "name": "Get OAuth Credentials",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [880, 480],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ Date.now() }}",
+              "rightValue": "={{ new Date($input.first().json.expires_at).getTime() - 120000 }}",
+              "operator": { "type": "number", "operation": "smaller" }
+            }
+          ]
+        }
+      },
+      "id": "b0000006-0000-0000-0000-000000000006",
+      "name": "Is Token Fresh?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1100, 480],
+      "notes": "TRUE = token valid for >2 more minutes → skip refresh. FALSE = expired or expiring → refresh."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/x-www-form-urlencoded" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "grant_type", "value": "refresh_token" },
+            {
+              "name": "refresh_token",
+              "value": "={{ $('Get OAuth Credentials').first().json.refresh_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0000007-0000-0000-0000-000000000007",
+      "name": "Refresh Access Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 600],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "REPLACE_WITH_QB_BASIC_AUTH_CREDENTIAL_ID",
+          "name": "QB OAuth Basic Auth"
+        }
+      },
+      "notes": "Basic auth credential uses the client's qb_oauth_basic_auth value (Base64 of clientId:clientSecret). Create one httpBasicAuth credential per QB app (not per client)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const token = $input.first().json;\nconst expiresAt = new Date(Date.now() + (token.expires_in || 3600) * 1000).toISOString();\n\n// Write fresh token back to OAuth sheet\nconst cfg = $('Loop: Process Each Client').item.json;\n\nreturn [{\n  json: {\n    client_id: cfg.client_id,\n    access_token: token.access_token,\n    refresh_token: token.refresh_token || $('Get OAuth Credentials').first().json.refresh_token,\n    expires_at: expiresAt,\n    retrieved_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "b0000008-0000-0000-0000-000000000008",
+      "name": "Process Fresh Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 600]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Loop: Process Each Client').item.json.qb_oauth_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": { "__rl": true, "value": "OAuth_Tokens", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "client_id": "={{ $json.client_id }}",
+            "access_token": "={{ $json.access_token }}",
+            "refresh_token": "={{ $json.refresh_token }}",
+            "expires_at": "={{ $json.expires_at }}",
+            "retrieved_at": "={{ $json.retrieved_at }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "b0000009-0000-0000-0000-000000000009",
+      "name": "Store Fresh Token",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1760, 600],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge client config with whichever token path was taken\nconst cfg = $('Loop: Process Each Client').item.json;\n\n// Determine which token node ran\nlet token;\ntry {\n  token = $('Store Fresh Token').first().json;\n} catch (e) {\n  // Token was fresh — use the value read from Get OAuth Credentials\n  token = $('Get OAuth Credentials').first().json;\n}\n\nif (!token.access_token) {\n  throw new Error(`OAuth token missing for client: ${cfg.client_name}`);\n}\n\nreturn [{\n  json: {\n    ...cfg,\n    access_token: token.access_token,\n    authorization_header: `Bearer ${token.access_token}`,\n    token_expires_at: token.expires_at,\n    token_retrieved_at: token.retrieved_at\n  }\n}];"
+      },
+      "id": "b0000010-0000-0000-0000-000000000010",
+      "name": "Merge Config + Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1980, 480],
+      "notes": "Reference in all downstream nodes: $('Merge Config + Token').first().json.authorization_header, .qb_realm_id, .qb_base_url, .slack_ar_channel_id, etc."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Merge Config + Token').first().json.qb_base_url }}/v3/company/{{ $('Merge Config + Token').first().json.qb_realm_id }}/query",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Merge Config + Token').first().json.authorization_header }}"
+            },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "SELECT * FROM Invoice WHERE Balance > '0' AND DueDate < '{{ new Date().toISOString().split('T')[0] }}' MAXRESULTS 100"
+            },
+            {
+              "name": "minorversion",
+              "value": "={{ $('Merge Config + Token').first().json.qb_minor_version }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0000011-0000-0000-0000-000000000011",
+      "name": "Get Unpaid Invoices from QB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 480],
+      "notes": "Queries all invoices with Balance > 0 and DueDate before today. QB Query does not support OR — use single WHERE condition only."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.QueryResponse?.Invoice?.length || 0 }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "larger" }
+            }
+          ]
+        }
+      },
+      "id": "b0000012-0000-0000-0000-000000000012",
+      "name": "Has Unpaid Invoices?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2420, 480],
+      "notes": "TRUE (output 0) = invoices found → Extract Invoice Data. FALSE (output 1) = no invoices → skip to next client (loop back)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// EXTRACT + ENRICH INVOICE DATA\n// Flattens QB invoice objects into reminder-ready records.\n// Calculates days overdue, formats payment link.\n// ============================================================\n\nconst cfg = $('Merge Config + Token').first().json;\nconst invoices = $input.first().json.QueryResponse?.Invoice || [];\n\nconst today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\nconst enriched = [];\n\nfor (const inv of invoices) {\n  const dueDate = new Date(inv.DueDate);\n  dueDate.setHours(0, 0, 0, 0);\n  const daysOverdue = Math.floor((today - dueDate) / 86400000);\n\n  // Skip invoices not yet overdue\n  if (daysOverdue < 1) continue;\n\n  const customerName = inv.CustomerRef?.name || 'Unknown Customer';\n  const customerEmail = inv.BillEmail?.Address || '';\n  const invoiceNum = inv.DocNumber || inv.Id;\n  const balance = parseFloat(inv.Balance || 0);\n  const totalAmt = parseFloat(inv.TotalAmt || 0);\n\n  const paymentLink = `${cfg.qb_payment_link_base}/app/invoice?invoiceId=${inv.Id}`;\n\n  enriched.push({\n    json: {\n      // Identifiers\n      client_id: cfg.client_id,\n      client_name: cfg.client_name,\n      qb_invoice_id: inv.Id,\n      invoice_num: invoiceNum,\n      // Customer\n      customer_name: customerName,\n      customer_email: customerEmail,\n      customer_id: inv.CustomerRef?.value || '',\n      // Financials\n      balance_due: balance,\n      total_amount: totalAmt,\n      currency: inv.CurrencyRef?.value || 'USD',\n      // Dates\n      due_date: inv.DueDate,\n      days_overdue: daysOverdue,\n      // Links\n      payment_link: paymentLink,\n      // Pass-through config for downstream nodes\n      slack_ar_channel_id: cfg.slack_ar_channel_id,\n      slack_dev_channel_id: cfg.slack_dev_channel_id,\n      data_sheet_id: cfg.data_sheet_id,\n      ar_reminder_log_gid: cfg.ar_reminder_log_gid,\n      reminder_email_from: cfg.reminder_email_from,\n      reminder_outlook_tenant_id: cfg.reminder_outlook_tenant_id,\n      reminder_outlook_client_id: cfg.reminder_outlook_client_id,\n      reminder_outlook_client_secret: cfg.reminder_outlook_client_secret\n    }\n  });\n}\n\nif (enriched.length === 0) {\n  // All invoices are future-dated — treat as no-op\n  throw new Error(`NO_OVERDUE_INVOICES:${cfg.client_name}`);\n}\n\nreturn enriched;"
+      },
+      "id": "b0000013-0000-0000-0000-000000000013",
+      "name": "Extract Invoice Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 360]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Merge Config + Token').first().json.data_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid={{ $('Merge Config + Token').first().json.pilot_list_gid }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b0000014-0000-0000-0000-000000000014",
+      "name": "Load Pilot Customer List",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2860, 240],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Sheet tab identified by GID. Reads customer_name column. Only customers on this list receive reminder emails."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// FILTER: PILOT CUSTOMERS ONLY\n// Only send reminders to customers explicitly on the pilot list.\n// ============================================================\n\nconst pilotItems = $('Load Pilot Customer List').all();\nconst pilotNames = new Set(\n  pilotItems.map(i => (i.json.customer_name || '').trim().toLowerCase())\n);\n\nif (pilotNames.size === 0) {\n  console.log('Pilot list is empty — no reminders will be sent this run.');\n  return [];\n}\n\nconst invoices = $input.all();\nconst filtered = invoices.filter(item => {\n  const name = (item.json.customer_name || '').trim().toLowerCase();\n  return pilotNames.has(name);\n});\n\nconsole.log(`Pilot filter: ${invoices.length} invoices → ${filtered.length} match pilot list`);\nreturn filtered;"
+      },
+      "id": "b0000015-0000-0000-0000-000000000015",
+      "name": "Filter: Pilot Customers Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3080, 240]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Merge Config + Token').first().json.data_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid={{ $('Merge Config + Token').first().json.vip_list_gid }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b0000016-0000-0000-0000-000000000016",
+      "name": "Load VIP Exemption List",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [3300, 240],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "VIP customers are exempt from automated reminders. Typically strategic accounts or customers with payment plans."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// FILTER: REMOVE VIP EXEMPTIONS\n// VIP customers never receive automated reminders.\n// ============================================================\n\nconst vipItems = $('Load VIP Exemption List').all();\nconst vipNames = new Set(\n  vipItems.map(i => (i.json.customer_name || '').trim().toLowerCase())\n);\n\nconst invoices = $input.all();\nconst filtered = invoices.filter(item => {\n  const name = (item.json.customer_name || '').trim().toLowerCase();\n  return !vipNames.has(name);\n});\n\nconsole.log(`VIP filter: ${invoices.length} invoices → ${filtered.length} after removing ${invoices.length - filtered.length} VIP exemptions`);\nreturn filtered;"
+      },
+      "id": "b0000017-0000-0000-0000-000000000017",
+      "name": "Filter: Remove VIP Exemptions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3520, 240]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "larger" }
+            }
+          ]
+        }
+      },
+      "id": "b0000018-0000-0000-0000-000000000018",
+      "name": "Has Eligible Invoices?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [3740, 240],
+      "notes": "TRUE (output 0) = send reminders. FALSE (output 1) = no eligible invoices after pilot+VIP filtering → continue to Slack AR summary."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// BUILD REMINDER EMAIL BODY\n// Outlook/Graph API requires HTML body.\n// Personalizes by customer name, invoice number, days overdue.\n// ============================================================\n\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const inv = item.json;\n\n  const urgencyLine = inv.days_overdue > 30\n    ? `<p style=\"color:#dc2626;font-weight:bold;\">⚠ This invoice is now ${inv.days_overdue} days past due. Please remit payment at your earliest convenience to avoid service interruption.</p>`\n    : `<p>This is a friendly reminder that the invoice below is ${inv.days_overdue} day${inv.days_overdue !== 1 ? 's' : ''} past due.</p>`;\n\n  const htmlBody = `\n<html><body style=\"font-family:Arial,sans-serif;color:#333;\">\n<p>Dear ${inv.customer_name},</p>\n${urgencyLine}\n<table style=\"border-collapse:collapse;margin:16px 0;\">\n  <tr><td style=\"padding:6px 12px;font-weight:bold;\">Invoice #</td><td style=\"padding:6px 12px;\">${inv.invoice_num}</td></tr>\n  <tr style=\"background:#f5f5f5;\"><td style=\"padding:6px 12px;font-weight:bold;\">Amount Due</td><td style=\"padding:6px 12px;\">$${inv.balance_due.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td></tr>\n  <tr><td style=\"padding:6px 12px;font-weight:bold;\">Due Date</td><td style=\"padding:6px 12px;\">${inv.due_date}</td></tr>\n</table>\n<p><a href=\"${inv.payment_link}\" style=\"background:#1a56db;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;\">Pay Now</a></p>\n<p style=\"font-size:12px;color:#666;\">If you have already remitted payment, please disregard this notice. Questions? Reply to this email.</p>\n<p>Thank you,<br/>${inv.client_name}</p>\n</body></html>`;\n\n  results.push({\n    json: {\n      ...inv,\n      email_subject: `Payment Reminder: Invoice #${inv.invoice_num} — $${inv.balance_due.toFixed(2)} Due`,\n      email_html_body: htmlBody,\n      email_to: inv.customer_email\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "b0000019-0000-0000-0000-000000000019",
+      "name": "Build Reminder Email Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3960, 120]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.microsoft.com/v1.0/users/{{ $json.reminder_email_from }}/sendMail",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "authentication": "oAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": {\n    \"subject\": \"{{ $json.email_subject }}\",\n    \"body\": {\n      \"contentType\": \"HTML\",\n      \"content\": \"{{ $json.email_html_body.replace(/\"/g, '\\\\\"').replace(/\\n/g, '') }}\"\n    },\n    \"toRecipients\": [\n      { \"emailAddress\": { \"address\": \"{{ $json.email_to }}\" } }\n    ]\n  },\n  \"saveToSentItems\": true\n}",
+        "options": {}
+      },
+      "id": "b0000020-0000-0000-0000-000000000020",
+      "name": "Send Reminder Email (Outlook)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4180, 120],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "REPLACE_WITH_OUTLOOK_OAUTH2_CREDENTIAL_ID",
+          "name": "Microsoft Outlook OAuth2"
+        }
+      },
+      "notes": "Uses Microsoft Graph API /sendMail. Outlook OAuth2 credential must have Mail.Send scope. QB native Send Invoice Email is intentionally disabled — all customer-facing email routes through Outlook for branding control.",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json.data_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid={{ $json.ar_reminder_log_gid }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "qb_invoice_id": "={{ $json.qb_invoice_id }}",
+            "invoice_num": "={{ $json.invoice_num }}",
+            "client_id": "={{ $json.client_id }}",
+            "customer_name": "={{ $json.customer_name }}",
+            "customer_email": "={{ $json.email_to }}",
+            "balance_due": "={{ $json.balance_due }}",
+            "days_overdue": "={{ $json.days_overdue }}",
+            "reminder_sent_at": "={{ new Date().toISOString() }}",
+            "email_status": "=Sent"
+          },
+          "matchingColumns": ["qb_invoice_id"],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "b0000021-0000-0000-0000-000000000021",
+      "name": "Log Reminder to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [4400, 120],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "appendOrUpdate with matchingColumns=[qb_invoice_id] — updates existing row if invoice was already logged, appends otherwise. Uses defineBelow mode (NEVER use Map Automatically for structured writes)."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Merge Config + Token').first().json.qb_base_url }}/v3/company/{{ $('Merge Config + Token').first().json.qb_realm_id }}/reports/AgedReceivableDetail",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Merge Config + Token').first().json.authorization_header }}"
+            },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "minorversion", "value": "={{ $('Merge Config + Token').first().json.qb_minor_version }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0000022-0000-0000-0000-000000000022",
+      "name": "Get AR Aging Report from QB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4180, 360],
+      "notes": "Runs regardless of whether reminders were sent. Aging report always posts to Slack as daily AR health summary."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// BUILD SLACK AR AGING SUMMARY\n// Parses QB AgedReceivableDetail report into Slack blocks.\n// ============================================================\n\nconst cfg = $('Merge Config + Token').first().json;\nconst report = $input.first().json;\n\nconst today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });\n\n// QB aging report Row structure varies — parse Columns + Rows\nconst rows = report.Rows?.Row || [];\nconst totals = { current: 0, d1_30: 0, d31_60: 0, d61_90: 0, d91plus: 0, total: 0 };\n\n// Sum bucket columns (QB report column order: Customer, Current, 1-30, 31-60, 61-90, 91+, Total)\nfor (const row of rows) {\n  if (row.type !== 'Data') continue;\n  const cols = row.ColData || [];\n  if (cols.length < 7) continue;\n  totals.current  += parseFloat(cols[1]?.value || 0);\n  totals.d1_30    += parseFloat(cols[2]?.value || 0);\n  totals.d31_60   += parseFloat(cols[3]?.value || 0);\n  totals.d61_90   += parseFloat(cols[4]?.value || 0);\n  totals.d91plus  += parseFloat(cols[5]?.value || 0);\n  totals.total    += parseFloat(cols[6]?.value || 0);\n}\n\nconst fmt = n => `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;\n\nconst riskPct = totals.total > 0\n  ? Math.round(((totals.d31_60 + totals.d61_90 + totals.d91plus) / totals.total) * 100)\n  : 0;\n\nconst riskEmoji = riskPct > 40 ? '🔴' : riskPct > 20 ? '🟡' : '🟢';\n\nreturn [{\n  json: {\n    client_name: cfg.client_name,\n    slack_ar_channel_id: cfg.slack_ar_channel_id,\n    slack_message: {\n      channel: cfg.slack_ar_channel_id,\n      text: `AR Aging Summary — ${cfg.client_name} — ${today}`,\n      blocks: [\n        {\n          type: 'header',\n          text: { type: 'plain_text', text: `📊 AR Aging — ${cfg.client_name}` }\n        },\n        {\n          type: 'section',\n          text: { type: 'mrkdwn', text: `*${today}* · LunarLogic AR Automation` }\n        },\n        { type: 'divider' },\n        {\n          type: 'section',\n          fields: [\n            { type: 'mrkdwn', text: `*Current:*\\n${fmt(totals.current)}` },\n            { type: 'mrkdwn', text: `*1–30 days:*\\n${fmt(totals.d1_30)}` },\n            { type: 'mrkdwn', text: `*31–60 days:*\\n${fmt(totals.d31_60)}` },\n            { type: 'mrkdwn', text: `*61–90 days:*\\n${fmt(totals.d61_90)}` },\n            { type: 'mrkdwn', text: `*90+ days:*\\n${fmt(totals.d91plus)}` },\n            { type: 'mrkdwn', text: `*Total AR:*\\n*${fmt(totals.total)}*` }\n          ]\n        },\n        {\n          type: 'section',\n          text: { type: 'mrkdwn', text: `${riskEmoji} *${riskPct}%* of AR is 31+ days past due` }\n        }\n      ]\n    },\n    totals\n  }\n}];"
+      },
+      "id": "b0000023-0000-0000-0000-000000000023",
+      "name": "Build Slack AR Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4400, 360]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $json.slack_ar_channel_id }}",
+          "mode": "id"
+        },
+        "text": "={{ $json.slack_message.text }}",
+        "blocksUi": "={{ JSON.stringify($json.slack_message.blocks) }}",
+        "otherOptions": {}
+      },
+      "id": "b0000024-0000-0000-0000-000000000024",
+      "name": "Post AR Summary to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [4620, 360],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "={{ $('Merge Config + Token').first().json.slack_credential_id }}",
+          "name": "Slack Bot Token"
+        }
+      },
+      "notes": "Uses slackOAuth2Api (bot token xoxb-). Never use slackApi (user token xoxp-) here."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Merge Config + Token').first().json.data_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": { "__rl": true, "value": "WF2_Run_Log", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_at": "={{ new Date().toISOString() }}",
+            "client_id": "={{ $('Merge Config + Token').first().json.client_id }}",
+            "client_name": "={{ $('Merge Config + Token').first().json.client_name }}",
+            "environment": "={{ $('Merge Config + Token').first().json.effective_environment }}",
+            "total_ar": "={{ $('Build Slack AR Summary').first().json.totals.total }}",
+            "reminders_sent": "=see AR Reminder Log",
+            "status": "=success"
+          },
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "b0000025-0000-0000-0000-000000000025",
+      "name": "Log Run Success",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [4840, 360],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop back to process next client.\n// This node intentionally returns empty to allow the SplitInBatches\n// node to advance to the next item.\nreturn [];"
+      },
+      "id": "b0000026-0000-0000-0000-000000000026",
+      "name": "Next Client →",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [5060, 360],
+      "notes": "Connect output → Loop: Process Each Client (input, not loop output). This causes the iterator to advance."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// ERROR: ANALYZE QB API FAILURE\n// Captures error details and client context for routing.\n// ============================================================\n\nconst error = $input.first().json.error || $input.first().json;\nconst cfg = $('Loop: Process Each Client').item?.json || {};\n\nconst statusCode = error.statusCode || error.httpCode || 0;\nconst message = error.message || JSON.stringify(error);\n\n// Classify retryability\nconst isRetriable = statusCode === 0    // network error\n  || statusCode === 429  // rate limit\n  || statusCode === 503  // QB service unavailable\n  || statusCode === 504; // gateway timeout\n\nconst retryCount = parseInt(cfg.retry_count || '0', 10);\n\nreturn [{\n  json: {\n    client_id: cfg.client_id || 'unknown',\n    client_name: cfg.client_name || 'Unknown Client',\n    slack_dev_channel_id: cfg.slack_dev_channel_id || '',\n    data_sheet_id: cfg.data_sheet_id || '',\n    error_log_gid: cfg.error_log_gid || '',\n    status_code: statusCode,\n    error_message: message,\n    is_retriable: isRetriable,\n    retry_count: retryCount,\n    failed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "b0000027-0000-0000-0000-000000000027",
+      "name": "Analyze QB API Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst retryCount = (item.retry_count || 0) + 1;\nconst circuitBreakerTripped = retryCount >= 3;\n\nreturn [{\n  json: {\n    ...item,\n    retry_count: retryCount,\n    circuit_breaker_tripped: circuitBreakerTripped\n  }\n}];"
+      },
+      "id": "b0000028-0000-0000-0000-000000000028",
+      "name": "Increment Retry Count",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, 700]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.circuit_breaker_tripped }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      },
+      "id": "b0000029-0000-0000-0000-000000000029",
+      "name": "Circuit Breaker Tripped?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [3080, 700],
+      "notes": "TRUE (output 0) = 3+ retries or non-retriable → log to DLQ + Slack alert. FALSE (output 1) = retry → back to Get OAuth Credentials."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json.data_sheet_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid={{ $json.error_log_gid }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "failed_at": "={{ $json.failed_at }}",
+            "client_id": "={{ $json.client_id }}",
+            "workflow": "=WF2",
+            "status_code": "={{ $json.status_code }}",
+            "error_message": "={{ $json.error_message }}",
+            "retry_count": "={{ $json.retry_count }}",
+            "circuit_breaker_tripped": "={{ $json.circuit_breaker_tripped }}"
+          },
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "b0000030-0000-0000-0000-000000000030",
+      "name": "Log Error to DLQ Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [3300, 600],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $json.slack_dev_channel_id }}",
+          "mode": "id"
+        },
+        "text": "=🔴 WF2 Error — {{ $json.client_name }} · {{ $json.failed_at }}\n\n*Status:* {{ $json.status_code }}\n*Message:* {{ $json.error_message }}\n*Retries:* {{ $json.retry_count }}/3\n*Circuit Breaker:* {{ $json.circuit_breaker_tripped ? 'TRIPPED — manual review required' : 'Not tripped' }}",
+        "otherOptions": {}
+      },
+      "id": "b0000031-0000-0000-0000-000000000031",
+      "name": "Alert Dev Channel",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [3520, 600],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_WITH_SLACK_BOT_CREDENTIAL_ID",
+          "name": "Slack Bot Token"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule: 9 AM ET Mon–Fri": {
+      "main": [[{ "node": "Read Client_Master_Config", "type": "main", "index": 0 }]]
+    },
+    "Read Client_Master_Config": {
+      "main": [[{ "node": "Enforce Sandbox & Filter Active", "type": "main", "index": 0 }]]
+    },
+    "Enforce Sandbox & Filter Active": {
+      "main": [[{ "node": "Loop: Process Each Client", "type": "main", "index": 0 }]]
+    },
+    "Loop: Process Each Client": {
+      "main": [
+        [{ "node": "Get OAuth Credentials", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Get OAuth Credentials": {
+      "main": [[{ "node": "Is Token Fresh?", "type": "main", "index": 0 }]]
+    },
+    "Is Token Fresh?": {
+      "main": [
+        [{ "node": "Merge Config + Token", "type": "main", "index": 0 }],
+        [{ "node": "Refresh Access Token", "type": "main", "index": 0 }]
+      ]
+    },
+    "Refresh Access Token": {
+      "main": [[{ "node": "Process Fresh Token", "type": "main", "index": 0 }]]
+    },
+    "Process Fresh Token": {
+      "main": [[{ "node": "Store Fresh Token", "type": "main", "index": 0 }]]
+    },
+    "Store Fresh Token": {
+      "main": [[{ "node": "Merge Config + Token", "type": "main", "index": 0 }]]
+    },
+    "Merge Config + Token": {
+      "main": [[{ "node": "Get Unpaid Invoices from QB", "type": "main", "index": 0 }]]
+    },
+    "Get Unpaid Invoices from QB": {
+      "main": [[{ "node": "Has Unpaid Invoices?", "type": "main", "index": 0 }]],
+      "error": [[{ "node": "Analyze QB API Error", "type": "main", "index": 0 }]]
+    },
+    "Has Unpaid Invoices?": {
+      "main": [
+        [{ "node": "Extract Invoice Data", "type": "main", "index": 0 }],
+        [{ "node": "Get AR Aging Report from QB", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Invoice Data": {
+      "main": [[{ "node": "Load Pilot Customer List", "type": "main", "index": 0 }]]
+    },
+    "Load Pilot Customer List": {
+      "main": [[{ "node": "Filter: Pilot Customers Only", "type": "main", "index": 0 }]]
+    },
+    "Filter: Pilot Customers Only": {
+      "main": [[{ "node": "Load VIP Exemption List", "type": "main", "index": 0 }]]
+    },
+    "Load VIP Exemption List": {
+      "main": [[{ "node": "Filter: Remove VIP Exemptions", "type": "main", "index": 0 }]]
+    },
+    "Filter: Remove VIP Exemptions": {
+      "main": [[{ "node": "Has Eligible Invoices?", "type": "main", "index": 0 }]]
+    },
+    "Has Eligible Invoices?": {
+      "main": [
+        [{ "node": "Build Reminder Email Body", "type": "main", "index": 0 }],
+        [{ "node": "Get AR Aging Report from QB", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Reminder Email Body": {
+      "main": [[{ "node": "Send Reminder Email (Outlook)", "type": "main", "index": 0 }]]
+    },
+    "Send Reminder Email (Outlook)": {
+      "main": [[{ "node": "Log Reminder to Sheet", "type": "main", "index": 0 }]]
+    },
+    "Log Reminder to Sheet": {
+      "main": [[{ "node": "Get AR Aging Report from QB", "type": "main", "index": 0 }]]
+    },
+    "Get AR Aging Report from QB": {
+      "main": [[{ "node": "Build Slack AR Summary", "type": "main", "index": 0 }]]
+    },
+    "Build Slack AR Summary": {
+      "main": [[{ "node": "Post AR Summary to Slack", "type": "main", "index": 0 }]]
+    },
+    "Post AR Summary to Slack": {
+      "main": [[{ "node": "Log Run Success", "type": "main", "index": 0 }]]
+    },
+    "Log Run Success": {
+      "main": [[{ "node": "Next Client →", "type": "main", "index": 0 }]]
+    },
+    "Next Client →": {
+      "main": [[{ "node": "Loop: Process Each Client", "type": "main", "index": 0 }]]
+    },
+    "Analyze QB API Error": {
+      "main": [[{ "node": "Increment Retry Count", "type": "main", "index": 0 }]]
+    },
+    "Increment Retry Count": {
+      "main": [[{ "node": "Circuit Breaker Tripped?", "type": "main", "index": 0 }]]
+    },
+    "Circuit Breaker Tripped?": {
+      "main": [
+        [{ "node": "Log Error to DLQ Sheet", "type": "main", "index": 0 }],
+        [{ "node": "Get OAuth Credentials", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Error to DLQ Sheet": {
+      "main": [[{ "node": "Alert Dev Channel", "type": "main", "index": 0 }]]
+    },
+    "Alert Dev Channel": {
+      "main": [[{ "node": "Next Client →", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "notes": "WF2 v2.1 — Multi-client proactive payment reminders. SETUP CHECKLIST: 1) Import this workflow. 2) In 'Read Client_Master_Config' replace YOUR_MASTER_CONFIG_SHEET_ID and Google Sheets credential. 3) Replace all REPLACE_WITH_* credential IDs. 4) Set active=true in master config sheet for each live client. 5) Set environment=production in config ONLY when a client's production QB credentials are confirmed — all other clients remain on sandbox. 6) Activate the workflow. REMOVED: QB native 'Send Invoice Email' node — all customer email routes through Outlook/Graph API for branding control. TIMEZONE: Cron 0 14 * * 1-5 = 9 AM ET (UTC-5). Change to 0 13 * * 1-5 during EDT (UTC-4) if n8n does not auto-adjust."
+  },
+  "tags": [{ "name": "LL-WF2" }, { "name": "LL-TEMPLATE" }]
+}

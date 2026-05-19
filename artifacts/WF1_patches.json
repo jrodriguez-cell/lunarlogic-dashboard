@@ -1,0 +1,207 @@
+{
+  "name": "LL — WF1A/1B Patch Nodes (paste into existing 92-node workflow)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c0000000-0000-0000-0000-000000000000",
+      "name": "STICKY: WF1 PATCH INSTRUCTIONS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 200],
+      "parameters": {
+        "content": "# WF1A/1B PATCH INSTRUCTIONS\n\n## What these nodes fix\n1. **Multi-client config** — reads client settings dynamically from master config sheet instead of hardcoded values\n2. **Token safety** — refreshes OAuth immediately before QB calls that follow Slack approval waits (token expires during human-in-the-loop delays)\n3. **Sandbox enforcement** — QB base URL derived from `environment` column; never reaches production unless explicitly set\n4. **Credential IDs** — Slack channel IDs and sheet IDs from config, not hardcoded\n\n## Connection changes required in WF1A\n\n### At the START of the workflow:\n- Disconnect: `Schedule Trigger` → (first node)\n- Add in sequence before existing first node:\n  `Schedule Trigger` → `Read Client_Master_Config` → `Enforce Sandbox & Filter Active` → `Loop: Process Each Client`\n- Connect `Loop: Process Each Client` output 0 → `Get OAuth Credentials` (your existing OAuth node)\n\n### AFTER any Slack approval node (human-in-the-loop):\n- Before any QB API call that follows a Slack approval, insert a fresh OAuth refresh:\n  `[Slack Approval Response]` → `Refresh Token (Pre-QB)` → `Merge Config + Token (Pre-QB)` → `[QB API Call]`\n- This is critical — Slack approval waits can take 5–60+ minutes; tokens expire in 60 minutes\n\n### Replace hardcoded values in existing nodes:\n| Replace this hardcoded value | With this expression |\n|---|---|\n| Realm ID (e.g. 9341456702590433) | `={{ $('Merge Config + Token').first().json.qb_realm_id }}` |\n| QB base URL | `={{ $('Merge Config + Token').first().json.qb_base_url }}` |\n| Authorization header value | `={{ $('Merge Config + Token').first().json.authorization_header }}` |\n| minorversion | `={{ $('Merge Config + Token').first().json.qb_minor_version }}` |\n| Slack AR channel ID | `={{ $('Merge Config + Token').first().json.slack_ar_channel_id }}` |\n| Slack dev channel ID | `={{ $('Merge Config + Token').first().json.slack_dev_channel_id }}` |\n| Google Sheet ID (data) | `={{ $('Merge Config + Token').first().json.data_sheet_id }}` |\n| Sales log GID | `={{ $('Merge Config + Token').first().json.sales_log_gid }}` |\n| Error log GID | `={{ $('Merge Config + Token').first().json.error_log_gid }}` |\n\n### At the END of the workflow (after success path):\n- Connect final success node → `Next Client →` → `Loop: Process Each Client` (input)\n- This causes the loop to advance to the next client automatically\n\n## Node to add once, reuse by name\n`Merge Config + Token` can be referenced by name from any downstream node.\nAfter the initial placement, reference it everywhere as:\n`$('Merge Config + Token').first().json.<field>`\n\nDo NOT add multiple Merge Config + Token nodes — one placement per execution path is sufficient.",
+        "height": 800,
+        "width": 600,
+        "color": 4
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": { "__rl": true, "value": "YOUR_MASTER_CONFIG_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Client_Master_Config", "mode": "name" },
+        "options": {}
+      },
+      "id": "c0000001-0000-0000-0000-000000000001",
+      "name": "Read Client_Master_Config",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [700, 480],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "SETUP: Replace YOUR_MASTER_CONFIG_SHEET_ID with the actual document ID. PLACEMENT: Connect Schedule Trigger → this node."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// ENFORCE SANDBOX + FILTER ACTIVE CLIENTS\n// NEVER routes to production unless environment='production'\n// ============================================================\n\nconst clients = $input.all()\n  .filter(item => String(item.json.active).toUpperCase() === 'TRUE')\n  .map(item => {\n    const cfg = item.json;\n    const isProd = cfg.environment === 'production';\n\n    const qbBaseUrl = isProd\n      ? 'https://quickbooks.api.intuit.com'\n      : 'https://sandbox-quickbooks.api.intuit.com';\n\n    const qbPaymentLinkBase = isProd\n      ? 'https://app.qbo.intuit.com'\n      : 'https://sandbox.qbo.intuit.com';\n\n    return {\n      json: {\n        ...cfg,\n        qb_base_url: qbBaseUrl,\n        qb_payment_link_base: qbPaymentLinkBase,\n        effective_environment: cfg.environment || 'sandbox',\n        qb_minor_version: parseInt(cfg.qb_minor_version || '73', 10)\n      }\n    };\n  });\n\nif (clients.length === 0) {\n  throw new Error('No active clients found in Client_Master_Config. Check that active=TRUE for at least one row.');\n}\n\nconsole.log(`WF1 running for ${clients.length} active client(s): ${clients.map(c => c.json.client_name).join(', ')}`);\nreturn clients;"
+      },
+      "id": "c0000002-0000-0000-0000-000000000002",
+      "name": "Enforce Sandbox & Filter Active",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 480]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "c0000003-0000-0000-0000-000000000003",
+      "name": "Loop: Process Each Client",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1140, 480],
+      "notes": "Output 0 (loop) → Get OAuth Credentials (your existing node). Output 1 (done) → leave empty or connect to a final summary node."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// MERGE CLIENT CONFIG + FRESH ACCESS TOKEN\n// PLACEMENT: After 'Process & Store Fresh Token'.\n// All downstream QB API nodes reference this node by name.\n// ============================================================\n\nconst token = $input.first().json;\nconst config = $('Loop: Process Each Client').item.json;\n\nif (!token.access_token) {\n  throw new Error(`OAuth token missing for client: ${config.client_name}`);\n}\n\nreturn [{\n  json: {\n    ...config,\n    access_token: token.access_token,\n    authorization_header: `Bearer ${token.access_token}`,\n    token_expires_at: token.expires_at,\n    token_retrieved_at: token.retrieved_at\n  }\n}];"
+      },
+      "id": "c0000004-0000-0000-0000-000000000004",
+      "name": "Merge Config + Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 480],
+      "notes": "PLACEMENT: Connect output of your existing 'Process & Store Fresh Token' node → this node → first QB API call. After this, all QB URLs and Slack channels use: $('Merge Config + Token').first().json.<field>"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/x-www-form-urlencoded" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "grant_type", "value": "refresh_token" },
+            {
+              "name": "refresh_token",
+              "value": "={{ $('Get OAuth Credentials').first().json.refresh_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c0000005-0000-0000-0000-000000000005",
+      "name": "Refresh Token (Pre-QB Post-Slack)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1580, 480],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "REPLACE_WITH_QB_BASIC_AUTH_CREDENTIAL_ID",
+          "name": "QB OAuth Basic Auth"
+        }
+      },
+      "notes": "CRITICAL: Insert this node immediately before any QB API call that follows a Slack approval node. Slack approvals take minutes to hours — the original token will be expired. Reference: $('Get OAuth Credentials').first().json.refresh_token points to the token read at workflow start."
+    },
+    {
+      "parameters": {
+        "jsCode": "const token = $input.first().json;\nconst expiresAt = new Date(Date.now() + (token.expires_in || 3600) * 1000).toISOString();\nconst cfg = $('Loop: Process Each Client').item.json;\n\nreturn [{\n  json: {\n    // Merged: all config fields + fresh token\n    ...cfg,\n    access_token: token.access_token,\n    authorization_header: `Bearer ${token.access_token}`,\n    token_expires_at: expiresAt,\n    token_retrieved_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "c0000006-0000-0000-0000-000000000006",
+      "name": "Merge Config + Token (Post-Slack)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1800, 480],
+      "notes": "PLACEMENT: Connect 'Refresh Token (Pre-QB Post-Slack)' → this node → QB API call that follows the Slack approval. Use this version after Slack approvals; use the standard 'Merge Config + Token' after the initial OAuth refresh at workflow start."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Returns empty array to trigger the next client loop iteration.\n// Connect output → Loop: Process Each Client (input port).\nreturn [];"
+      },
+      "id": "c0000007-0000-0000-0000-000000000007",
+      "name": "Next Client →",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2020, 480],
+      "notes": "PLACEMENT: Connect final success node → this → Loop: Process Each Client (input). This advances the iterator to the next client without re-triggering the schedule."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// ANALYZE WF1 ERROR\n// Capture error context from the Loop's current client.\n// ============================================================\n\nconst error = $input.first().json.error || $input.first().json;\nconst cfg = $('Loop: Process Each Client').item?.json || {};\n\nconst statusCode = error.statusCode || error.httpCode || 0;\nconst message = error.message || JSON.stringify(error);\n\nconst isRetriable = statusCode === 0\n  || statusCode === 429\n  || statusCode === 503\n  || statusCode === 504;\n\nconst retryCount = parseInt(cfg.retry_count || '0', 10);\n\nreturn [{\n  json: {\n    client_id: cfg.client_id || 'unknown',\n    client_name: cfg.client_name || 'Unknown Client',\n    slack_dev_channel_id: cfg.slack_dev_channel_id || '',\n    data_sheet_id: cfg.data_sheet_id || '',\n    error_log_gid: cfg.error_log_gid || '',\n    status_code: statusCode,\n    error_message: message,\n    is_retriable: isRetriable,\n    retry_count: retryCount,\n    failed_at: new Date().toISOString(),\n    workflow: 'WF1'\n  }\n}];"
+      },
+      "id": "c0000008-0000-0000-0000-000000000008",
+      "name": "Analyze WF1 Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 700],
+      "notes": "Connect the error output of any QB API HTTP Request node → this node. Then chain → Increment Retry Count → Circuit Breaker → DLQ/retry."
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst retryCount = (item.retry_count || 0) + 1;\nreturn [{ json: { ...item, retry_count: retryCount, circuit_breaker_tripped: retryCount >= 3 } }];"
+      },
+      "id": "c0000009-0000-0000-0000-000000000009",
+      "name": "Increment Retry Count",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1580, 700]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.circuit_breaker_tripped }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      },
+      "id": "c0000010-0000-0000-0000-000000000010",
+      "name": "Circuit Breaker (WF1)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1800, 700],
+      "notes": "TRUE = 3+ retries → log DLQ + alert dev Slack. FALSE = retry → reconnect to Get OAuth Credentials."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Read Client_Master_Config": {
+      "main": [[{ "node": "Enforce Sandbox & Filter Active", "type": "main", "index": 0 }]]
+    },
+    "Enforce Sandbox & Filter Active": {
+      "main": [[{ "node": "Loop: Process Each Client", "type": "main", "index": 0 }]]
+    },
+    "Loop: Process Each Client": {
+      "main": [[], []]
+    },
+    "Merge Config + Token": {
+      "main": []
+    },
+    "Refresh Token (Pre-QB Post-Slack)": {
+      "main": [[{ "node": "Merge Config + Token (Post-Slack)", "type": "main", "index": 0 }]]
+    },
+    "Analyze WF1 Error": {
+      "main": [[{ "node": "Increment Retry Count", "type": "main", "index": 0 }]]
+    },
+    "Increment Retry Count": {
+      "main": [[{ "node": "Circuit Breaker (WF1)", "type": "main", "index": 0 }]]
+    },
+    "Circuit Breaker (WF1)": {
+      "main": [[], []]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "notes": "PATCH NODES for WF1A/1B (92-node Sales Order Processing workflow). Import this workflow, select all nodes except the sticky note, copy them, then paste into your WF1A/1B workflow. Follow the instructions in the sticky note for connection changes. Do NOT import this as a standalone workflow — it is a patch set, not a complete workflow."
+  },
+  "tags": [{ "name": "LL-WF1-PATCH" }, { "name": "LL-TEMPLATE" }]
+}
