@@ -7,15 +7,19 @@ import InvoiceBoard from '../components/InvoiceBoard';
 import InvoiceDrawer from '../components/InvoiceDrawer';
 import PaymentTable from '../components/PaymentTable';
 import CustomerDrawer from '../components/CustomerDrawer';
+import PaymentQueue from '../components/PaymentQueue';
+import PaymentMatchDrawer from '../components/PaymentMatchDrawer';
+import MatchConfidenceChart from '../components/MatchConfidenceChart';
 import { fetchDashboardData } from '../lib/quickbooks';
 
 const REFRESH_MS = 15 * 60 * 1000;
 
 const VIEW_TITLES = {
-  overview:  { title: 'Overview',  sub: 'Full AR health at a glance' },
-  invoices:  { title: 'Invoices',  sub: 'All open and recent invoices' },
-  customers: { title: 'Customers', sub: 'Payment behavior by customer' },
-  reports:   { title: 'Reports',   sub: 'Coming soon' },
+  overview:  { title: 'Overview',          sub: 'Full AR health at a glance'              },
+  invoices:  { title: 'Invoices',          sub: 'All open and recent invoices'            },
+  customers: { title: 'Customers',         sub: 'Payment behavior by customer'            },
+  reports:   { title: 'Reports',           sub: 'Coming soon'                             },
+  payments:  { title: 'Cash Application',  sub: 'Plaid-powered payment matching · WF3'   },
 };
 
 export default function DashboardPage({ session, onLogout }) {
@@ -24,8 +28,9 @@ export default function DashboardPage({ session, onLogout }) {
   const [refreshing, setRefreshing]   = useState(false);
   const [activeView, setActiveView]   = useState('overview');
   const [selectedBucket, setSelectedBucket] = useState(null);
-  const [openInvoice, setOpenInvoice] = useState(null);
+  const [openInvoice, setOpenInvoice]   = useState(null);
   const [openCustomer, setOpenCustomer] = useState(null);
+  const [openPayment, setOpenPayment]   = useState(null);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -51,12 +56,18 @@ export default function DashboardPage({ session, onLogout }) {
     );
   }
 
-  const { dsoTrend, arAging, invoices, paymentBehavior, goLiveDate, preLiveDSO, collectionEfficiency } = data;
+  const { dsoTrend, arAging, invoices, paymentBehavior, goLiveDate, preLiveDSO, collectionEfficiency, payments } = data;
   const currentDSO  = Math.round(dsoTrend[dsoTrend.length - 1].dso);
   const delta       = preLiveDSO - currentDSO;
   const totalAR     = arAging.reduce((s, b) => s + b.amount, 0);
   const overdue     = invoices.filter(i => i.status === 'Overdue');
   const overdueAmt  = overdue.reduce((s, i) => s + i.amount, 0);
+
+  const pendingPayments  = payments ? payments.filter(p => p.status === 'Pending Review').length : 0;
+  const autoApplied      = payments ? payments.filter(p => p.status === 'Auto-Applied') : [];
+  const autoMatchRate    = payments ? Math.round((autoApplied.length / payments.length) * 100) : 0;
+  const totalAppliedAmt  = autoApplied.reduce((s, p) => s + p.amount, 0);
+  const avgApplyMinutes  = 8;
 
   const { title, sub } = VIEW_TITLES[activeView];
 
@@ -77,6 +88,7 @@ export default function DashboardPage({ session, onLogout }) {
         onNav={setActiveView}
         session={session}
         onLogout={onLogout}
+        pendingPayments={pendingPayments}
       />
 
       <div className="dashboard-main">
@@ -101,7 +113,49 @@ export default function DashboardPage({ session, onLogout }) {
         </header>
 
         <main className="main-content">
-          {activeView === 'reports' ? (
+          {activeView === 'payments' ? (
+            <>
+              <section className="payments-hero">
+                <div className="payments-hero-metric">
+                  <div className="ph-label">Auto-Match Rate</div>
+                  <div className="ph-value" style={{ color: 'var(--teal)' }}>{autoMatchRate}%</div>
+                  <div className="ph-sub">of transactions applied automatically</div>
+                </div>
+                <div className="payments-hero-divider" />
+                <div className="payments-hero-stats">
+                  <div className="stat">
+                    <div className="stat-value stat-good">{payments.length}</div>
+                    <div className="stat-label">Transactions Received</div>
+                    <div className="stat-sub">last 10 days</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-value">${(totalAppliedAmt / 1000).toFixed(0)}k</div>
+                    <div className="stat-label">Cash Applied</div>
+                    <div className="stat-sub">auto-matched</div>
+                  </div>
+                  <div className="stat">
+                    <div className={`stat-value${pendingPayments > 0 ? ' stat-warn' : ' stat-good'}`}>
+                      {pendingPayments}
+                    </div>
+                    <div className="stat-label">Pending Review</div>
+                    <div className="stat-sub">need manual routing</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-value stat-good">{avgApplyMinutes}m</div>
+                    <div className="stat-label">Avg Apply Time</div>
+                    <div className="stat-sub">vs days manually</div>
+                  </div>
+                </div>
+              </section>
+
+              <PaymentQueue payments={payments} onOpenPayment={p => { setOpenPayment(p); }} />
+
+              <div className="grid">
+                <MatchConfidenceChart payments={payments} />
+                <PaymentActivityFeed payments={payments} />
+              </div>
+            </>
+          ) : activeView === 'reports' ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, flexDirection: 'column', gap: 12, color: 'var(--muted)' }}>
               <div style={{ fontSize: 32 }}>📊</div>
               <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>Reports Coming Soon</div>
@@ -173,6 +227,62 @@ export default function DashboardPage({ session, onLogout }) {
         onClose={() => setOpenCustomer(null)}
         onOpenInvoice={handleOpenInvoice}
       />
+      <PaymentMatchDrawer payment={openPayment} onClose={() => setOpenPayment(null)} />
+    </div>
+  );
+}
+
+function PaymentActivityFeed({ payments }) {
+  const STATUS_META = {
+    'Auto-Applied':   { color: 'var(--green)',  icon: '✓' },
+    'Pending Review': { color: 'var(--yellow)', icon: '⚠' },
+    'Manual':         { color: 'var(--muted)',  icon: '✎' },
+  };
+
+  function fmtDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  const recent = [...payments].slice(0, 8);
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2>Recent Activity</h2>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {recent.map((p, i) => {
+          const meta = STATUS_META[p.status];
+          return (
+            <div key={p.txId} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '10px 0',
+              borderBottom: i < recent.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+            }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700,
+                background: p.status === 'Auto-Applied' ? 'rgba(34,197,94,.1)' : p.status === 'Pending Review' ? 'rgba(245,158,11,.1)' : 'rgba(255,255,255,.05)',
+                color: meta.color,
+                border: `1px solid ${p.status === 'Auto-Applied' ? 'rgba(34,197,94,.2)' : p.status === 'Pending Review' ? 'rgba(245,158,11,.2)' : 'rgba(255,255,255,.1)'}`,
+              }}>
+                {meta.icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  ${p.amount.toLocaleString()} · {p.matchedCustomer}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 1 }}>
+                  {p.status === 'Auto-Applied' && p.matchedInvoice ? `→ ${p.matchedInvoice}` : p.rule.split('—')[0].trim()}
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>{fmtDate(p.received)}</div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

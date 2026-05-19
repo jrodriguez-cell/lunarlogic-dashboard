@@ -1030,6 +1030,165 @@ body {
   color: var(--teal);
 }
 
+/* ── Sidebar pending badge ───────────────────────── */
+
+.nav-pending-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(245,158,11,.18);
+  color: var(--yellow);
+  border: 1px solid rgba(245,158,11,.28);
+  letter-spacing: 0.3px;
+}
+
+/* ── Payments Hero ───────────────────────────────── */
+
+.payments-hero {
+  display: grid;
+  grid-template-columns: auto 1px 1fr;
+  align-items: center;
+  padding: 36px 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.payments-hero-divider {
+  width: 1px;
+  height: 80px;
+  background: var(--border);
+  margin: 0 48px;
+  align-self: center;
+}
+
+.ph-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.ph-value {
+  font-size: 88px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -4px;
+  text-shadow: 0 0 40px var(--teal-glow);
+  text-align: center;
+}
+
+.ph-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  text-align: center;
+}
+
+.payments-hero-metric { min-width: 180px; }
+
+.payments-hero-stats {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+/* ── Payment Queue Table ─────────────────────────── */
+
+.pq-table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.pq-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.pq-table th {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.pq-table td {
+  padding: 11px 8px 11px 0;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.pq-table tr:last-child td { border-bottom: none; }
+
+.pq-row {
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.pq-row:hover td { background: var(--bg-hover); }
+.pq-row:hover td:first-child { border-radius: 6px 0 0 6px; padding-left: 8px; }
+.pq-row:hover td:last-child  { border-radius: 0 6px 6px 0; }
+
+.pq-desc {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted) !important;
+  font-size: 12px !important;
+  font-family: ui-monospace, 'SF Mono', monospace;
+}
+
+.pq-invoice-ref {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 10px;
+  color: var(--teal);
+}
+
+.pq-status-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pq-time {
+  font-size: 11px;
+  color: var(--muted) !important;
+  white-space: nowrap;
+}
+
+/* ── Confidence bar ──────────────────────────────── */
+
+.conf-bar-track {
+  width: 52px;
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.conf-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .3s;
+}
+
 /* ── Mobile ──────────────────────────────────────── */
 
 @media (max-width: 1024px) {
@@ -1051,4 +1210,12 @@ body {
   .stat:last-child { border-bottom: none; }
   .dso-value { font-size: 72px; }
   .drawer-panel { width: 100%; }
+  .payments-hero {
+    grid-template-columns: 1fr;
+    padding: 24px;
+    gap: 24px;
+  }
+  .payments-hero-divider { display: none; }
+  .payments-hero-stats { gap: 0; }
+  .ph-value { font-size: 72px; }
 }

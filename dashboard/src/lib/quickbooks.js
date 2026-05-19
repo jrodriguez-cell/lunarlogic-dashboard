@@ -19,5 +19,6 @@ export async function fetchDashboardData(clientId) {
     goLiveDate:           client.goLiveDate,
     preLiveDSO:           client.preLiveDSO,
     collectionEfficiency: client.collectionEfficiency,
+    payments:             client.payments,
   };
 }

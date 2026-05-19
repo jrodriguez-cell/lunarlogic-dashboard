@@ -31,6 +31,14 @@ const Icons = {
       <path d="M2 6L5.5 3.5L9 5L13 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none" opacity="0.5"/>
     </svg>
   ),
+  payments: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="3.5" width="13" height="9" rx="1.5"/>
+      <path d="M1 6.5h13"/>
+      <circle cx="4" cy="9.5" r="1" fill="currentColor" stroke="none"/>
+      <path d="M7 9.5h4" strokeWidth="1.5"/>
+    </svg>
+  ),
   logout: () => (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
       <path d="M5 2H2.5A1.5 1.5 0 001 3.5v7A1.5 1.5 0 002.5 12H5"/>
@@ -39,14 +47,18 @@ const Icons = {
   ),
 };
 
-const NAV = [
+const NAV_AR = [
   { key: 'overview',   label: 'Overview',   Icon: Icons.overview  },
   { key: 'invoices',   label: 'Invoices',   Icon: Icons.invoices  },
   { key: 'customers',  label: 'Customers',  Icon: Icons.customers },
   { key: 'reports',    label: 'Reports',    Icon: Icons.reports   },
 ];
 
-export default function Sidebar({ activeView, onNav, session, onLogout }) {
+const NAV_PAYMENTS = [
+  { key: 'payments', label: 'Cash Application', Icon: Icons.payments },
+];
+
+export default function Sidebar({ activeView, onNav, session, onLogout, pendingPayments }) {
   function handleLogout() {
     logout();
     onLogout();
@@ -60,8 +72,8 @@ export default function Sidebar({ activeView, onNav, session, onLogout }) {
       </div>
 
       <nav className="sidebar-nav">
-        <div className="nav-section-label">Dashboard</div>
-        {NAV.map(({ key, label, Icon }) => (
+        <div className="nav-section-label">AR Dashboard</div>
+        {NAV_AR.map(({ key, label, Icon }) => (
           <button
             key={key}
             className={`nav-item${activeView === key ? ' active' : ''}`}
@@ -69,6 +81,21 @@ export default function Sidebar({ activeView, onNav, session, onLogout }) {
           >
             <Icon />
             {label}
+          </button>
+        ))}
+
+        <div className="nav-section-label" style={{ marginTop: 8 }}>Payments</div>
+        {NAV_PAYMENTS.map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            className={`nav-item${activeView === key ? ' active' : ''}`}
+            onClick={() => onNav(key)}
+          >
+            <Icon />
+            <span style={{ flex: 1 }}>{label}</span>
+            {pendingPayments > 0 && activeView !== key && (
+              <span className="nav-pending-badge">{pendingPayments}</span>
+            )}
           </button>
         ))}
       </nav>
