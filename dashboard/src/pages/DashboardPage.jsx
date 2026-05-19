@@ -220,6 +220,8 @@ export default function DashboardPage({ session, onLogout }) {
         </main>
       </div>
 
+      <MobileBottomNav activeView={activeView} onNav={setActiveView} pendingPayments={pendingPayments} />
+
       <InvoiceDrawer invoice={openInvoice} onClose={() => setOpenInvoice(null)} />
       <CustomerDrawer
         customer={openCustomer}
@@ -229,6 +231,70 @@ export default function DashboardPage({ session, onLogout }) {
       />
       <PaymentMatchDrawer payment={openPayment} onClose={() => setOpenPayment(null)} />
     </div>
+  );
+}
+
+function MobileBottomNav({ activeView, onNav, pendingPayments }) {
+  const tabs = [
+    { key: 'overview',  label: 'Overview',  icon: (
+      <svg width="20" height="20" viewBox="0 0 15 15" fill="currentColor">
+        <rect x="1" y="1" width="5.5" height="5.5" rx="1"/>
+        <rect x="8.5" y="1" width="5.5" height="5.5" rx="1"/>
+        <rect x="1" y="8.5" width="5.5" height="5.5" rx="1"/>
+        <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1"/>
+      </svg>
+    )},
+    { key: 'invoices',  label: 'Invoices',  icon: (
+      <svg width="20" height="20" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+        <rect x="2" y="1.5" width="11" height="12" rx="1.5"/>
+        <path d="M4.5 5.5h6M4.5 8h6M4.5 10.5h3.5"/>
+      </svg>
+    )},
+    { key: 'customers', label: 'Customers', icon: (
+      <svg width="20" height="20" viewBox="0 0 15 15" fill="currentColor">
+        <circle cx="5.5" cy="4.5" r="2.5"/>
+        <path d="M0.5 13c0-2.8 2.2-5 5-5s5 2.2 5 5" opacity="0.9"/>
+        <circle cx="11.5" cy="4.5" r="2" opacity="0.55"/>
+        <path d="M10 13c.4-1.5 1.8-2.5 3-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none" opacity="0.55"/>
+      </svg>
+    )},
+    { key: 'payments',  label: 'Payments',  icon: (
+      <svg width="20" height="20" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="3.5" width="13" height="9" rx="1.5"/>
+        <path d="M1 6.5h13"/>
+        <circle cx="4" cy="9.5" r="1" fill="currentColor" stroke="none"/>
+        <path d="M7 9.5h4" strokeWidth="1.5"/>
+      </svg>
+    )},
+    { key: 'reports',   label: 'Reports',   icon: (
+      <svg width="20" height="20" viewBox="0 0 15 15" fill="currentColor">
+        <rect x="1.5" y="9" width="3" height="4.5" rx="0.5"/>
+        <rect x="6" y="5.5" width="3" height="8" rx="0.5"/>
+        <rect x="10.5" y="2.5" width="3" height="11" rx="0.5"/>
+      </svg>
+    )},
+  ];
+
+  return (
+    <nav className="mobile-bottom-nav">
+      {tabs.map(({ key, label, icon }) => {
+        const isActive = activeView === key;
+        const hasBadge = key === 'payments' && pendingPayments > 0 && !isActive;
+        return (
+          <button
+            key={key}
+            className={`mobile-tab${isActive ? ' active' : ''}`}
+            onClick={() => onNav(key)}
+          >
+            <span className="mobile-tab-icon-wrap">
+              {icon}
+              {hasBadge && <span className="mobile-tab-badge">{pendingPayments}</span>}
+            </span>
+            <span className="mobile-tab-label">{label}</span>
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
