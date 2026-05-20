@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { login } from '../lib/auth';
 
-const DEMO = [
-  { label: 'Kaptain Clean LLC', email: 'kaptainclean@demo.com', pw: 'demo2024' },
-  { label: 'Gualapack',         email: 'gualapack@demo.com',    pw: 'demo2024' },
-];
-
 export default function LoginPage({ onLogin }) {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -21,23 +16,27 @@ export default function LoginPage({ onLogin }) {
       if (session) {
         onLogin(session);
       } else {
-        setError('Invalid email or password.');
+        setError('Invalid email or password. Contact your LunarLogic representative for access.');
       }
       setLoading(false);
     }, 400);
   }
 
-  function fillDemo(cred) {
-    setEmail(cred.email);
-    setPassword(cred.pw);
-    setError('');
-  }
-
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-wordmark">lunarlogic</div>
-        <div className="login-subtitle">AR Client Portal — sign in to your dashboard</div>
+        <div className="login-logo-row">
+          <svg className="login-logo-icon" width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="13" stroke="var(--teal)" strokeWidth="1.5" opacity="0.4"/>
+            <path d="M14 4 A10 10 0 0 1 24 14" stroke="var(--teal)" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="14" cy="14" r="3.5" fill="var(--teal)" opacity="0.9"/>
+            <circle cx="14" cy="14" r="1.5" fill="var(--bg)"/>
+          </svg>
+          <div className="login-wordmark">lunarlogic</div>
+        </div>
+
+        <div className="login-portal-badge">Client Portal</div>
+        <div className="login-subtitle">Sign in to access your AR dashboard</div>
 
         <form onSubmit={handleSubmit}>
           {error && <div className="login-error">{error}</div>}
@@ -68,21 +67,15 @@ export default function LoginPage({ onLogin }) {
           </div>
 
           <button className="login-btn" type="submit" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Signing in…' : 'Sign In to Dashboard'}
           </button>
         </form>
 
-        <div className="demo-creds">
-          <div className="demo-creds-title">Demo accounts — click to fill</div>
-          {DEMO.map(c => (
-            <div key={c.email} className="demo-cred-row" onClick={() => fillDemo(c)}>
-              <span>{c.label}</span>
-              <code>{c.email}</code>
-            </div>
-          ))}
-          <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 6, paddingLeft: 6 }}>
-            Password: <code style={{ color: 'var(--teal)', fontFamily: 'ui-monospace, monospace', fontSize: 10 }}>demo2024</code>
-          </div>
+        <div className="login-help">
+          Need access? Email&nbsp;
+          <a href="mailto:jrodriguez@lunarlogic.ai" className="login-help-link">
+            jrodriguez@lunarlogic.ai
+          </a>
         </div>
       </div>
     </div>

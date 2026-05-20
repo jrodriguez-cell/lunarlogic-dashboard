@@ -1,0 +1,69 @@
+<!--
+  LunarLogic — Client Portal Button
+  ──────────────────────────────────
+  Paste this snippet into your website builder's custom HTML/code embed block.
+
+  IMPORTANT: Replace YOUR_DASHBOARD_URL below with your actual Vercel deployment URL
+  e.g. https://lunarlogic-dashboard.vercel.app
+-->
+
+<style>
+  .ll-portal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 22px;
+    background: #00d4e8;
+    color: #07101c;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+  }
+
+  .ll-portal-btn:hover {
+    opacity: 0.88;
+    box-shadow: 0 6px 24px rgba(0, 212, 232, 0.30);
+    transform: translateY(-1px);
+  }
+
+  .ll-portal-btn:active {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .ll-portal-btn svg {
+    flex-shrink: 0;
+  }
+</style>
+
+<a class="ll-portal-btn" href="YOUR_DASHBOARD_URL" target="_blank" rel="noopener">
+  <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="14" cy="14" r="13" stroke="#07101c" stroke-width="1.5" opacity="0.3"/>
+    <path d="M14 4 A10 10 0 0 1 24 14" stroke="#07101c" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="14" cy="14" r="3.5" fill="#07101c" opacity="0.85"/>
+    <circle cx="14" cy="14" r="1.5" fill="#00d4e8"/>
+  </svg>
+  Client Portal
+</a>
+
+<!--
+  OPTIONAL DARK VARIANT
+  Use this instead if your website has a dark/navy background section.
+
+<a class="ll-portal-btn" href="YOUR_DASHBOARD_URL" target="_blank" rel="noopener" style="background: transparent; color: #00d4e8; border: 1.5px solid rgba(0,212,232,0.5);">
+  <svg width="16" height="16" viewBox="0 0 28 28" fill="none">
+    <circle cx="14" cy="14" r="13" stroke="#00d4e8" stroke-width="1.5" opacity="0.4"/>
+    <path d="M14 4 A10 10 0 0 1 24 14" stroke="#00d4e8" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="14" cy="14" r="3.5" fill="#00d4e8" opacity="0.9"/>
+    <circle cx="14" cy="14" r="1.5" fill="#07101c"/>
+  </svg>
+  Client Portal
+</a>
+-->
