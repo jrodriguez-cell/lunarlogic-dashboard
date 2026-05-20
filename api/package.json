@@ -1,0 +1,12 @@
+{
+  "name": "lunarlogic-api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Vercel serverless functions for LunarLogic AR Dashboard",
+  "dependencies": {
+    "googleapis": "^140.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
