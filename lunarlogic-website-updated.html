@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>LunarLogic | Complete AR Automation Platform for Professional Services</title>
+<meta name="description" content="Complete accounts receivable automation platform. Automate invoicing, payment reminders, sales orders, and AR analytics. Cut DSO 40%, reduce bad debt 70%. Deployed in 2-4 weeks.">
+<meta name="robots" content="index, follow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --ink:        #050810;
+  --ink2:       #0a0e1a;
+  --cyan:       #4dd0e1;
+  --cyan-glow:  rgba(77,208,225,0.45);
+  --cyan-dim:   rgba(77,208,225,0.08);
+  --white:      #eef3ff;
+  --muted:      rgba(238,243,255,0.68);
+  --muted2:     rgba(238,243,255,0.42);
+  --accent:     #7b6cff;
+  --green:      #20e87a;
+  --border:     rgba(77,208,225,0.13);
+  --border2:    rgba(77,208,225,0.24);
+}
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--ink);
+  color:var(--white);
+  overflow-x:hidden;
+  line-height:1.6;
+}
+
+.skip-link {
+  position:absolute; top:-999px; left:1rem;
+  background:var(--cyan); color:var(--ink);
+  font-family:'Comfortaa',sans-serif; font-size:.82rem; font-weight:700;
+  padding:.5rem 1.1rem; border-radius:6px; z-index:9999;
+  text-decoration:none;
+}
+.skip-link:focus { top:1rem; }
+
+:focus-visible {
+  outline:2px solid var(--cyan);
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+body::before {
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size:200px; opacity:.35;
+}
+
+body::after {
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(77,208,225,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(77,208,225,0.025) 1px,transparent 1px);
+  background-size:64px 64px;
+}
+
+.z1 { position:relative; z-index:1; }
+
+.aurora { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.aurora span {
+  position:absolute; border-radius:50%; filter:blur(90px); opacity:.045;
+  animation:auroraFloat 20s ease-in-out infinite;
+}
+.aurora span:nth-child(1) { width:600px; height:480px; background:#4dd0e1; top:-130px; left:-160px; animation-duration:22s; }
+.aurora span:nth-child(2) { width:440px; height:380px; background:#7b6cff; top:42%; right:-120px; animation-duration:27s; animation-delay:-8s; }
+.aurora span:nth-child(3) { width:360px; height:360px; background:#4dd0e1; bottom:-80px; left:38%; animation-duration:24s; animation-delay:-5s; }
+@keyframes auroraFloat {
+  0%,100% { transform:translate(0,0) scale(1); }
+  33%      { transform:translate(30px,-22px) scale(1.04); }
+  66%      { transform:translate(-16px,28px) scale(.97); }
+}
+
+.neon-logo {
+  font-family:'Comfortaa',sans-serif;
+  font-weight:300;
+  letter-spacing:.03em;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+  -webkit-text-stroke:1.8px var(--cyan);
+  paint-order:stroke fill;
+  filter:
+    drop-shadow(0 0 3px var(--cyan))
+    drop-shadow(0 0 10px rgba(77,208,225,.7))
+    drop-shadow(0 0 22px rgba(77,208,225,.35));
+  animation:neonFlicker 9s ease-in-out infinite;
+}
+@keyframes neonFlicker {
+  0%,18%,20%,22%,50%,52%,100% {
+    filter:
+      drop-shadow(0 0 3px var(--cyan))
+      drop-shadow(0 0 10px rgba(77,208,225,.72))
+      drop-shadow(0 0 24px rgba(77,208,225,.38));
+  }
+  19%,21% { filter:drop-shadow(0 0 1px rgba(77,208,225,.3)); }
+  51%     { filter:drop-shadow(0 0 2px rgba(77,208,225,.4)); }
+}
+
+/* Header */
+header {
+  position:sticky; top:0; z-index:100;
+  background:rgba(10,14,26,0.95); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  transition:transform 0.3s ease-in-out;
+}
+header.hide-header {
+  transform:translateY(-100%);
+}
+nav {
+  max-width:1200px; margin:0 auto; padding:1rem 2rem;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:2rem;
+}
+.logo {
+  font-family:'Comfortaa',sans-serif; font-size:1.4rem; font-weight:700;
+  color:var(--cyan); text-decoration:none;
+  text-shadow:0 0 12px var(--cyan-glow);
+  flex-shrink:0;
+}
+
+.nav-links {
+  display:flex; gap:2rem; list-style:none;
+  align-items:center;
+  flex:1;
+}
+.nav-links > li {
+  position:relative;
+}
+.nav-links > li > a {
+  color:var(--muted); text-decoration:none; font-size:.9rem;
+  transition:color .2s;
+  display:flex; align-items:center; gap:.3rem;
+  padding:.5rem 0;
+}
+.nav-links > li > a:hover { color:var(--cyan); }
+.nav-links > li.active > a {
+  color:var(--white);
+  border-bottom:2px solid var(--cyan);
+}
+
+.nav-links > li.has-dropdown > a::after {
+  content:'▾';
+  font-size:.7rem;
+  opacity:.7;
+}
+
+.mega-menu {
+  position:absolute;
+  top:100%;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(10,14,26,0.98);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:2rem;
+  min-width:700px;
+  margin-top:1rem;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .3s, visibility .3s, margin-top .3s;
+  box-shadow:0 10px 40px rgba(0,0,0,0.5);
+}
+
+.nav-links > li.has-dropdown:hover .mega-menu {
+  opacity:1;
+  visibility:visible;
+  margin-top:.5rem;
+}
+
+.mega-menu-grid {
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:1.5rem 3rem;
+}
+
+.mega-menu-section h3 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.15em;
+  color:var(--cyan);
+  margin-bottom:1rem;
+}
+
+.mega-menu-links {
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:.8rem;
+}
+
+.mega-menu-links li a {
+  display:flex;
+  align-items:flex-start;
+  gap:.8rem;
+  padding:.6rem;
+  border-radius:6px;
+  text-decoration:none;
+  transition:background .2s;
+}
+
+.mega-menu-links li a:hover {
+  background:var(--cyan-dim);
+}
+
+.mega-menu-icon {
+  width:32px;
+  height:32px;
+  background:var(--cyan-dim);
+  border:1px solid var(--border);
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.7rem;
+  font-weight:700;
+  color:var(--cyan);
+  flex-shrink:0;
+  font-family:'Comfortaa',sans-serif;
+}
+
+.mega-menu-content {
+  flex:1;
+}
+
+.mega-menu-title {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.9rem;
+  font-weight:600;
+  color:var(--white);
+  margin-bottom:.2rem;
+}
+
+.mega-menu-desc {
+  font-size:.8rem;
+  color:var(--muted);
+  line-height:1.4;
+}
+
+.mobile-menu-toggle {
+  display:none;
+  background:transparent;
+  border:2px solid var(--cyan);
+  color:var(--cyan);
+  padding:.5rem;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:1.2rem;
+  width:40px;
+  height:40px;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ── Nav action buttons (portal + CTA) ── */
+.nav-actions {
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  flex-shrink:0;
+}
+
+.nav-portal-btn {
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  font-family:'Comfortaa',sans-serif;
+  font-size:.82rem;
+  font-weight:600;
+  color:var(--cyan);
+  background:transparent;
+  border:1.5px solid rgba(77,208,225,0.4);
+  border-radius:6px;
+  padding:.55rem 1.1rem;
+  text-decoration:none;
+  white-space:nowrap;
+  transition:background .2s, border-color .2s, box-shadow .2s;
+}
+.nav-portal-btn:hover {
+  background:var(--cyan-dim);
+  border-color:var(--cyan);
+  box-shadow:0 0 14px rgba(77,208,225,0.18);
+}
+.nav-portal-btn svg { flex-shrink:0; }
+
+.nav-cta {
+  background:var(--cyan); color:var(--ink);
+  padding:.6rem 1.3rem; border-radius:6px;
+  font-family:'Comfortaa',sans-serif; font-size:.85rem; font-weight:700;
+  text-decoration:none; box-shadow:0 0 16px var(--cyan-glow);
+  transition:transform .2s;
+  white-space:nowrap;
+}
+.nav-cta:hover { transform:translateY(-2px); }
+
+/* Buttons */
+.btn-primary {
+  font-family:'Comfortaa',sans-serif; font-size:.88rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.07em;
+  color:var(--ink); background:var(--cyan);
+  border:none; border-radius:8px; padding:.85rem 1.9rem;
+  cursor:pointer; text-decoration:none; display:inline-block;
+  box-shadow:0 4px 22px var(--cyan-glow);
+  transition:box-shadow .2s, transform .2s;
+}
+.btn-primary:hover { box-shadow:0 6px 36px var(--cyan-glow); transform:translateY(-2px); }
+
+.btn-ghost {
+  font-family:'Comfortaa',sans-serif; font-size:.88rem; font-weight:500;
+  color:var(--white); background:transparent;
+  border:1px solid var(--border); border-radius:8px;
+  padding:.85rem 1.9rem; cursor:pointer; text-decoration:none; display:inline-block;
+  transition:all .2s;
+}
+.btn-ghost:hover { border-color:var(--cyan); color:var(--cyan); background:var(--cyan-dim); }
+
+/* Layout */
+.wrap { max-width:1100px; margin:0 auto; padding:4.5rem 2rem; }
+.wrap-wide { max-width:1200px; margin:0 auto; padding:4.5rem 2rem; }
+
+/* Product Hero */
+.product-hero {
+  padding:6rem 2rem 4rem;
+  text-align:center;
+  background:linear-gradient(180deg, rgba(30,58,95,0.15) 0%, transparent 100%);
+  border-bottom:1px solid var(--border);
+}
+
+.product-category {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--cyan);
+  margin-bottom:1.5rem;
+}
+
+.product-hero h1 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:clamp(2.5rem,5vw,3.8rem);
+  font-weight:700;
+  line-height:1.15;
+  letter-spacing:-.02em;
+  max-width:900px;
+  margin:0 auto 1.2rem;
+}
+
+.product-hero-sub {
+  font-size:1.15rem;
+  color:var(--muted);
+  max-width:700px;
+  margin:0 auto 2.5rem;
+  line-height:1.7;
+}
+
+.product-stats {
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:2rem;
+  max-width:800px;
+  margin:3rem auto 3rem;
+  padding:2rem;
+  background:rgba(30,58,95,0.1);
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+
+.stat-item {
+  text-align:center;
+  padding:1rem;
+  border-right:1px solid var(--border);
+}
+
+.stat-item:last-child {
+  border-right:none;
+}
+
+.stat-number {
+  font-family:'Comfortaa',sans-serif;
+  font-size:2.2rem;
+  font-weight:700;
+  color:var(--cyan);
+  display:block;
+  margin-bottom:.5rem;
+}
+
+.stat-label {
+  font-size:.85rem;
+  color:var(--muted);
+  line-height:1.4;
+}
+
+/* Content Sections */
+.content-section {
+  padding:5rem 2rem;
+}
+
+.content-section.alt {
+  background:rgba(30,58,95,0.08);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+
+.section-header {
+  max-width:800px;
+  margin:0 auto 3rem;
+  text-align:center;
+}
+
+.section-header h2 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:2.2rem;
+  font-weight:700;
+  margin-bottom:1rem;
+  line-height:1.3;
+}
+
+.section-header p {
+  font-size:1.05rem;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+/* Workflow Steps */
+.workflow-container {
+  max-width:900px;
+  margin:0 auto;
+}
+
+.workflow-step {
+  display:grid;
+  grid-template-columns:80px 1fr;
+  gap:2rem;
+  margin-bottom:3rem;
+  padding-bottom:3rem;
+  border-bottom:1px solid var(--border);
+}
+
+.workflow-step:last-child {
+  border-bottom:none;
+  margin-bottom:0;
+  padding-bottom:0;
+}
+
+.step-number {
+  width:60px;
+  height:60px;
+  background:linear-gradient(135deg, rgba(77,208,225,0.15) 0%, rgba(77,208,225,0.05) 100%);
+  border:2px solid var(--cyan);
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Comfortaa',sans-serif;
+  font-size:1.4rem;
+  font-weight:700;
+  color:var(--cyan);
+  flex-shrink:0;
+}
+
+.step-content h3 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:1.3rem;
+  font-weight:700;
+  margin-bottom:1rem;
+  color:var(--white);
+}
+
+.step-content p {
+  color:var(--muted);
+  line-height:1.8;
+  margin-bottom:1rem;
+}
+
+.step-details {
+  background:rgba(30,58,95,0.1);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:1.5rem;
+  margin-top:1.5rem;
+}
+
+.step-details h4 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.9rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--cyan);
+  margin-bottom:1rem;
+}
+
+.step-details ul {
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:.8rem;
+}
+
+.step-details li {
+  display:flex;
+  align-items:flex-start;
+  gap:.8rem;
+  color:var(--muted);
+  font-size:.95rem;
+  line-height:1.6;
+}
+
+.step-details li::before {
+  content:'→';
+  color:var(--cyan);
+  font-weight:700;
+  flex-shrink:0;
+  margin-top:.1rem;
+}
+
+/* Feature Grid */
+.feature-grid {
+  max-width:1100px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:2rem;
+}
+
+.feature-card {
+  background:rgba(10,14,26,0.6);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:2rem;
+  transition:all .3s;
+}
+
+.feature-card:hover {
+  border-color:var(--border2);
+  background:rgba(10,14,26,0.8);
+}
+
+.feature-card h3 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:1.2rem;
+  font-weight:700;
+  margin-bottom:1rem;
+  color:var(--white);
+}
+
+.feature-card p {
+  color:var(--muted);
+  line-height:1.7;
+  margin-bottom:1.2rem;
+}
+
+.feature-list {
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:.7rem;
+}
+
+.feature-list li {
+  display:flex;
+  align-items:flex-start;
+  gap:.6rem;
+  font-size:.9rem;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+.feature-list li::before {
+  content:'✓';
+  color:var(--cyan);
+  font-weight:700;
+  flex-shrink:0;
+  font-size:1rem;
+}
+
+/* Technical Specs */
+.tech-specs {
+  max-width:800px;
+  margin:3rem auto 0;
+  background:rgba(10,14,26,0.6);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:2rem;
+}
+
+.tech-specs h3 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:1.1rem;
+  font-weight:700;
+  margin-bottom:1.5rem;
+  color:var(--cyan);
+}
+
+.spec-grid {
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:1.5rem;
+}
+
+.spec-item {
+  padding:1rem;
+  background:rgba(30,58,95,0.1);
+  border-radius:6px;
+}
+
+.spec-label {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--cyan);
+  margin-bottom:.5rem;
+}
+
+.spec-value {
+  font-size:.95rem;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+/* CTA Section */
+.cta-section {
+  padding:6rem 2rem;
+  text-align:center;
+  background:linear-gradient(180deg, transparent 0%, rgba(30,58,95,0.15) 100%);
+  border-top:1px solid var(--border);
+}
+
+.cta-section h2 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:2.5rem;
+  font-weight:700;
+  margin-bottom:1rem;
+}
+
+.cta-section p {
+  font-size:1.1rem;
+  color:var(--muted);
+  max-width:600px;
+  margin:0 auto 2.5rem;
+  line-height:1.7;
+}
+
+.cta-buttons {
+  display:flex;
+  gap:1rem;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+/* Footer */
+footer {
+  background:var(--ink2);
+  border-top:1px solid var(--border);
+  padding:3rem 2.5rem 2rem;
+}
+.footer-grid {
+  max-width:1200px; margin:0 auto;
+  display:grid; grid-template-columns:1.6fr 1fr 1fr;
+  gap:3rem; padding-bottom:2rem;
+  border-bottom:1px solid var(--border);
+}
+.foot-brand-logo {
+  font-size:1.4rem; display:inline-block;
+  margin-bottom:.8rem; text-decoration:none;
+}
+.foot-tag {
+  font-size:.85rem; color:var(--muted);
+  line-height:1.65; max-width:250px;
+  margin-bottom:.8rem;
+}
+.foot-email {
+  display:inline-block; font-size:.8rem;
+  color:var(--cyan); text-decoration:none;
+}
+.foot-email:hover { text-decoration:underline; }
+
+.foot-col {
+  display:flex; flex-direction:column;
+}
+.foot-col h4 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.7rem; text-transform:uppercase;
+  letter-spacing:.15em; color:var(--cyan);
+  margin-bottom:1rem; order:-1;
+}
+.foot-col ul {
+  list-style:none;
+  display:flex; flex-direction:column; gap:.6rem;
+}
+.foot-col a {
+  font-size:.8rem; color:var(--muted);
+  text-decoration:none; transition:color .2s;
+}
+.foot-col a:hover { color:var(--cyan); }
+
+/* ── Footer portal link ── */
+.foot-portal-link {
+  display:inline-flex;
+  align-items:center;
+  gap:.4rem;
+  font-size:.8rem;
+  color:var(--cyan) !important;
+  font-weight:600;
+}
+.foot-portal-link svg { flex-shrink:0; opacity:.8; }
+
+.footer-bottom {
+  max-width:1200px; margin:0 auto;
+  padding-top:1.5rem;
+  text-align:center;
+}
+.footer-bottom p {
+  font-size:.75rem; color:var(--muted2);
+}
+
+/* Responsive */
+@media(max-width:920px) {
+  nav { padding:1rem 1.5rem; }
+  .logo { font-size:1.2rem; }
+  .mobile-menu-toggle { display:flex; }
+  
+  .nav-links {
+    position:fixed;
+    top:65px;
+    left:0;
+    right:0;
+    background:rgba(10,14,26,0.98);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    flex-direction:column;
+    gap:0;
+    padding:1rem 0;
+    display:none;
+    align-items:stretch;
+  }
+  
+  .nav-links.active {
+    display:flex;
+  }
+  
+  .nav-links > li {
+    border-bottom:1px solid var(--border);
+  }
+  
+  .nav-links > li > a {
+    display:block;
+    padding:1rem 2rem;
+    font-size:1rem;
+  }
+  
+  .mega-menu {
+    position:static;
+    transform:none;
+    min-width:auto;
+    margin:0;
+    padding:1rem 2rem;
+    border:none;
+    border-radius:0;
+    background:rgba(5,8,16,0.95);
+    display:none;
+  }
+  
+  .nav-links > li.has-dropdown.active .mega-menu {
+    display:block;
+    opacity:1;
+    visibility:visible;
+  }
+  
+  .mega-menu-grid {
+    grid-template-columns:1fr;
+    gap:1.5rem;
+  }
+  
+  /* Mobile: stack portal btn + CTA vertically inside expanded menu */
+  .nav-actions {
+    flex-direction:column;
+    align-items:stretch;
+    margin:1rem 1.5rem 0;
+  }
+
+  .nav-portal-btn {
+    justify-content:center;
+    padding:.75rem 1rem;
+    font-size:.9rem;
+  }
+
+  .nav-cta {
+    margin:0;
+    display:block;
+    text-align:center;
+    padding:.75rem 1rem;
+  }
+  
+  .product-stats {
+    grid-template-columns:1fr;
+  }
+  
+  .stat-item {
+    border-right:none;
+    border-bottom:1px solid var(--border);
+  }
+  
+  .stat-item:last-child {
+    border-bottom:none;
+  }
+  
+  .feature-grid {
+    grid-template-columns:1fr;
+  }
+  
+  .spec-grid {
+    grid-template-columns:1fr;
+  }
+  
+  .workflow-step {
+    grid-template-columns:1fr;
+    gap:1rem;
+  }
+  
+  .footer-grid {
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(max-width:560px) {
+  .product-hero { padding:4rem 1.5rem 3rem; }
+  .content-section { padding:3rem 1.5rem; }
+  .footer-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<!-- HEADER -->
+<header>
+  <nav>
+    <a href="/" class="logo neon-logo">lunarlogic</a>
+    
+    <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+      ☰
+    </button>
+    
+    <ul class="nav-links">
+      <li class="has-dropdown active">
+        <a href="/product">Product</a>
+        <div class="mega-menu">
+          <div class="mega-menu-grid">
+            <div class="mega-menu-section">
+              <h3>Products</h3>
+              <ul class="mega-menu-links">
+                <li>
+                  <a href="/invoice-automation">
+                    <div class="mega-menu-icon">IA</div>
+                    <div class="mega-menu-content">
+                      <div class="mega-menu-title">Invoice Automation</div>
+                      <div class="mega-menu-desc">Turn Slack messages into QuickBooks invoices in 90 seconds</div>
+                    </div>
+                  </a>
+                </li>
+                <li>
+                  <a href="/payment-reminders">
+                    <div class="mega-menu-icon">PR</div>
+                    <div class="mega-menu-content">
+                      <div class="mega-menu-title">Payment Reminders</div>
+                      <div class="mega-menu-desc">Automated 5-tier reminder sequence</div>
+                    </div>
+                  </a>
+                </li>
+                <li>
+                  <a href="/sales-order-processing">
+                    <div class="mega-menu-icon">SO</div>
+                    <div class="mega-menu-content">
+                      <div class="mega-menu-title">Sales Order Processing</div>
+                      <div class="mega-menu-desc">PDF to QuickBooks estimate automation</div>
+                    </div>
+                  </a>
+                </li>
+                <li>
+                  <a href="/ar-dashboard">
+                    <div class="mega-menu-icon">AR</div>
+                    <div class="mega-menu-content">
+                      <div class="mega-menu-title">AR Dashboard & Reporting</div>
+                      <div class="mega-menu-desc">Real-time AR aging and analytics</div>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="mega-menu-section">
+              <h3>Platform</h3>
+              <ul class="mega-menu-links">
+                <li>
+                  <a href="/integrations">
+                    <div class="mega-menu-icon">INT</div>
+                    <div class="mega-menu-content">
+                      <div class="mega-menu-title">Integrations</div>
+                      <div class="mega-menu-desc">QuickBooks, Xero, Slack, and more</div>
+                    </div>
+                  </a>
+                </li>
+                <li>
+                  <a href="/security">
+                    <div class="mega-menu-icon">SEC</div>
+                    <div class="mega-menu-content">
+                      <div class="mega-menu-title">Security</div>
+                      <div class="mega-menu-desc">Bank-level encryption & SOC 2 compliance</div>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </li>
+      
+      <li>
+        <a href="/pricing">Pricing</a>
+      </li>
+      
+      <li class="has-dropdown">
+        <a href="/resources">Resources</a>
+        <div class="mega-menu">
+          <div class="mega-menu-grid">
+            <div class="mega-menu-section">
+              <h3>Learn</h3>
+              <ul class="mega-menu-links">
+                <li>
+                  <a href="/resources">
+                    <div class="mega-menu-icon">CS</div>
+                    <div class="mega-menu-content">
+                      <div class="mega-menu-title">Case Studies</div>
+                      <div class="mega-menu-desc">See how businesses save 500+ hours annually</div>
+                    </div>
+                  </a>
+                </li>
+                <li>
+                  <a href="/resources">
+                    <div class="mega-menu-icon">BL</div>
+                    <div class="mega-menu-content">
+                      <div class="mega-menu-title">Blog</div>
+                      <div class="mega-menu-desc">AR automation best practices</div>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </li>
+      
+      <li>
+        <a href="/about">About</a>
+      </li>
+    </ul>
+
+    <!-- NAV ACTIONS: Client Portal + Get Started -->
+    <div class="nav-actions">
+      <a href="YOUR_DASHBOARD_URL" class="nav-portal-btn" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+          <path d="M14 4 A10 10 0 0 1 24 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="14" cy="14" r="3.5" fill="currentColor" opacity="0.85"/>
+          <circle cx="14" cy="14" r="1.5" fill="#050810"/>
+        </svg>
+        Client Portal
+      </a>
+      <a href="https://calendly.com/jrodriguez-lunarlogic/30min" class="nav-cta">Get Started</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+
+<!-- HERO SECTION -->
+<section class="hero z1">
+  <div class="hero-content">
+    <h1>Complete accounts receivable automation for professional services</h1>
+    <p class="hero-sub">AI-powered AR platform that automates invoicing, payment collection, sales order processing, and financial reporting. Integrated with QuickBooks. Deployed in 2-4 weeks.</p>
+    
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-value">40%</span>
+        <span class="stat-label">Average DSO reduction</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">70%</span>
+        <span class="stat-label">Bad debt improvement</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">500+ hrs</span>
+        <span class="stat-label">Saved annually per firm</span>
+      </div>
+    </div>
+    
+    <div class="hero-cta">
+      <a href="https://calendly.com/jrodriguez-lunarlogic/30min" class="btn-primary">Schedule Demo</a>
+      <a href="#products" class="btn-ghost">Explore Platform</a>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORM OVERVIEW -->
+<section class="platform-overview z1">
+  <div class="wrap">
+    <div class="section-header centered">
+      <h2>One platform, complete AR automation</h2>
+      <p>LunarLogic automates your entire accounts receivable workflow—from invoice creation through cash collection and financial reporting. Built for professional services firms that need enterprise capabilities without enterprise complexity.</p>
+    </div>
+    
+    <div class="value-props">
+      <div class="value-prop">
+        <div class="value-prop-header">
+          <h3>Eliminate manual billing</h3>
+        </div>
+        <p>Stop manually creating invoices, chasing payments, and processing sales orders. Automation handles routine AR tasks while your team focuses on client relationships and strategic work.</p>
+      </div>
+      
+      <div class="value-prop">
+        <div class="value-prop-header">
+          <h3>Accelerate cash collection</h3>
+        </div>
+        <p>Automated reminder sequences and predictive analytics ensure invoices get paid faster. Average DSO reduction of 15-20 days translates to significant working capital improvement.</p>
+      </div>
+      
+      <div class="value-prop">
+        <div class="value-prop-header">
+          <h3>Gain real-time visibility</h3>
+        </div>
+        <p>Live AR dashboard shows exactly where your receivables stand at any moment. Payment predictions and collection priorities tell you where to focus efforts for maximum impact.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTS SECTION -->
+<section id="products" class="products-section z1">
+  <div class="wrap-wide">
+    <div class="section-header centered">
+      <h2>Four integrated modules, one seamless platform</h2>
+      <p>Deploy individual modules or the complete AR automation suite. Each module integrates with QuickBooks and works independently or as part of the full platform.</p>
+    </div>
+    
+    <div class="products-grid">
+      
+      <div class="product-card">
+        <div class="product-card-header">
+          <div class="product-icon">IA</div>
+          <h3>Invoice Automation</h3>
+        </div>
+        <p class="product-desc">Turn Slack messages into QuickBooks invoices automatically. From job completion signal to sent invoice in under 90 seconds. Zero manual data entry.</p>
+        <ul class="product-highlights">
+          <li>19 min → 3 min per invoice (84% reduction)</li>
+          <li>98%+ accuracy on customer and amount extraction</li>
+          <li>Complete audit trail with Slack message linking</li>
+        </ul>
+        <a href="/invoice-automation" class="product-link">Learn more →</a>
+      </div>
+      
+      <div class="product-card">
+        <div class="product-card-header">
+          <div class="product-icon">PR</div>
+          <h3>Payment Reminders</h3>
+        </div>
+        <p class="product-desc">Automated 5-tier reminder sequence prevents late payments. Set once, runs forever. Automatically pauses when payments are received.</p>
+        <ul class="product-highlights">
+          <li>2% → 0.6% bad debt rate (70% improvement)</li>
+          <li>40% average DSO reduction (50 to 30 days)</li>
+          <li>99.2% email delivery rate with open tracking</li>
+        </ul>
+        <a href="/payment-reminders" class="product-link">Learn more →</a>
+      </div>
+      
+      <div class="product-card">
+        <div class="product-card-header">
+          <div class="product-icon">SO</div>
+          <h3>Sales Order Processing</h3>
+        </div>
+        <p class="product-desc">Convert PDF sales orders into QuickBooks estimates automatically. AI extracts line items, pricing, and terms with 92%+ accuracy.</p>
+        <ul class="product-highlights">
+          <li>35 min → 4 min per estimate (89% reduction)</li>
+          <li>95% reduction in data entry errors</li>
+          <li>24-48 hour quote turnaround improvement</li>
+        </ul>
+        <a href="/sales-order-processing" class="product-link">Learn more →</a>
+      </div>
+      
+      <div class="product-card">
+        <div class="product-card-header">
+          <div class="product-icon">AR</div>
+          <h3>AR Dashboard & Reporting</h3>
+        </div>
+        <p class="product-desc">Real-time AR aging, payment predictions, and collection priority scoring. Month-end close reduced from 14 days to 3 days.</p>
+        <ul class="product-highlights">
+          <li>87% accuracy on payment date predictions</li>
+          <li>Hourly QuickBooks sync (configurable to 15 min)</li>
+          <li>14 → 3 days month-end close (79% faster)</li>
+        </ul>
+        <a href="/ar-dashboard" class="product-link">Learn more →</a>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works z1">
+  <div class="wrap">
+    <div class="section-header centered">
+      <h2>How deployment works</h2>
+      <p>From discovery call to production deployment in 2-4 weeks. No lengthy implementation projects or expensive consultants required.</p>
+    </div>
+    
+    <div class="deployment-steps">
+      
+      <div class="deployment-step">
+        <div class="step-badge">1</div>
+        <div class="step-content">
+          <h3>Technical discovery</h3>
+          <p>We analyze your current AR workflow, QuickBooks setup, and automation requirements. Identify highest-impact areas and create deployment roadmap.</p>
+          <div class="step-duration">Duration: 1-2 days</div>
+        </div>
+      </div>
+      
+      <div class="deployment-step">
+        <div class="step-badge">2</div>
+        <div class="step-content">
+          <h3>Custom proposal & configuration</h3>
+          <p>Receive detailed proposal with specific workflows, integrations, and pricing. We configure the platform to match your processes and QuickBooks structure.</p>
+          <div class="step-duration">Duration: 3-5 days</div>
+        </div>
+      </div>
+      
+      <div class="deployment-step">
+        <div class="step-badge">3</div>
+        <div class="step-content">
+          <h3>Pilot deployment & training</h3>
+          <p>Start with one workflow in pilot mode. Test with real data, train your team, validate accuracy. Expand to full production once comfortable.</p>
+          <div class="step-duration">Duration: 1-2 weeks</div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS SECTION -->
+<section class="results-section z1">
+  <div class="wrap">
+    <div class="section-header centered">
+      <h2>Real results from professional services firms</h2>
+      <p>Measurable improvements in cash flow, collections efficiency, and accounting team productivity.</p>
+    </div>
+    
+    <div class="results-grid">
+      
+      <div class="result-card">
+        <div class="result-metric">
+          <span class="result-number">50 → 30</span>
+          <span class="result-unit">days DSO</span>
+        </div>
+        <p class="result-desc">20-day DSO reduction freed $240,000 in working capital for 75-person consulting firm. Payment reminders + AR analytics drove improvement.</p>
+      </div>
+      
+      <div class="result-card">
+        <div class="result-metric">
+          <span class="result-number">$84K</span>
+          <span class="result-unit">annual savings</span>
+        </div>
+        <p class="result-desc">Eliminated 1.5 FTE positions in accounting department. Staff reallocated to financial planning and client advisory services.</p>
+      </div>
+      
+      <div class="result-card">
+        <div class="result-metric">
+          <span class="result-number">2% → 0.6%</span>
+          <span class="result-unit">bad debt</span>
+        </div>
+        <p class="result-desc">70% reduction in uncollectable receivables through consistent reminder sequence and early warning system for payment distress.</p>
+      </div>
+      
+      <div class="result-card">
+        <div class="result-metric">
+          <span class="result-number">14 → 3</span>
+          <span class="result-unit">days close</span>
+        </div>
+        <p class="result-desc">Month-end close accelerated from 14 days to 3 days. Automated AR aging and reconciliation eliminated manual report building.</p>
+      </div>
+      
+    </div>
+    
+    <div class="results-cta">
+      <a href="/resources" class="btn-ghost">Read Full Case Studies</a>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATION SECTION -->
+<section class="integration-section z1">
+  <div class="wrap">
+    <div class="section-header centered">
+      <h2>Built for QuickBooks, integrated with your stack</h2>
+      <p>Native QuickBooks integration (Online and Desktop) with connections to communication, payment, and business intelligence platforms.</p>
+    </div>
+    
+    <div class="integrations-showcase">
+      <div class="integration-category">
+        <h3>Accounting Systems</h3>
+        <div class="integration-items">
+          <div class="integration-item primary">QuickBooks Online</div>
+          <div class="integration-item primary">QuickBooks Desktop</div>
+        </div>
+      </div>
+      
+      <div class="integration-category">
+        <h3>Communication</h3>
+        <div class="integration-items">
+          <div class="integration-item">Slack</div>
+          <div class="integration-item">Email (SMTP)</div>
+        </div>
+      </div>
+      
+      <div class="integration-category">
+        <h3>Payments</h3>
+        <div class="integration-items">
+          <div class="integration-item">QuickBooks Payments</div>
+          <div class="integration-item">Stripe</div>
+        </div>
+      </div>
+      
+      <div class="integration-category">
+        <h3>Reporting</h3>
+        <div class="integration-items">
+          <div class="integration-item">Google Sheets</div>
+          <div class="integration-item">Excel Export</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="integration-cta">
+      <p>Need a custom integration? <a href="/integrations">View all integrations →</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA SECTION -->
+<section class="final-cta z1">
+  <div class="wrap">
+    <div class="cta-content">
+      <h2>See LunarLogic with your QuickBooks data</h2>
+      <p>Schedule a 30-minute demo where we'll connect to your QuickBooks account and show you the platform working with your actual invoices, customers, and payment history.</p>
+      <div class="cta-buttons">
+        <a href="https://calendly.com/jrodriguez-lunarlogic/30min" class="btn-primary">Schedule Demo</a>
+        <a href="/pricing" class="btn-ghost">View Pricing</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<style>
+/* Hero Section */
+.hero {
+  padding:8rem 2rem 6rem;
+  text-align:center;
+  background:linear-gradient(180deg, rgba(30,58,95,0.2) 0%, transparent 100%);
+  border-bottom:1px solid var(--border);
+}
+
+.hero-content {
+  max-width:900px;
+  margin:0 auto;
+}
+
+.hero h1 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:clamp(2.5rem,5vw,4rem);
+  font-weight:700;
+  line-height:1.15;
+  letter-spacing:-.02em;
+  margin-bottom:1.5rem;
+}
+
+.hero-sub {
+  font-size:1.2rem;
+  color:var(--muted);
+  line-height:1.7;
+  margin-bottom:3rem;
+  max-width:800px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.hero-stats {
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:3rem;
+  max-width:700px;
+  margin:0 auto 3rem;
+  padding:2rem;
+  background:rgba(30,58,95,0.15);
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+
+.stat {
+  text-align:center;
+}
+
+.stat-value {
+  font-family:'Comfortaa',sans-serif;
+  font-size:2.5rem;
+  font-weight:700;
+  color:var(--cyan);
+  display:block;
+  margin-bottom:.5rem;
+}
+
+.stat-label {
+  font-size:.9rem;
+  color:var(--muted);
+  line-height:1.4;
+}
+
+.hero-cta {
+  display:flex;
+  gap:1rem;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+/* Platform Overview */
+.platform-overview {
+  padding:6rem 2rem;
+  background:rgba(30,58,95,0.08);
+  border-bottom:1px solid var(--border);
+}
+
+.value-props {
+  max-width:1000px;
+  margin:3rem auto 0;
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:3rem;
+}
+
+.value-prop {
+  padding:2rem;
+  background:rgba(10,14,26,0.6);
+  border:1px solid var(--border);
+  border-radius:12px;
+  transition:all .3s;
+}
+
+.value-prop:hover {
+  border-color:var(--border2);
+  background:rgba(10,14,26,0.8);
+  transform:translateY(-4px);
+}
+
+.value-prop-header {
+  margin-bottom:1rem;
+}
+
+.value-prop h3 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:1.3rem;
+  font-weight:700;
+  color:var(--white);
+}
+
+.value-prop p {
+  color:var(--muted);
+  line-height:1.7;
+}
+
+/* Products Section */
+.products-section {
+  padding:6rem 2rem;
+}
+
+.products-grid {
+  max-width:1200px;
+  margin:3rem auto 0;
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:2rem;
+}
+
+.product-card {
+  background:rgba(10,14,26,0.6);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:2.5rem;
+  transition:all .3s;
+  display:flex;
+  flex-direction:column;
+}
+
+.product-card:hover {
+  border-color:var(--border2);
+  background:rgba(10,14,26,0.8);
+  transform:translateY(-4px);
+}
+
+.product-card-header {
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  margin-bottom:1.5rem;
+}
+
+.product-icon {
+  width:50px;
+  height:50px;
+  background:linear-gradient(135deg, rgba(77,208,225,0.15) 0%, rgba(77,208,225,0.05) 100%);
+  border:2px solid var(--cyan);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Comfortaa',sans-serif;
+  font-size:.9rem;
+  font-weight:700;
+  color:var(--cyan);
+  flex-shrink:0;
+}
+
+.product-card h3 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:1.4rem;
+  font-weight:700;
+  color:var(--white);
+}
+
+.product-desc {
+  color:var(--muted);
+  line-height:1.7;
+  margin-bottom:1.5rem;
+}
+
+.product-highlights {
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:.8rem;
+  margin-bottom:2rem;
+  flex-grow:1;
+}
+
+.product-highlights li {
+  display:flex;
+  align-items:flex-start;
+  gap:.6rem;
+  font-size:.9rem;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+.product-highlights li::before {
+  content:'→';
+  color:var(--cyan);
+  font-weight:700;
+  flex-shrink:0;
+  font-size:1rem;
+}
+
+.product-link {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.9rem;
+  font-weight:600;
+  color:var(--cyan);
+  text-decoration:none;
+  transition:all .2s;
+  align-self:flex-start;
+}
+
+.product-link:hover {
+  color:var(--white);
+  transform:translateX(4px);
+}
+
+/* How It Works */
+.how-it-works {
+  padding:6rem 2rem;
+  background:rgba(30,58,95,0.08);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+
+.deployment-steps {
+  max-width:800px;
+  margin:3rem auto 0;
+  display:flex;
+  flex-direction:column;
+  gap:2.5rem;
+}
+
+.deployment-step {
+  display:grid;
+  grid-template-columns:80px 1fr;
+  gap:2rem;
+  align-items:start;
+}
+
+.step-badge {
+  width:60px;
+  height:60px;
+  background:linear-gradient(135deg, rgba(77,208,225,0.15) 0%, rgba(77,208,225,0.05) 100%);
+  border:2px solid var(--cyan);
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Comfortaa',sans-serif;
+  font-size:1.4rem;
+  font-weight:700;
+  color:var(--cyan);
+}
+
+.step-content h3 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:1.3rem;
+  font-weight:700;
+  margin-bottom:.8rem;
+  color:var(--white);
+}
+
+.step-content p {
+  color:var(--muted);
+  line-height:1.7;
+  margin-bottom:.8rem;
+}
+
+.step-duration {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.8rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--cyan);
+}
+
+/* Results Section */
+.results-section {
+  padding:6rem 2rem;
+}
+
+.results-grid {
+  max-width:1100px;
+  margin:3rem auto;
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:2rem;
+}
+
+.result-card {
+  background:rgba(10,14,26,0.6);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:2rem;
+  transition:all .3s;
+}
+
+.result-card:hover {
+  border-color:var(--border2);
+  background:rgba(10,14,26,0.8);
+}
+
+.result-metric {
+  display:flex;
+  flex-direction:column;
+  margin-bottom:1.5rem;
+  padding-bottom:1.5rem;
+  border-bottom:1px solid var(--border);
+}
+
+.result-number {
+  font-family:'Comfortaa',sans-serif;
+  font-size:2.2rem;
+  font-weight:700;
+  color:var(--cyan);
+  line-height:1;
+  margin-bottom:.3rem;
+}
+
+.result-unit {
+  font-size:.85rem;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+
+.result-desc {
+  color:var(--muted);
+  line-height:1.7;
+  font-size:.95rem;
+}
+
+.results-cta {
+  text-align:center;
+  margin-top:3rem;
+}
+
+/* Integration Section */
+.integration-section {
+  padding:6rem 2rem;
+  background:rgba(30,58,95,0.08);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+
+.integrations-showcase {
+  max-width:1000px;
+  margin:3rem auto;
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:2rem;
+}
+
+.integration-category h3 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:.85rem;
+  text-transform:uppercase;
+  letter-spacing:.15em;
+  color:var(--cyan);
+  margin-bottom:1rem;
+}
+
+.integration-items {
+  display:flex;
+  flex-direction:column;
+  gap:.8rem;
+}
+
+.integration-item {
+  background:rgba(10,14,26,0.6);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:.8rem 1rem;
+  font-size:.85rem;
+  color:var(--muted);
+  text-align:center;
+  transition:all .2s;
+}
+
+.integration-item.primary {
+  border-color:var(--cyan);
+  color:var(--cyan);
+  font-weight:600;
+}
+
+.integration-item:hover {
+  border-color:var(--border2);
+  background:rgba(10,14,26,0.8);
+}
+
+.integration-cta {
+  text-align:center;
+  margin-top:2.5rem;
+}
+
+.integration-cta a {
+  color:var(--cyan);
+  text-decoration:none;
+  font-weight:500;
+  transition:color .2s;
+}
+
+.integration-cta a:hover {
+  color:var(--white);
+}
+
+/* Final CTA */
+.final-cta {
+  padding:6rem 2rem;
+  text-align:center;
+  background:linear-gradient(180deg, transparent 0%, rgba(30,58,95,0.15) 100%);
+  border-top:1px solid var(--border);
+}
+
+.cta-content {
+  max-width:700px;
+  margin:0 auto;
+}
+
+.cta-content h2 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:2.5rem;
+  font-weight:700;
+  margin-bottom:1.2rem;
+}
+
+.cta-content p {
+  font-size:1.1rem;
+  color:var(--muted);
+  line-height:1.7;
+  margin-bottom:2.5rem;
+}
+
+.cta-buttons {
+  display:flex;
+  gap:1rem;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+/* Section Headers */
+.section-header {
+  max-width:800px;
+  margin:0 auto 3rem;
+}
+
+.section-header.centered {
+  text-align:center;
+}
+
+.section-header h2 {
+  font-family:'Comfortaa',sans-serif;
+  font-size:2.5rem;
+  font-weight:700;
+  margin-bottom:1rem;
+  line-height:1.3;
+}
+
+.section-header p {
+  font-size:1.1rem;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+/* Buttons */
+.btn-primary {
+  font-family:'Comfortaa',sans-serif; font-size:.88rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.07em;
+  color:var(--ink); background:var(--cyan);
+  border:none; border-radius:8px; padding:.85rem 1.9rem;
+  cursor:pointer; text-decoration:none; display:inline-block;
+  box-shadow:0 4px 22px var(--cyan-glow);
+  transition:box-shadow .2s, transform .2s;
+}
+.btn-primary:hover { box-shadow:0 6px 36px var(--cyan-glow); transform:translateY(-2px); }
+
+.btn-ghost {
+  font-family:'Comfortaa',sans-serif; font-size:.88rem; font-weight:500;
+  color:var(--white); background:transparent;
+  border:1px solid var(--border); border-radius:8px;
+  padding:.85rem 1.9rem; cursor:pointer; text-decoration:none; display:inline-block;
+  transition:all .2s;
+}
+.btn-ghost:hover { border-color:var(--cyan); color:var(--cyan); background:var(--cyan-dim); }
+
+/* Layout */
+.wrap { max-width:1100px; margin:0 auto; padding:0 2rem; }
+.wrap-wide { max-width:1200px; margin:0 auto; padding:0 2rem; }
+.z1 { position:relative; z-index:1; }
+
+/* Responsive */
+@media(max-width:920px) {
+  .hero-stats { grid-template-columns:1fr; }
+  .value-props { grid-template-columns:1fr; }
+  .products-grid { grid-template-columns:1fr; }
+  .results-grid { grid-template-columns:1fr; }
+  .integrations-showcase { grid-template-columns:repeat(2, 1fr); }
+  .deployment-step { grid-template-columns:1fr; gap:1rem; }
+}
+
+@media(max-width:560px) {
+  .hero { padding:5rem 1.5rem 4rem; }
+  .platform-overview,
+  .products-section,
+  .how-it-works,
+  .results-section,
+  .integration-section,
+  .final-cta { padding:4rem 1.5rem; }
+  .integrations-showcase { grid-template-columns:1fr; }
+}
+</style>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="foot-brand">
+      <a class="neon-logo foot-brand-logo" href="/">lunarlogic</a>
+      <p class="foot-tag">AI-powered accounts receivable automation for professional services firms. Integrates with QuickBooks, Slack, and other accounting platforms.</p>
+      <a href="mailto:support@lunarlogic.ai" class="foot-email">support@lunarlogic.ai</a>
+    </div>
+
+    <nav class="foot-col">
+      <h4>Navigate</h4>
+      <ul>
+        <li><a href="/product">Products</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/resources">Case Studies</a></li>
+        <li><a href="/about">About</a></li>
+        <li>
+          <a href="YOUR_DASHBOARD_URL" class="foot-portal-link" target="_blank" rel="noopener">
+            <svg width="11" height="11" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+              <path d="M14 4 A10 10 0 0 1 24 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="14" cy="14" r="3.5" fill="currentColor" opacity="0.9"/>
+              <circle cx="14" cy="14" r="1.5" fill="#0a0e1a"/>
+            </svg>
+            Client Portal
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="foot-col">
+      <h4>Legal & Connect</h4>
+      <ul>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Terms of Service</a></li>
+        <li><a href="https://x.com/LunarLogicAI" target="_blank" rel="noopener">X (Twitter)</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2025 LunarLogic, LLC. Charlotte, NC. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+// Mobile menu toggle
+const mobileToggle = document.querySelector('.mobile-menu-toggle');
+const navLinks = document.querySelector('.nav-links');
+
+if (mobileToggle) {
+  mobileToggle.addEventListener('click', () => {
+    const isActive = navLinks.classList.toggle('active');
+    mobileToggle.setAttribute('aria-expanded', isActive);
+  });
+  
+  document.querySelectorAll('.nav-links > li.has-dropdown > a').forEach(link => {
+    link.addEventListener('click', (e) => {
+      if (window.innerWidth <= 920) {
+        e.preventDefault();
+        link.parentElement.classList.toggle('active');
+      }
+    });
+  });
+  
+  document.querySelectorAll('.nav-links a:not(.has-dropdown > a)').forEach(link => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('active');
+      mobileToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
+
+// Auto-hide header on scroll
+let lastScroll = 0;
+const header = document.querySelector('header');
+const scrollThreshold = 100;
+
+window.addEventListener('scroll', () => {
+  const currentScroll = window.pageYOffset;
+  
+  if (currentScroll <= scrollThreshold) {
+    header.classList.remove('hide-header');
+    lastScroll = currentScroll;
+    return;
+  }
+  
+  if (currentScroll > lastScroll && !header.classList.contains('hide-header')) {
+    header.classList.add('hide-header');
+  }
+  else if (currentScroll < lastScroll && header.classList.contains('hide-header')) {
+    header.classList.remove('hide-header');
+  }
+  
+  lastScroll = currentScroll;
+});
+</script>
+
+
+<!-- Contact Form Modal -->
+<div id="contactModal" class="contact-modal">
+  <div class="contact-modal-overlay"></div>
+  <div class="contact-modal-content">
+    <button class="contact-modal-close" aria-label="Close modal">&times;</button>
+    
+    <div class="contact-modal-header">
+      <h2>Get Started with LunarLogic</h2>
+      <p>Tell us about your AR automation needs. We'll respond within one business day with a custom solution.</p>
+    </div>
+    
+    <form id="contactForm" action="https://formspree.io/f/mblnkvaa" method="POST">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required placeholder="John Smith">
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required placeholder="john@company.com">
+      </div>
+      
+      <div class="form-group">
+        <label for="company">Company Name</label>
+        <input type="text" id="company" name="company" required placeholder="Acme Consulting">
+      </div>
+      
+      <div class="form-group">
+        <label for="service">Service Interested In</label>
+        <select id="service" name="service" required>
+          <option value="">Select a service...</option>
+          <option value="Complete AR Suite">Complete AR Automation Suite</option>
+          <option value="Invoice Automation">Invoice Automation</option>
+          <option value="Payment Reminders">Payment Reminders</option>
+          <option value="Sales Order Processing">Sales Order Processing</option>
+          <option value="AR Dashboard">AR Dashboard & Reporting</option>
+          <option value="Custom Solution">Custom Solution</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="message">Additional Details (Optional)</label>
+        <textarea id="message" name="message" rows="4" placeholder="Tell us about your current AR process, invoice volume, or specific challenges..."></textarea>
+      </div>
+      
+      <button type="submit" class="form-submit-btn">Send Request</button>
+    </form>
+    
+    <div id="formSuccess" class="form-success" style="display:none;">
+      <h3>Request Sent!</h3>
+      <p>Thank you for your interest in LunarLogic. We'll review your information and respond within one business day.</p>
+      <button class="btn-ghost" onclick="closeContactModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Contact Modal Styles */
+.contact-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  overflow-y: auto;
+}
+
+.contact-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.contact-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 16, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.contact-modal-content {
+  position: relative;
+  background: linear-gradient(135deg, rgba(10, 14, 26, 0.98) 0%, rgba(15, 25, 45, 0.98) 100%);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 3rem;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 
+    0 0 40px rgba(77, 208, 225, 0.15),
+    0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.contact-modal-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.contact-modal-close:hover {
+  background: var(--cyan-dim);
+  color: var(--cyan);
+}
+
+.contact-modal-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.contact-modal-header h2 {
+  font-family: 'Comfortaa', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 0.8rem;
+}
+
+.contact-modal-header p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-family: 'Comfortaa', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.9rem 1.2rem;
+  background: rgba(5, 8, 16, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--cyan);
+  background: rgba(5, 8, 16, 0.8);
+  box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--muted2);
+}
+
+.form-group select {
+  cursor: pointer;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-submit-btn {
+  width: 100%;
+  font-family: 'Comfortaa', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink);
+  background: var(--cyan);
+  border: none;
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 22px var(--cyan-glow);
+  transition: all 0.2s;
+}
+
+.form-submit-btn:hover {
+  box-shadow: 0 6px 36px var(--cyan-glow);
+  transform: translateY(-2px);
+}
+
+.form-submit-btn:active {
+  transform: translateY(0);
+}
+
+.form-success {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.form-success h3 {
+  font-family: 'Comfortaa', sans-serif;
+  font-size: 1.5rem;
+  color: var(--green);
+  margin-bottom: 1rem;
+}
+
+.form-success p {
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 560px) {
+  .contact-modal-content {
+    padding: 2rem 1.5rem;
+  }
+  
+  .contact-modal-header h2 {
+    font-size: 1.5rem;
+  }
+}
+</style>
+
+<script>
+function openContactModal() {
+  document.getElementById('contactModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeContactModal() {
+  document.getElementById('contactModal').classList.remove('active');
+  document.body.style.overflow = '';
+  document.getElementById('contactForm').style.display = 'block';
+  document.getElementById('formSuccess').style.display = 'none';
+  document.getElementById('contactForm').reset();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('contactModal');
+  const overlay = modal.querySelector('.contact-modal-overlay');
+  const closeBtn = modal.querySelector('.contact-modal-close');
+  
+  overlay.addEventListener('click', closeContactModal);
+  closeBtn.addEventListener('click', closeContactModal);
+  
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeContactModal();
+    }
+  });
+  
+  const form = document.getElementById('contactForm');
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        form.style.display = 'none';
+        document.getElementById('formSuccess').style.display = 'block';
+      } else {
+        alert('There was a problem submitting your request. Please email us directly at support@lunarlogic.ai');
+      }
+    })
+    .catch(error => {
+      alert('There was a problem submitting your request. Please email us directly at support@lunarlogic.ai');
+    });
+  });
+  
+  document.querySelectorAll('a[href*="calendly"]').forEach(link => {
+    link.href = '#';
+    link.onclick = function(e) {
+      e.preventDefault();
+      openContactModal();
+    };
+  });
+});
+</script>
+
+</body>
+</html>
