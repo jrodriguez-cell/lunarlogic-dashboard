@@ -31,6 +31,13 @@ const Icons = {
       <path d="M2 6L5.5 3.5L9 5L13 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none" opacity="0.5"/>
     </svg>
   ),
+  reminders: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7.5 1.5a4.5 4.5 0 014.5 4.5c0 2.5.7 3.5 1.5 4H2c.8-.5 1.5-1.5 1.5-4A4.5 4.5 0 017.5 1.5z"/>
+      <path d="M6.2 13a1.3 1.3 0 002.6 0"/>
+      <line x1="7.5" y1="1.5" x2="7.5" y2=".5"/>
+    </svg>
+  ),
   payments: () => (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
       <rect x="1" y="3.5" width="13" height="9" rx="1.5"/>
@@ -48,10 +55,11 @@ const Icons = {
 };
 
 const NAV_AR = [
-  { key: 'overview',   label: 'Overview',   Icon: Icons.overview  },
-  { key: 'invoices',   label: 'Invoices',   Icon: Icons.invoices  },
-  { key: 'customers',  label: 'Customers',  Icon: Icons.customers },
-  { key: 'reports',    label: 'Reports',    Icon: Icons.reports   },
+  { key: 'overview',   label: 'Overview',   Icon: Icons.overview   },
+  { key: 'invoices',   label: 'Invoices',   Icon: Icons.invoices   },
+  { key: 'customers',  label: 'Customers',  Icon: Icons.customers  },
+  { key: 'reminders',  label: 'Reminders',  Icon: Icons.reminders  },
+  { key: 'reports',    label: 'Reports',    Icon: Icons.reports    },
 ];
 
 const NAV_PAYMENTS = [

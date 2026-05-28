@@ -10,16 +10,18 @@ import CustomerDrawer from '../components/CustomerDrawer';
 import PaymentQueue from '../components/PaymentQueue';
 import PaymentMatchDrawer from '../components/PaymentMatchDrawer';
 import MatchConfidenceChart from '../components/MatchConfidenceChart';
+import ARReminderTracker from '../components/ARReminderTracker';
 import { fetchDashboardData } from '../lib/quickbooks';
 
 const REFRESH_MS = 15 * 60 * 1000;
 
 const VIEW_TITLES = {
-  overview:  { title: 'Overview',          sub: 'Full AR health at a glance'              },
-  invoices:  { title: 'Invoices',          sub: 'All open and recent invoices'            },
-  customers: { title: 'Customers',         sub: 'Payment behavior by customer'            },
-  reports:   { title: 'Reports',           sub: 'Coming soon'                             },
-  payments:  { title: 'Cash Application',  sub: 'Plaid-powered payment matching · WF3'   },
+  overview:   { title: 'Overview',            sub: 'Full AR health at a glance'              },
+  invoices:   { title: 'Invoices',            sub: 'All open and recent invoices'            },
+  customers:  { title: 'Customers',           sub: 'Payment behavior by customer'            },
+  reminders:  { title: 'Reminder Sequence',   sub: 'Escalation tracker · Gualapack POC'      },
+  reports:    { title: 'Reports',             sub: 'Coming soon'                             },
+  payments:   { title: 'Cash Application',    sub: 'Plaid-powered payment matching · WF3'   },
 };
 
 export default function DashboardPage({ session, onLogout }) {
@@ -155,6 +157,8 @@ export default function DashboardPage({ session, onLogout }) {
                 <PaymentActivityFeed payments={payments} />
               </div>
             </>
+          ) : activeView === 'reminders' ? (
+            <ARReminderTracker />
           ) : activeView === 'reports' ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, flexDirection: 'column', gap: 12, color: 'var(--muted)' }}>
               <div style={{ fontSize: 32 }}>📊</div>
@@ -256,6 +260,13 @@ function MobileBottomNav({ activeView, onNav, pendingPayments }) {
         <path d="M0.5 13c0-2.8 2.2-5 5-5s5 2.2 5 5" opacity="0.9"/>
         <circle cx="11.5" cy="4.5" r="2" opacity="0.55"/>
         <path d="M10 13c.4-1.5 1.8-2.5 3-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none" opacity="0.55"/>
+      </svg>
+    )},
+    { key: 'reminders', label: 'Reminders', icon: (
+      <svg width="20" height="20" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7.5 1.5a4.5 4.5 0 014.5 4.5c0 2.5.7 3.5 1.5 4H2c.8-.5 1.5-1.5 1.5-4A4.5 4.5 0 017.5 1.5z"/>
+        <path d="M6.2 13a1.3 1.3 0 002.6 0"/>
+        <line x1="7.5" y1="1.5" x2="7.5" y2=".5"/>
       </svg>
     )},
     { key: 'payments',  label: 'Payments',  icon: (
