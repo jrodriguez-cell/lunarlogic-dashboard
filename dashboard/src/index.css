@@ -1268,6 +1268,305 @@ body {
   .main-content { padding-bottom: 80px; }
 }
 
+/* ── AR Reminder Tracker ─────────────────────────── */
+
+.rmt-hero {
+  display: flex;
+  align-items: stretch;
+  padding: 32px 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.rmt-metric {
+  flex: 1;
+  text-align: center;
+  padding: 0 28px;
+  min-width: 120px;
+}
+
+.rmt-hero-divider {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.rmt-metric-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.rmt-metric-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+.rmt-metric-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.rmt-poc-bar {
+  width: 60px;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 4px auto 4px;
+}
+
+.rmt-poc-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  transition: width .4s;
+}
+
+/* Sequence timeline */
+
+.rmt-sequence {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.rmt-stage-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.rmt-stage-card {
+  width: 168px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: border-color .15s, background .15s;
+}
+
+.rmt-stage-card:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--border-mid);
+}
+
+.rmt-stage-day {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+
+.rmt-stage-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.rmt-stage-subject {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.rmt-stage-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.rmt-stage-arrow {
+  padding: 0 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Shared badge */
+
+.rmt-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.rmt-tone-badge {
+  align-self: flex-start;
+}
+
+.rmt-action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--muted);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.rmt-action-chip.rmt-manual {
+  color: var(--yellow);
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.2);
+}
+
+.rmt-cc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--muted);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+/* Tracker table */
+
+.rmt-table-wrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.rmt-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
+}
+
+.rmt-table th {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  padding-right: 16px;
+}
+
+.rmt-table td {
+  padding: 11px 16px 11px 0;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.rmt-table tr:last-child td { border-bottom: none; }
+
+.rmt-table tbody tr { transition: background .12s; }
+
+.rmt-table tbody tr:hover td { background: var(--bg-hover); }
+
+.rmt-table tbody tr.rmt-row-paid td { opacity: .5; }
+
+.rmt-td-action { max-width: 200px; }
+
+.rmt-editable {
+  cursor: text;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: background .12s;
+  display: inline-block;
+}
+
+.rmt-editable:hover { background: rgba(0,212,232,0.06); }
+
+.rmt-stage-none {
+  font-size: 11px;
+  color: var(--muted);
+  cursor: text;
+}
+
+.rmt-days-bar {
+  width: 44px;
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.rmt-days-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .3s;
+}
+
+/* Responsive — mobile */
+
+@media (max-width: 1024px) {
+  .rmt-sequence {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rmt-stage-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .rmt-stage-card {
+    width: 100%;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .rmt-stage-card > * { flex-shrink: 0; }
+  .rmt-stage-subject { flex: 1; min-width: 0; }
+  .rmt-stage-arrow {
+    padding: 4px 0 4px 16px;
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 680px) {
+  .rmt-hero { padding: 20px 20px; flex-direction: column; gap: 16px; }
+  .rmt-hero-divider { width: 100%; height: 1px; align-self: auto; }
+  .rmt-metric { padding: 0; text-align: left; display: flex; align-items: baseline; gap: 12px; }
+  .rmt-metric-label { margin-bottom: 0; min-width: 140px; }
+  .rmt-metric-value { font-size: 24px; }
+  .rmt-stage-card { flex-direction: column; gap: 0; }
+}
+
 @media (max-width: 680px) {
   .main-content { padding: 16px 16px 40px; }
   .hero {
