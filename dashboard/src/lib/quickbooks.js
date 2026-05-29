@@ -1,13 +1,43 @@
 import { getClientData } from '../data/mockData';
 
-// Real QB API integration: replace this function body with live calls.
-// QB OAuth tokens live in Google Sheets (see WF1A/1B OAuth refresh pattern).
-// Sandbox company ID: 9341456702590433
-// Endpoints needed:
-//   GET /v3/company/{realmId}/query?query=SELECT * FROM Invoice WHERE Balance > '0'
-//   GET /v3/company/{realmId}/query?query=SELECT * FROM Invoice (for DSO calc)
-// DSO formula: (Total AR / Total Revenue last 90 days) * 90
+/**
+ * Fetch dashboard data from the Vercel API, which queries QuickBooks live.
+ * Falls back to mock data if the API is unreachable or returns an error
+ * (e.g. during local dev without env vars set).
+ */
 export async function fetchDashboardData(clientId) {
+  try {
+    const res = await fetch('/api/dashboard-data');
+
+    if (!res.ok) {
+      console.warn(`Dashboard API returned ${res.status} — falling back to mock data`);
+      return getMockData(clientId);
+    }
+
+    const live = await res.json();
+
+    // Merge live QB data with static client metadata from mock
+    const meta = getClientData(clientId);
+    return {
+      clientName:           meta.name,
+      industry:             meta.industry,
+      preLiveDSO:           meta.preLiveDSO,
+      collectionEfficiency: meta.collectionEfficiency,
+      payments:             meta.payments,  // WF3 mock until Plaid is live
+      // Live from QuickBooks:
+      dsoTrend:             live.dsoTrend,
+      arAging:              live.arAging,
+      invoices:             live.invoices,
+      paymentBehavior:      live.paymentBehavior,
+      goLiveDate:           live.goLiveDate,
+    };
+  } catch (err) {
+    console.warn('Dashboard API unreachable — falling back to mock data:', err.message);
+    return getMockData(clientId);
+  }
+}
+
+function getMockData(clientId) {
   const client = getClientData(clientId);
   return {
     clientName:           client.name,
