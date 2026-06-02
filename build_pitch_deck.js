@@ -5,441 +5,525 @@ pres.layout = "LAYOUT_16x9";
 pres.title = "LunarLogic — Carolina Turf AR Automation";
 pres.author = "Jonathan Rodriguez";
 
-// Color constants (no # prefix)
-const GREEN = "1B4332";
-const GREEN_MID = "2D6A4F";
-const GREEN_LIGHT = "40916C";
-const GOLD = "D4A017";
-const WHITE = "FFFFFF";
-const LIGHT_GRAY = "F1F5F2";
-const DARK_TEXT = "1A1A1A";
-const MID_GRAY = "6B7280";
+// ── Brand colors (no # prefix) ───────────────────────────────────────────────
+const BG_DEEP   = "0A0F1A";   // deepest background (cover, section slides)
+const BG_DARK   = "0D1117";   // main slide background
+const BG_CARD   = "111827";   // card / panel fill
+const BG_CARD2  = "0F1929";   // slightly deeper card
+const BORDER    = "1F2937";   // subtle card border
+const BORDER_LT = "243044";   // lighter border for hover states
 
-function footerLL(slide) {
-  slide.addText("LunarLogic  |  AR Automation for Service Businesses", {
-    x: 0.4, y: 5.25, w: 9.2, h: 0.3,
-    fontSize: 9, color: MID_GRAY, align: "center",
-    fontFace: "Calibri", italic: true
+const CYAN      = "00D4FF";   // primary brand accent — logo glow color
+const CYAN_DIM  = "0099BB";   // dimmer cyan for secondary elements
+const GREEN     = "22C55E";   // positive / good
+const AMBER     = "F59E0B";   // warning / mid-age AR
+const RED       = "EF4444";   // overdue / danger
+
+const WHITE     = "FFFFFF";
+const GRAY_LT   = "E5E7EB";   // light body text
+const GRAY_MD   = "9CA3AF";   // muted labels
+const GRAY_DK   = "4B5563";   // very muted
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function footer(slide, light = false) {
+  const color = light ? "4B5563" : "374151";
+  slide.addText("lunarlogic  ·  AR Automation Platform  ·  lunarlogic.ai", {
+    x: 0.4, y: 5.28, w: 9.2, h: 0.26,
+    fontSize: 9, color, align: "center", fontFace: "Trebuchet MS", italic: true
   });
 }
 
-// ─── SLIDE 1: COVER ───────────────────────────────────────────────────────────
+// Glowing cyan stat — large number with label beneath
+function cyanStat(slide, val, label, x, y, w, valSize = 48, labelSize = 11) {
+  slide.addText(val, {
+    x, y, w, h: (valSize / 72) * 1.6,
+    fontSize: valSize, bold: true, color: CYAN,
+    fontFace: "Trebuchet MS", align: "left", margin: 0
+  });
+  slide.addText(label, {
+    x, y: y + (valSize / 72) * 1.5, w, h: 0.3,
+    fontSize: labelSize, color: GRAY_MD,
+    fontFace: "Trebuchet MS", align: "left", margin: 0,
+    charSpacing: 1
+  });
+}
+
+// Dark card with optional top accent bar
+function card(slide, cx, cy, cw, ch, accentColor = null) {
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: cx, y: cy, w: cw, h: ch,
+    fill: { color: BG_CARD },
+    line: { color: BORDER, width: 0.75 }
+  });
+  if (accentColor) {
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: cx, y: cy, w: cw, h: 0.06,
+      fill: { color: accentColor }, line: { color: accentColor }
+    });
+  }
+}
+
+// ── SLIDE 1: COVER ───────────────────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: GREEN };
+  slide.background = { color: BG_DEEP };
 
-  // Gold accent bar on left
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0, y: 0, w: 0.18, h: 5.625,
-    fill: { color: GOLD }, line: { color: GOLD }
+  // Subtle radial-style glow suggestion — large faded cyan circle behind title
+  slide.addShape(pres.shapes.OVAL, {
+    x: -1.5, y: -1.0, w: 7, h: 5,
+    fill: { color: "001A24", transparency: 0 },
+    line: { color: "001A24" }
   });
 
-  // Main title
+  // "lunarlogic" wordmark style — cyan glow
+  slide.addText("lunarlogic", {
+    x: 0.55, y: 0.42, w: 4, h: 0.58,
+    fontSize: 26, bold: true, color: CYAN,
+    fontFace: "Trebuchet MS", align: "left", margin: 0
+  });
+  slide.addText("AR AUTOMATION PLATFORM", {
+    x: 0.56, y: 0.98, w: 4.5, h: 0.25,
+    fontSize: 9, color: GRAY_MD, fontFace: "Trebuchet MS",
+    charSpacing: 3, align: "left", margin: 0
+  });
+
+  // Thin horizontal rule
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.55, y: 1.38, w: 8.9, h: 0.02,
+    fill: { color: BORDER }, line: { color: BORDER }
+  });
+
+  // Main headline
   slide.addText("Reclaim What\nYou've Already Earned", {
-    x: 0.55, y: 1.1, w: 8.8, h: 1.8,
-    fontSize: 44, bold: true, color: WHITE, fontFace: "Calibri",
-    align: "left", valign: "top"
+    x: 0.55, y: 1.58, w: 9.0, h: 2.0,
+    fontSize: 52, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left", valign: "top"
   });
 
-  // Subtitle
+  // Subtitle — cyan
   slide.addText("A Custom AR Automation System for Carolina Turf Lawn and Landscape", {
-    x: 0.55, y: 3.05, w: 8.0, h: 0.7,
-    fontSize: 18, color: GOLD, fontFace: "Calibri",
-    align: "left", bold: false, italic: true
+    x: 0.55, y: 3.65, w: 8.0, h: 0.5,
+    fontSize: 16, color: CYAN,
+    fontFace: "Trebuchet MS", align: "left", italic: false
   });
 
-  // Divider line
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.55, y: 3.85, w: 3.5, h: 0.04,
-    fill: { color: "40916C" }, line: { color: "40916C" }
-  });
-
-  // Presenter / date placeholders
-  slide.addText([
-    { text: "Presented by: ", options: { bold: false } },
-    { text: "Jonathan Rodriguez", options: { bold: true } }
-  ], { x: 0.55, y: 4.05, w: 5, h: 0.3, fontSize: 13, color: WHITE, fontFace: "Calibri" });
-
-  slide.addText("LunarLogic  ·  jrodriguez@lunarlogic.ai  ·  [Date]", {
-    x: 0.55, y: 4.42, w: 8, h: 0.25,
-    fontSize: 11, color: "95B5A4", fontFace: "Calibri"
+  // Bottom meta
+  slide.addText("Presented by  Jonathan Rodriguez  ·  jrodriguez@lunarlogic.ai  ·  [Date]", {
+    x: 0.55, y: 4.92, w: 9.0, h: 0.28,
+    fontSize: 11, color: GRAY_MD, fontFace: "Trebuchet MS", align: "left"
   });
 }
 
-// ─── SLIDE 2: THE PROBLEM ─────────────────────────────────────────────────────
+// ── SLIDE 2: THE PROBLEM ─────────────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: WHITE };
+  slide.background = { color: BG_DARK };
+
+  // Section label
+  slide.addText("THE PROBLEM", {
+    x: 0.5, y: 0.28, w: 4, h: 0.22,
+    fontSize: 10, color: CYAN, fontFace: "Trebuchet MS",
+    charSpacing: 3, bold: true, margin: 0
+  });
 
   slide.addText("You Deliver Excellence.\nYou Shouldn't Have to Wait to Get Paid.", {
-    x: 0.45, y: 0.3, w: 9.1, h: 0.95,
-    fontSize: 28, bold: true, color: GREEN, fontFace: "Calibri", align: "left"
+    x: 0.5, y: 0.52, w: 9.1, h: 1.05,
+    fontSize: 30, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left"
   });
 
   slide.addText(
-    "Carolina Turf runs 8 service lines, serves HOAs, commercial properties, and homeowners across 28+ communities. " +
-    "That operational complexity shouldn't mean delayed cash flow. These three patterns keep showing up in landscaping companies your size:",
+    "Carolina Turf runs 8 service lines across 28+ communities — maintenance, hardscapes, HOA contracts, commercial properties. " +
+    "That complexity creates billing gaps that quietly erode cash flow. Three patterns keep showing up:",
     {
-      x: 0.45, y: 1.3, w: 9.1, h: 0.55,
-      fontSize: 13, color: MID_GRAY, fontFace: "Calibri", align: "left"
+      x: 0.5, y: 1.62, w: 9.0, h: 0.48,
+      fontSize: 13, color: GRAY_MD, fontFace: "Trebuchet MS", align: "left"
     }
   );
 
   const cols = [
     {
-      x: 0.45, icon: "⏱", accent: GREEN,
-      title: "50+ Days to Collect",
-      body: "HOA boards and commercial clients run their own AP schedules — 30, 45, even 60-day payment terms are standard. You've already delivered the work, but the cash won't land for weeks."
+      x: 0.5, accent: CYAN,
+      icon: "⏱",
+      label: "50+ DAYS TO COLLECT",
+      title: "The HOA & Commercial Cash Gap",
+      body: "HOA boards and commercial clients run their own AP schedules — 30, 45, even 60-day terms are standard. You've already done the work. The cash won't land for weeks."
     },
     {
-      x: 3.75, icon: "🗂", accent: GREEN_MID,
-      title: "Manual Follow-Up",
-      body: "Your office team is talented and stretched thin. Collections calls happen when someone has bandwidth — which means some invoices age silently while your staff handles everything else."
+      x: 3.62, accent: AMBER,
+      icon: "🗂",
+      label: "MANUAL FOLLOW-UP",
+      title: "Collections When There's Time",
+      body: "Your office team is talented and stretched thin. Follow-up happens when someone has bandwidth — which means some invoices age silently while everything else gets prioritized."
     },
     {
-      x: 7.05, icon: "🔍", accent: GOLD,
-      title: "Invisible Leakage",
-      body: "Project deposits not invoiced at signing. Crew completes a job Tuesday; invoice goes out Friday. Small gaps that, multiplied across 150–250 invoices per month, add real dollars to your DSO."
+      x: 6.75, accent: RED,
+      icon: "🔍",
+      label: "INVISIBLE LEAKAGE",
+      title: "Revenue That Never Gets Billed",
+      body: "Project deposits not invoiced at signing. Jobs completed Tuesday, invoiced Friday. Small gaps multiplied across 150–250 invoices per month add real dollars to your DSO."
     }
   ];
 
   cols.forEach(col => {
-    // Card background
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: col.x, y: 1.95, w: 2.85, h: 3.1,
-      fill: { color: LIGHT_GRAY }, line: { color: "E5E7EB", width: 1 },
-      shadow: { type: "outer", color: "000000", blur: 8, offset: 2, angle: 135, opacity: 0.08 }
-    });
-    // Top accent bar
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: col.x, y: 1.95, w: 2.85, h: 0.07,
-      fill: { color: col.accent }, line: { color: col.accent }
-    });
-    // Icon
+    const cw = 2.9;
+    card(slide, col.x, 2.2, cw, 3.1, col.accent);
+
     slide.addText(col.icon, {
-      x: col.x + 0.15, y: 2.1, w: 0.6, h: 0.55,
-      fontSize: 28, align: "left", fontFace: "Calibri"
+      x: col.x + 0.18, y: 2.35, w: 0.55, h: 0.5,
+      fontSize: 24, fontFace: "Trebuchet MS", align: "left", margin: 0
     });
-    // Title
+    slide.addText(col.label, {
+      x: col.x + 0.18, y: 2.92, w: 2.55, h: 0.25,
+      fontSize: 9, bold: true, color: col.accent,
+      fontFace: "Trebuchet MS", charSpacing: 2, margin: 0
+    });
     slide.addText(col.title, {
-      x: col.x + 0.15, y: 2.7, w: 2.55, h: 0.45,
-      fontSize: 15, bold: true, color: GREEN, fontFace: "Calibri", align: "left"
+      x: col.x + 0.18, y: 3.2, w: 2.55, h: 0.45,
+      fontSize: 14, bold: true, color: WHITE,
+      fontFace: "Trebuchet MS", align: "left", margin: 0
     });
-    // Body
     slide.addText(col.body, {
-      x: col.x + 0.15, y: 3.2, w: 2.55, h: 1.7,
-      fontSize: 12, color: DARK_TEXT, fontFace: "Calibri", align: "left",
-      valign: "top", wrap: true
+      x: col.x + 0.18, y: 3.7, w: 2.54, h: 1.42,
+      fontSize: 11.5, color: GRAY_LT,
+      fontFace: "Trebuchet MS", align: "left", valign: "top", wrap: true, margin: 0
     });
   });
 
-  footerLL(slide);
+  footer(slide);
 }
 
-// ─── SLIDE 3: COST OF THE PROBLEM ─────────────────────────────────────────────
+// ── SLIDE 3: COST OF THE PROBLEM ─────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: GREEN };
+  slide.background = { color: BG_DARK };
+
+  slide.addText("THE COST", {
+    x: 0.5, y: 0.28, w: 4, h: 0.22,
+    fontSize: 10, color: CYAN, fontFace: "Trebuchet MS",
+    charSpacing: 3, bold: true, margin: 0
+  });
 
   slide.addText("What Slow AR Is Actually Costing Carolina Turf", {
-    x: 0.45, y: 0.28, w: 9.1, h: 0.7,
-    fontSize: 30, bold: true, color: WHITE, fontFace: "Calibri", align: "left"
+    x: 0.5, y: 0.52, w: 9.1, h: 0.68,
+    fontSize: 30, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left"
   });
 
-  // Hero stat box
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.45, y: 1.1, w: 9.1, h: 1.35,
-    fill: { color: GREEN_MID }, line: { color: GREEN_LIGHT, width: 1 },
-    shadow: { type: "outer", color: "000000", blur: 10, offset: 3, angle: 135, opacity: 0.2 }
-  });
+  // Hero card
+  card(slide, 0.5, 1.32, 9.1, 1.28, CYAN);
   slide.addText("$328,767", {
-    x: 0.6, y: 1.18, w: 4.2, h: 0.75,
-    fontSize: 56, bold: true, color: GOLD, fontFace: "Calibri", align: "left", margin: 0
+    x: 0.72, y: 1.42, w: 4.5, h: 0.88,
+    fontSize: 60, bold: true, color: CYAN,
+    fontFace: "Trebuchet MS", align: "left", margin: 0
   });
-  slide.addText("Currently locked in open receivables — money you've earned but haven't collected", {
-    x: 0.6, y: 1.95, w: 8.7, h: 0.38,
-    fontSize: 14, color: WHITE, fontFace: "Calibri", align: "left", italic: true, margin: 0
+  slide.addText("currently locked in open receivables — money you've already earned but haven't collected", {
+    x: 5.3, y: 1.62, w: 4.1, h: 0.68,
+    fontSize: 13, color: GRAY_LT,
+    fontFace: "Trebuchet MS", align: "left", valign: "middle", italic: true
   });
 
-  // Supporting stats — 3 cards + bottom line
+  // Three supporting stat cards
   const stats = [
-    { val: "$62,500", label: "in unbilled or\nlost revenue annually", x: 0.45 },
-    { val: "$11,700", label: "in staff time spent on\nmanual collections each year", x: 3.62 },
-    { val: "$11,250", label: "lost to bad debt\nannually", x: 6.78 }
+    { val: "$62,500",  label: "UNBILLED / LOST REVENUE", sub: "annually",              color: AMBER, x: 0.5  },
+    { val: "$11,700",  label: "STAFF TIME ON COLLECTIONS", sub: "per year",             color: AMBER, x: 3.62 },
+    { val: "$11,250",  label: "BAD DEBT LOSSES",           sub: "annually",             color: RED,   x: 6.75 }
   ];
 
   stats.forEach(s => {
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: s.x, y: 2.65, w: 2.9, h: 1.45,
-      fill: { color: "163326" }, line: { color: GREEN_LIGHT, width: 1 }
-    });
+    card(slide, s.x, 2.75, 2.9, 1.65, s.color);
     slide.addText(s.val, {
-      x: s.x + 0.12, y: 2.72, w: 2.66, h: 0.6,
-      fontSize: 32, bold: true, color: GOLD, fontFace: "Calibri", align: "left", margin: 0
+      x: s.x + 0.18, y: 2.9, w: 2.55, h: 0.72,
+      fontSize: 38, bold: true, color: s.color,
+      fontFace: "Trebuchet MS", align: "left", margin: 0
     });
     slide.addText(s.label, {
-      x: s.x + 0.12, y: 3.35, w: 2.66, h: 0.65,
-      fontSize: 12, color: WHITE, fontFace: "Calibri", align: "left", margin: 0
+      x: s.x + 0.18, y: 3.65, w: 2.55, h: 0.2,
+      fontSize: 9, bold: true, color: s.color,
+      fontFace: "Trebuchet MS", charSpacing: 1.5, margin: 0
+    });
+    slide.addText(s.sub, {
+      x: s.x + 0.18, y: 3.87, w: 2.55, h: 0.22,
+      fontSize: 10.5, color: GRAY_MD,
+      fontFace: "Trebuchet MS", margin: 0
     });
   });
 
-  // Bottom summary line
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.45, y: 4.25, w: 9.1, h: 0.72,
-    fill: { color: GOLD }, line: { color: GOLD }
-  });
+  // Summary line
   slide.addText(
-    "That's $263,532 working against you every year — not from lack of revenue, from lack of collection systems.",
+    "That's  $263,532  working against you every year — not from lack of revenue, from lack of collection systems.",
     {
-      x: 0.6, y: 4.3, w: 8.8, h: 0.6,
-      fontSize: 14, bold: true, color: GREEN, fontFace: "Calibri", align: "center"
+      x: 0.5, y: 4.56, w: 9.1, h: 0.42,
+      fontSize: 13.5, color: GRAY_LT,
+      fontFace: "Trebuchet MS", align: "center", italic: true
     }
   );
 
-  // Footer (light version)
-  slide.addText("LunarLogic  |  AR Automation for Service Businesses", {
-    x: 0.4, y: 5.25, w: 9.2, h: 0.3,
-    fontSize: 9, color: "95B5A4", align: "center", fontFace: "Calibri", italic: true
-  });
+  footer(slide);
 }
 
-// ─── SLIDE 4: HOW IT WORKS ────────────────────────────────────────────────────
+// ── SLIDE 4: HOW IT WORKS ────────────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: WHITE };
+  slide.background = { color: BG_DARK };
 
-  slide.addText("The LunarLogic AR Automation System", {
-    x: 0.45, y: 0.28, w: 9.1, h: 0.6,
-    fontSize: 30, bold: true, color: GREEN, fontFace: "Calibri", align: "left"
+  slide.addText("THE SYSTEM", {
+    x: 0.5, y: 0.28, w: 4, h: 0.22,
+    fontSize: 10, color: CYAN, fontFace: "Trebuchet MS",
+    charSpacing: 3, bold: true, margin: 0
   });
 
-  slide.addText("Four automated workflows that run inside QuickBooks Online — no new software, no training required.", {
-    x: 0.45, y: 0.92, w: 9.1, h: 0.38,
-    fontSize: 14, color: MID_GRAY, fontFace: "Calibri", align: "left"
+  slide.addText("The LunarLogic AR Automation System", {
+    x: 0.5, y: 0.52, w: 9.1, h: 0.62,
+    fontSize: 30, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left"
+  });
+
+  slide.addText("Four automated workflows — runs inside QuickBooks Online, nothing new to learn.", {
+    x: 0.5, y: 1.17, w: 9.1, h: 0.32,
+    fontSize: 13, color: GRAY_MD, fontFace: "Trebuchet MS"
   });
 
   const steps = [
     {
-      num: "01", label: "WF1", title: "Invoice Created\nAutomatically",
-      body: "Triggered at job completion. No human touchpoint needed — the invoice builds itself.",
-      color: GREEN, x: 0.3
+      num: "01", tag: "WF1", accent: CYAN,
+      title: "Invoice Created\nAutomatically",
+      body: "Triggered at job completion. No human touchpoint — the invoice builds itself in QuickBooks instantly.",
+      x: 0.3
     },
     {
-      num: "02", label: "WF2", title: "Reminders Sent\non Schedule",
-      body: "Day 1, 7, 14, 30 past due. Escalating tone. Email + SMS via Twilio. Always on.",
-      color: GREEN_MID, x: 2.65
+      num: "02", tag: "WF2", accent: GREEN,
+      title: "Reminders Sent\non Schedule",
+      body: "Day 1, 7, 14, 30 past due. Escalating tone. Email + SMS via Twilio. Always running, always on-brand.",
+      x: 2.72
     },
     {
-      num: "03", label: "WF3", title: "Payment Link\nDelivered",
-      body: "One tap to pay. No login, no friction. Embedded in every reminder automatically.",
-      color: GREEN_LIGHT, x: 4.98
+      num: "03", tag: "WF3", accent: AMBER,
+      title: "Payment Link\nDelivered",
+      body: "One tap to pay. No login, no friction. Embedded in every reminder — removes every excuse not to pay.",
+      x: 5.13
     },
     {
-      num: "04", label: "WF4", title: "You See\nEverything",
-      body: "Live AR aging dashboard. Monday morning Slack report. Full visibility, zero effort.",
-      color: GOLD, x: 7.32
+      num: "04", tag: "WF4", accent: CYAN,
+      title: "You See\nEverything",
+      body: "Live AR aging dashboard. Monday morning Slack report. Full real-time visibility with zero manual work.",
+      x: 7.55
     }
   ];
 
+  // Connecting line
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.62, y: 2.56, w: 9.25, h: 0.03,
+    fill: { color: BORDER }, line: { color: BORDER }
+  });
+
   steps.forEach((s, i) => {
-    const cardW = 2.35;
-    // Card
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: s.x, y: 1.48, w: cardW, h: 3.55,
-      fill: { color: LIGHT_GRAY }, line: { color: "E5E7EB", width: 1 },
-      shadow: { type: "outer", color: "000000", blur: 8, offset: 2, angle: 135, opacity: 0.08 }
-    });
-    // Top color bar
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: s.x, y: 1.48, w: cardW, h: 0.1,
-      fill: { color: s.color }, line: { color: s.color }
-    });
+    const cw = 2.22;
+    card(slide, s.x, 1.6, cw, 3.65, s.accent);
+
     // Step number
     slide.addText(s.num, {
-      x: s.x + 0.12, y: 1.65, w: 0.7, h: 0.6,
-      fontSize: 36, bold: true, color: s.color === GOLD ? GOLD : s.color,
-      fontFace: "Calibri", align: "left", margin: 0
+      x: s.x + 0.14, y: 1.72, w: 0.75, h: 0.68,
+      fontSize: 40, bold: true, color: s.accent,
+      fontFace: "Trebuchet MS", align: "left", margin: 0
     });
-    // Workflow label
-    slide.addText(s.label, {
-      x: s.x + 0.82, y: 1.75, w: 1.4, h: 0.35,
-      fontSize: 10, color: MID_GRAY, fontFace: "Calibri",
-      align: "left", bold: true, margin: 0
+
+    // Tag
+    slide.addText(s.tag, {
+      x: s.x + 0.92, y: 1.87, w: 1.1, h: 0.22,
+      fontSize: 10, bold: true, color: GRAY_DK,
+      fontFace: "Trebuchet MS", charSpacing: 2, margin: 0
     });
+
     // Title
     slide.addText(s.title, {
-      x: s.x + 0.12, y: 2.3, w: 2.1, h: 0.75,
-      fontSize: 16, bold: true, color: GREEN, fontFace: "Calibri",
-      align: "left", valign: "top", margin: 0
+      x: s.x + 0.14, y: 2.48, w: 1.95, h: 0.72,
+      fontSize: 16, bold: true, color: WHITE,
+      fontFace: "Trebuchet MS", align: "left", valign: "top", margin: 0
     });
+
     // Body
     slide.addText(s.body, {
-      x: s.x + 0.12, y: 3.15, w: 2.12, h: 1.65,
-      fontSize: 12, color: DARK_TEXT, fontFace: "Calibri",
-      align: "left", valign: "top", wrap: true, margin: 0
+      x: s.x + 0.14, y: 3.28, w: 1.96, h: 1.75,
+      fontSize: 11.5, color: GRAY_LT,
+      fontFace: "Trebuchet MS", align: "left", valign: "top", wrap: true, margin: 0
     });
 
     // Arrow between cards
     if (i < 3) {
-      slide.addShape(pres.shapes.RECTANGLE, {
-        x: s.x + cardW + 0.04, y: 3.1, w: 0.18, h: 0.04,
-        fill: { color: GREEN_LIGHT }, line: { color: GREEN_LIGHT }
-      });
-      // Arrow head approximation using text
-      slide.addText("▶", {
-        x: s.x + cardW + 0.12, y: 2.98, w: 0.2, h: 0.28,
-        fontSize: 12, color: GREEN_LIGHT, fontFace: "Calibri", align: "center", margin: 0
+      slide.addText("›", {
+        x: s.x + cw + 0.04, y: 2.3, w: 0.3, h: 0.4,
+        fontSize: 22, color: CYAN_DIM,
+        fontFace: "Trebuchet MS", align: "center", margin: 0
       });
     }
   });
 
-  // Footer note
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.3, y: 5.1, w: 9.4, h: 0.35,
-    fill: { color: "EEF4F0" }, line: { color: "D1E8DB", width: 1 }
-  });
-  slide.addText("Runs inside QuickBooks Online. Nothing new to learn. No new software to manage.", {
-    x: 0.4, y: 5.15, w: 9.2, h: 0.26,
-    fontSize: 11, color: GREEN, fontFace: "Calibri", align: "center", bold: true
-  });
+  footer(slide);
 }
 
-// ─── SLIDE 5: DONE FOR YOU ────────────────────────────────────────────────────
+// ── SLIDE 5: DONE FOR YOU ────────────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: WHITE };
+  slide.background = { color: BG_DARK };
+
+  slide.addText("THE DIFFERENCE", {
+    x: 0.5, y: 0.28, w: 5, h: 0.22,
+    fontSize: 10, color: CYAN, fontFace: "Trebuchet MS",
+    charSpacing: 3, bold: true, margin: 0
+  });
 
   slide.addText("We Don't Sell You Software. We Run Your AR.", {
-    x: 0.45, y: 0.28, w: 9.1, h: 0.65,
-    fontSize: 30, bold: true, color: GREEN, fontFace: "Calibri", align: "left"
+    x: 0.5, y: 0.52, w: 9.1, h: 0.65,
+    fontSize: 30, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left"
   });
 
-  // Two column headers
-  // Without column
+  // Column headers
+  // Without
   slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.4, y: 1.05, w: 4.4, h: 0.52,
-    fill: { color: "4B0000" }, line: { color: "4B0000" }
+    x: 0.5, y: 1.3, w: 4.35, h: 0.5,
+    fill: { color: BG_CARD2 }, line: { color: "3B1F1F", width: 1 }
   });
-  slide.addText("✗  WITHOUT LunarLogic", {
-    x: 0.4, y: 1.05, w: 4.4, h: 0.52,
-    fontSize: 16, bold: true, color: WHITE, fontFace: "Calibri", align: "center"
+  slide.addText("WITHOUT LUNARLOGIC", {
+    x: 0.5, y: 1.3, w: 4.35, h: 0.5,
+    fontSize: 12, bold: true, color: RED,
+    fontFace: "Trebuchet MS", align: "center", valign: "middle",
+    charSpacing: 1.5
   });
 
-  // With column
+  // With
   slide.addShape(pres.shapes.RECTANGLE, {
-    x: 5.2, y: 1.05, w: 4.4, h: 0.52,
-    fill: { color: GREEN }, line: { color: GREEN }
+    x: 5.15, y: 1.3, w: 4.35, h: 0.5,
+    fill: { color: BG_CARD2 }, line: { color: "0A3040", width: 1 }
   });
-  slide.addText("✓  WITH LunarLogic", {
-    x: 5.2, y: 1.05, w: 4.4, h: 0.52,
-    fontSize: 16, bold: true, color: WHITE, fontFace: "Calibri", align: "center"
+  slide.addText("WITH LUNARLOGIC", {
+    x: 5.15, y: 1.3, w: 4.35, h: 0.5,
+    fontSize: 12, bold: true, color: CYAN,
+    fontFace: "Trebuchet MS", align: "center", valign: "middle",
+    charSpacing: 1.5
   });
 
   const rows = [
-    ["Manual invoice creation after every job", "Automated invoice triggers at job completion"],
-    ["Forgotten follow-ups when staff is stretched", "Systematic reminder sequences — Day 1, 7, 14, 30"],
-    ["Uncomfortable collections calls to clients", "Payment links do the asking — professionally, automatically"],
-    ["No real-time visibility into AR health", "Live dashboard every Monday morning in Slack"],
-    ["Staff time wasted chasing open invoices", "Staff focused on clients, crews, and growth"],
+    ["Manual invoice creation after every job",            "Automated invoice triggers at job completion"],
+    ["Forgotten follow-ups when staff is stretched",       "Systematic Day 1 / 7 / 14 / 30 reminder sequences"],
+    ["Uncomfortable collections calls to clients",         "Payment links do the asking — professionally, automatically"],
+    ["No real-time visibility into AR aging",              "Live dashboard every Monday morning in Slack"],
+    ["Staff time wasted chasing open invoices",            "Staff focused on clients, crews, and growth"],
   ];
 
   rows.forEach((row, i) => {
-    const yPos = 1.73 + i * 0.65;
-    const bg = i % 2 === 0 ? "FAFAFA" : WHITE;
+    const yPos = 1.9 + i * 0.64;
+    const bg = i % 2 === 0 ? "0D1520" : BG_CARD;
 
     // Left cell
     slide.addShape(pres.shapes.RECTANGLE, {
-      x: 0.4, y: yPos, w: 4.4, h: 0.58,
-      fill: { color: bg }, line: { color: "E5E7EB", width: 1 }
+      x: 0.5, y: yPos, w: 4.35, h: 0.58,
+      fill: { color: bg }, line: { color: BORDER, width: 0.5 }
     });
     slide.addShape(pres.shapes.RECTANGLE, {
-      x: 0.4, y: yPos, w: 0.08, h: 0.58,
-      fill: { color: "990000" }, line: { color: "990000" }
+      x: 0.5, y: yPos, w: 0.06, h: 0.58,
+      fill: { color: RED }, line: { color: RED }
     });
     slide.addText(row[0], {
-      x: 0.6, y: yPos + 0.06, w: 4.1, h: 0.46,
-      fontSize: 13, color: "5C1A1A", fontFace: "Calibri", align: "left", valign: "middle"
+      x: 0.68, y: yPos + 0.05, w: 4.08, h: 0.48,
+      fontSize: 12.5, color: GRAY_LT,
+      fontFace: "Trebuchet MS", align: "left", valign: "middle"
     });
 
     // Right cell
     slide.addShape(pres.shapes.RECTANGLE, {
-      x: 5.2, y: yPos, w: 4.4, h: 0.58,
-      fill: { color: bg }, line: { color: "E5E7EB", width: 1 }
+      x: 5.15, y: yPos, w: 4.35, h: 0.58,
+      fill: { color: bg }, line: { color: BORDER, width: 0.5 }
     });
     slide.addShape(pres.shapes.RECTANGLE, {
-      x: 5.2, y: yPos, w: 0.08, h: 0.58,
-      fill: { color: GREEN_LIGHT }, line: { color: GREEN_LIGHT }
+      x: 5.15, y: yPos, w: 0.06, h: 0.58,
+      fill: { color: CYAN }, line: { color: CYAN }
     });
     slide.addText(row[1], {
-      x: 5.4, y: yPos + 0.06, w: 4.1, h: 0.46,
-      fontSize: 13, color: GREEN, fontFace: "Calibri", align: "left", valign: "middle", bold: true
+      x: 5.33, y: yPos + 0.05, w: 4.08, h: 0.48,
+      fontSize: 12.5, bold: true, color: WHITE,
+      fontFace: "Trebuchet MS", align: "left", valign: "middle"
     });
   });
 
-  footerLL(slide);
+  footer(slide);
 }
 
-// ─── SLIDE 6: ROI ─────────────────────────────────────────────────────────────
+// ── SLIDE 6: ROI ─────────────────────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: GREEN };
+  slide.background = { color: BG_DARK };
+
+  slide.addText("THE ROI", {
+    x: 0.5, y: 0.28, w: 4, h: 0.22,
+    fontSize: 10, color: CYAN, fontFace: "Trebuchet MS",
+    charSpacing: 3, bold: true, margin: 0
+  });
 
   slide.addText("The Numbers for Carolina Turf", {
-    x: 0.45, y: 0.25, w: 9.1, h: 0.65,
-    fontSize: 32, bold: true, color: WHITE, fontFace: "Calibri", align: "left"
+    x: 0.5, y: 0.52, w: 9.1, h: 0.65,
+    fontSize: 30, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left"
   });
 
-  // DSO transformation block
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.45, y: 1.0, w: 9.1, h: 1.15,
-    fill: { color: GREEN_MID }, line: { color: GREEN_LIGHT, width: 1 }
-  });
-  slide.addText("DSO:", {
-    x: 0.65, y: 1.08, w: 0.85, h: 0.5,
-    fontSize: 16, color: "95B5A4", fontFace: "Calibri", bold: true, align: "left", margin: 0
+  // DSO transformation card
+  card(slide, 0.5, 1.28, 9.1, 1.1, CYAN);
+  slide.addText("DSO  TODAY", {
+    x: 0.72, y: 1.4, w: 2.2, h: 0.22,
+    fontSize: 9, color: GRAY_MD, fontFace: "Trebuchet MS", charSpacing: 2, margin: 0
   });
   slide.addText("48 days", {
-    x: 1.5, y: 1.05, w: 1.8, h: 0.6,
-    fontSize: 32, color: WHITE, fontFace: "Calibri", bold: true, align: "left", margin: 0
+    x: 0.72, y: 1.62, w: 2.0, h: 0.6,
+    fontSize: 34, bold: true, color: RED,
+    fontFace: "Trebuchet MS", align: "left", margin: 0
   });
   slide.addText("→", {
-    x: 3.3, y: 1.08, w: 0.5, h: 0.55,
-    fontSize: 28, color: GOLD, fontFace: "Calibri", align: "center", margin: 0
+    x: 2.85, y: 1.65, w: 0.55, h: 0.55,
+    fontSize: 30, color: GRAY_MD,
+    fontFace: "Trebuchet MS", align: "center", margin: 0
+  });
+  slide.addText("DSO  WITH LUNARLOGIC", {
+    x: 3.45, y: 1.4, w: 3.0, h: 0.22,
+    fontSize: 9, color: CYAN, fontFace: "Trebuchet MS", charSpacing: 2, margin: 0, bold: true
   });
   slide.addText("22 days", {
-    x: 3.8, y: 1.05, w: 1.8, h: 0.6,
-    fontSize: 32, color: GOLD, fontFace: "Calibri", bold: true, align: "left", margin: 0
+    x: 3.45, y: 1.62, w: 2.2, h: 0.6,
+    fontSize: 34, bold: true, color: CYAN,
+    fontFace: "Trebuchet MS", align: "left", margin: 0
   });
   slide.addText("26-day reduction in days sales outstanding", {
-    x: 5.65, y: 1.15, w: 3.7, h: 0.45,
-    fontSize: 13, color: "95B5A4", fontFace: "Calibri", italic: true, align: "right", margin: 0
+    x: 6.1, y: 1.68, w: 3.3, h: 0.4,
+    fontSize: 12, color: GRAY_MD,
+    fontFace: "Trebuchet MS", align: "right", italic: true, margin: 0
   });
 
   // Four metric cards
   const metrics = [
-    { label: "Working Capital Released", val: "$178,082", note: "cash freed in Year 1", color: GOLD, x: 0.45 },
-    { label: "Total Year 1 Value", val: "$263,532", note: "working capital + savings + bad debt", color: WHITE, x: 2.82 },
-    { label: "LunarLogic Investment", val: "$12,000", note: "$1,000/month, no long-term contract", color: "95B5A4", x: 5.18 },
-    { label: "Year 1 ROI", val: "22x", note: "return on investment", color: GOLD, x: 7.55 }
+    { label: "WORKING CAPITAL RELEASED", val: "$178,082", sub: "cash freed in Year 1",              color: CYAN,  x: 0.5  },
+    { label: "TOTAL YEAR 1 VALUE",        val: "$263,532", sub: "working capital + savings + bad debt", color: GREEN, x: 2.82 },
+    { label: "LUNARLOGIC INVESTMENT",     val: "$12,000",  sub: "$1,000/month · no long-term contract", color: GRAY_MD, x: 5.13 },
+    { label: "YEAR 1 RETURN",             val: "22×",      sub: "return on investment",              color: CYAN,  x: 7.45 }
   ];
 
   metrics.forEach(m => {
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: m.x, y: 2.3, w: 2.2, h: 2.3,
-      fill: { color: "163326" }, line: { color: GREEN_LIGHT, width: 1 },
-      shadow: { type: "outer", color: "000000", blur: 8, offset: 2, angle: 135, opacity: 0.2 }
-    });
+    card(slide, m.x, 2.52, 2.2, 2.5, m.color === GRAY_MD ? BORDER : m.color);
+
     slide.addText(m.label, {
-      x: m.x + 0.12, y: 2.38, w: 1.96, h: 0.5,
-      fontSize: 11, color: "95B5A4", fontFace: "Calibri", align: "left", bold: true, margin: 0
+      x: m.x + 0.15, y: 2.65, w: 1.9, h: 0.4,
+      fontSize: 8.5, bold: true, color: m.color,
+      fontFace: "Trebuchet MS", charSpacing: 1, margin: 0
     });
     slide.addText(m.val, {
-      x: m.x + 0.12, y: 2.88, w: 1.96, h: 0.85,
-      fontSize: 34, color: m.color, fontFace: "Calibri", bold: true, align: "left", margin: 0
+      x: m.x + 0.15, y: 3.08, w: 1.9, h: 0.85,
+      fontSize: m.val.length > 6 ? 30 : 38, bold: true, color: m.color,
+      fontFace: "Trebuchet MS", align: "left", margin: 0
     });
-    slide.addText(m.note, {
-      x: m.x + 0.12, y: 3.78, w: 1.96, h: 0.6,
-      fontSize: 10.5, color: "6B9E84", fontFace: "Calibri", align: "left", italic: true, margin: 0
+    slide.addText(m.sub, {
+      x: m.x + 0.15, y: 3.98, w: 1.9, h: 0.75,
+      fontSize: 10, color: GRAY_MD,
+      fontFace: "Trebuchet MS", align: "left", italic: true, margin: 0, wrap: true
     });
   });
 
@@ -447,212 +531,228 @@ function footerLL(slide) {
   slide.addText(
     "This is not projected revenue. This is money you've already earned — collected faster.",
     {
-      x: 0.45, y: 4.78, w: 9.1, h: 0.38,
-      fontSize: 14, color: GOLD, fontFace: "Calibri", align: "center", italic: true, bold: false
+      x: 0.5, y: 5.12, w: 9.1, h: 0.28,
+      fontSize: 12, color: GRAY_MD,
+      fontFace: "Trebuchet MS", align: "center", italic: true
     }
   );
-
-  // Footer light
-  slide.addText("LunarLogic  |  AR Automation for Service Businesses", {
-    x: 0.4, y: 5.25, w: 9.2, h: 0.3,
-    fontSize: 9, color: "95B5A4", align: "center", fontFace: "Calibri", italic: true
-  });
 }
 
-// ─── SLIDE 7: IMPLEMENTATION ──────────────────────────────────────────────────
+// ── SLIDE 7: IMPLEMENTATION ──────────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: WHITE };
+  slide.background = { color: BG_DARK };
 
-  slide.addText("From Zero to Automated in 30 Days", {
-    x: 0.45, y: 0.28, w: 9.1, h: 0.65,
-    fontSize: 30, bold: true, color: GREEN, fontFace: "Calibri", align: "left"
+  slide.addText("IMPLEMENTATION", {
+    x: 0.5, y: 0.28, w: 5, h: 0.22,
+    fontSize: 10, color: CYAN, fontFace: "Trebuchet MS",
+    charSpacing: 3, bold: true, margin: 0
   });
 
-  // Timeline bar
+  slide.addText("From Zero to Automated in 30 Days", {
+    x: 0.5, y: 0.52, w: 9.1, h: 0.65,
+    fontSize: 30, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left"
+  });
+
+  // Connecting timeline bar
   slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.45, y: 1.08, w: 9.1, h: 0.12,
-    fill: { color: "D1E8DB" }, line: { color: "D1E8DB" }
+    x: 0.9, y: 2.55, w: 8.55, h: 0.04,
+    fill: { color: BORDER }, line: { color: BORDER }
   });
 
   const phases = [
     {
-      label: "WEEK 1–2", title: "Discovery & Setup",
-      body: "QuickBooks connection established. Workflow configuration built to match Carolina Turf's billing rules — maintenance programs, project invoicing, seasonal contracts. Billing triggers mapped.",
-      x: 0.45, dotX: 0.9, color: GREEN
+      dotX: 1.2, label: "WEEK 1–2", accent: CYAN,
+      title: "Discovery & Setup",
+      body: "QuickBooks connection established. All four workflows configured to match Carolina Turf's billing rules — maintenance programs, project invoicing, seasonal contracts, and deposit triggers. Every client billing scenario mapped.",
+      x: 0.5
     },
     {
-      label: "WEEK 3", title: "Testing & Refinement",
-      body: "Live testing with real invoices. Reminder sequences tuned to Carolina Turf's voice and brand. Timing, tone, and escalation logic confirmed. Edge cases handled.",
-      x: 3.55, dotX: 4.78, color: GREEN_MID
+      dotX: 4.55, label: "WEEK 3", accent: AMBER,
+      title: "Testing & Refinement",
+      body: "Live testing with real invoices. Reminder sequences tuned to Carolina Turf's voice and brand standards. Timing, tone, and escalation logic validated. Edge cases handled before go-live.",
+      x: 3.55
     },
     {
-      label: "WEEK 4", title: "Go Live",
-      body: "Full system active. Dashboard live in Slack. First automated reminder sequences running. AR aging report delivered Monday morning.",
-      x: 6.65, dotX: 8.65, color: GOLD
+      dotX: 7.88, label: "WEEK 4", accent: GREEN,
+      title: "Go Live",
+      body: "Full system active. Dashboard live in Slack. First automated reminder sequences running. AR aging report delivered Monday morning. You're collecting on day one.",
+      x: 6.6
     }
   ];
 
   phases.forEach(p => {
     // Dot on timeline
     slide.addShape(pres.shapes.OVAL, {
-      x: p.dotX - 0.15, y: 1.0, w: 0.28, h: 0.28,
-      fill: { color: p.color }, line: { color: p.color }
+      x: p.dotX - 0.12, y: 2.46, w: 0.24, h: 0.24,
+      fill: { color: p.accent }, line: { color: p.accent }
     });
+
     // Week label
     slide.addText(p.label, {
-      x: p.x, y: 1.35, w: 2.9, h: 0.32,
-      fontSize: 11, bold: true, color: p.color, fontFace: "Calibri", align: "left"
+      x: p.x, y: 2.85, w: 2.9, h: 0.25,
+      fontSize: 9, bold: true, color: p.accent,
+      fontFace: "Trebuchet MS", charSpacing: 2, margin: 0
     });
+
     // Phase card
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: p.x, y: 1.72, w: 2.9, h: 3.0,
-      fill: { color: LIGHT_GRAY }, line: { color: "E5E7EB", width: 1 },
-      shadow: { type: "outer", color: "000000", blur: 8, offset: 2, angle: 135, opacity: 0.07 }
-    });
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: p.x, y: 1.72, w: 2.9, h: 0.09,
-      fill: { color: p.color }, line: { color: p.color }
-    });
+    card(slide, p.x, 3.15, 2.9, 2.2, p.accent);
+
     slide.addText(p.title, {
-      x: p.x + 0.15, y: 1.88, w: 2.6, h: 0.5,
-      fontSize: 17, bold: true, color: GREEN, fontFace: "Calibri", align: "left"
+      x: p.x + 0.15, y: 3.28, w: 2.6, h: 0.45,
+      fontSize: 17, bold: true, color: WHITE,
+      fontFace: "Trebuchet MS", align: "left", margin: 0
     });
     slide.addText(p.body, {
-      x: p.x + 0.15, y: 2.45, w: 2.6, h: 2.1,
-      fontSize: 12.5, color: DARK_TEXT, fontFace: "Calibri", align: "left", valign: "top", wrap: true
+      x: p.x + 0.15, y: 3.78, w: 2.6, h: 1.42,
+      fontSize: 11.5, color: GRAY_LT,
+      fontFace: "Trebuchet MS", align: "left", valign: "top", wrap: true, margin: 0
     });
   });
 
-  // Footer bar
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.3, y: 4.9, w: 9.4, h: 0.45,
-    fill: { color: "EEF4F0" }, line: { color: "D1E8DB", width: 1 }
-  });
+  // Footer note
   slide.addText("You attend one onboarding call. We handle everything else.", {
-    x: 0.4, y: 4.97, w: 9.2, h: 0.3,
-    fontSize: 13, color: GREEN, fontFace: "Calibri", align: "center", bold: true
+    x: 0.5, y: 5.22, w: 9.1, h: 0.26,
+    fontSize: 12, color: CYAN, fontFace: "Trebuchet MS",
+    align: "center", bold: true
   });
 }
 
-// ─── SLIDE 8: MISSION ALIGNMENT ───────────────────────────────────────────────
+// ── SLIDE 8: MISSION ALIGNMENT ───────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: GREEN };
+  slide.background = { color: BG_DEEP };
 
-  slide.addText("13 Years of Excellence Deserves a Financial System to Match", {
-    x: 0.45, y: 0.28, w: 9.1, h: 0.88,
-    fontSize: 28, bold: true, color: WHITE, fontFace: "Calibri", align: "left"
+  slide.addText("WHY THIS MATTERS", {
+    x: 0.5, y: 0.28, w: 5, h: 0.22,
+    fontSize: 10, color: CYAN, fontFace: "Trebuchet MS",
+    charSpacing: 3, bold: true, margin: 0
   });
 
-  // Mission banner
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.45, y: 1.28, w: 9.1, h: 0.58,
-    fill: { color: GREEN_MID }, line: { color: GREEN_LIGHT, width: 1 }
-  });
-  slide.addText('"Responsive. Profitable. Professional."  — Carolina Turf Mission', {
-    x: 0.6, y: 1.32, w: 8.8, h: 0.5,
-    fontSize: 16, color: GOLD, fontFace: "Calibri", align: "center", italic: true, bold: true
+  slide.addText("13 Years of Excellence Deserves\na Financial System to Match", {
+    x: 0.5, y: 0.52, w: 9.1, h: 1.05,
+    fontSize: 34, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left"
   });
 
-  // Body text
+  // Mission quote card
+  card(slide, 0.5, 1.7, 9.1, 0.65, CYAN);
   slide.addText(
-    "Carolina Turf has spent 13 years building a reputation for quality, integrity, and client satisfaction across Charlotte metro and beyond. " +
-    "You've grown to 8 service lines, 28+ communities, commercial contracts, HOA relationships, and a branded fleet that signals professionalism before anyone picks up a phone.\n\n" +
-    "The operational side is already exceptional.\n\n" +
-    "LunarLogic installs the financial infrastructure to make sure the revenue from that excellence arrives on time, every time — without anyone on your team having to chase it.\n\n" +
-    "Responsive billing. Profitable cash flow. Professional collections — automated.",
+    "\" Responsive. Profitable. Professional. \"   —  Carolina Turf Mission",
     {
-      x: 0.55, y: 2.02, w: 8.9, h: 3.0,
-      fontSize: 14.5, color: WHITE, fontFace: "Calibri", align: "left",
-      valign: "top", lineSpacingMultiple: 1.3
+      x: 0.65, y: 1.82, w: 8.8, h: 0.42,
+      fontSize: 16, color: CYAN, fontFace: "Trebuchet MS",
+      align: "center", italic: true, bold: false
     }
   );
 
-  // Footer
-  slide.addText("LunarLogic  |  AR Automation for Service Businesses", {
-    x: 0.4, y: 5.25, w: 9.2, h: 0.3,
-    fontSize: 9, color: "95B5A4", align: "center", fontFace: "Calibri", italic: true
-  });
+  // Body
+  slide.addText(
+    "Carolina Turf has spent 13 years building a reputation for quality, integrity, and client satisfaction across Charlotte metro and beyond. " +
+    "You've grown to 8 service lines, 28+ communities, commercial contracts, HOA relationships, and a branded fleet that signals professionalism before anyone picks up a phone.\n\n" +
+    "The operational side of this business is already exceptional.\n\n" +
+    "LunarLogic installs the financial infrastructure to make sure the revenue from that excellence arrives on time, every time — without anyone on your team having to chase it.\n\n" +
+    "Responsive billing. Profitable cash flow. Professional collections — fully automated.",
+    {
+      x: 0.5, y: 2.5, w: 9.1, h: 2.65,
+      fontSize: 14.5, color: GRAY_LT,
+      fontFace: "Trebuchet MS", align: "left",
+      valign: "top", lineSpacingMultiple: 1.35
+    }
+  );
+
+  footer(slide);
 }
 
-// ─── SLIDE 9: NEXT STEPS ──────────────────────────────────────────────────────
+// ── SLIDE 9: NEXT STEPS ──────────────────────────────────────────────────────
 {
   const slide = pres.addSlide();
-  slide.background = { color: WHITE };
+  slide.background = { color: BG_DARK };
+
+  slide.addText("NEXT STEPS", {
+    x: 0.5, y: 0.28, w: 4, h: 0.22,
+    fontSize: 10, color: CYAN, fontFace: "Trebuchet MS",
+    charSpacing: 3, bold: true, margin: 0
+  });
 
   slide.addText("Let's Find Out What Your AR Is Actually Worth", {
-    x: 0.45, y: 0.28, w: 9.1, h: 0.7,
-    fontSize: 30, bold: true, color: GREEN, fontFace: "Calibri", align: "left"
+    x: 0.5, y: 0.52, w: 9.1, h: 0.65,
+    fontSize: 30, bold: true, color: WHITE,
+    fontFace: "Trebuchet MS", align: "left"
   });
 
   slide.addText("Three simple steps — the first one costs you 20 minutes.", {
-    x: 0.45, y: 1.02, w: 9.1, h: 0.38,
-    fontSize: 14, color: MID_GRAY, fontFace: "Calibri", align: "left", italic: true
+    x: 0.5, y: 1.2, w: 9.1, h: 0.32,
+    fontSize: 13, color: GRAY_MD, fontFace: "Trebuchet MS", italic: true
   });
 
   const steps = [
     {
-      num: "1", title: "AR Audit Call — 20 Minutes",
-      body: "We pull your QuickBooks aging report together on a screen share. You'll see exactly how many dollars are sitting in 30-, 60-, and 90-day buckets before we say another word about solutions.",
-      color: GREEN
+      num: "01", accent: CYAN,
+      title: "AR Audit Call  —  20 Minutes",
+      body: "We pull your QuickBooks aging report together on a screen share. You'll see exactly how many dollars are sitting in 30-, 60-, and 90-day buckets before we say another word about solutions."
     },
     {
-      num: "2", title: "Custom ROI Model",
-      body: "We build your specific financial model using your actual invoice volume, current DSO, and historical collections data. The numbers in this deck are estimates — we'll replace them with yours.",
-      color: GREEN_MID
+      num: "02", accent: AMBER,
+      title: "Custom ROI Model with Your Actual Numbers",
+      body: "We build your specific financial model using your real invoice volume, current DSO, and historical collections data. The numbers in this deck are estimates — we replace them with yours."
     },
     {
-      num: "3", title: "30-Day Installation — If It Makes Sense",
-      body: "If the numbers work, we install the full system in 30 days. Month-to-month engagement. No long-term contract required. 60-day satisfaction guarantee.",
-      color: GOLD
+      num: "03", accent: GREEN,
+      title: "30-Day Installation  —  If It Makes Sense",
+      body: "Full system installed in 30 days. Month-to-month engagement. No long-term contract required. 60-day satisfaction guarantee. If it doesn't deliver, you don't pay."
     }
   ];
 
   steps.forEach((s, i) => {
-    const yPos = 1.6 + i * 1.15;
+    const yPos = 1.65 + i * 1.08;
+    card(slide, 0.5, yPos, 9.1, 0.95, null);
+
+    // Number circle
     slide.addShape(pres.shapes.OVAL, {
-      x: 0.45, y: yPos + 0.12, w: 0.62, h: 0.62,
-      fill: { color: s.color }, line: { color: s.color }
+      x: 0.65, y: yPos + 0.16, w: 0.6, h: 0.6,
+      fill: { color: s.accent }, line: { color: s.accent }
     });
     slide.addText(s.num, {
-      x: 0.45, y: yPos + 0.12, w: 0.62, h: 0.62,
-      fontSize: 22, bold: true, color: WHITE, fontFace: "Calibri", align: "center", valign: "middle", margin: 0
+      x: 0.65, y: yPos + 0.16, w: 0.6, h: 0.6,
+      fontSize: 14, bold: true, color: BG_DARK,
+      fontFace: "Trebuchet MS", align: "center", valign: "middle", margin: 0
     });
+
+    // Left accent bar
     slide.addShape(pres.shapes.RECTANGLE, {
-      x: 1.25, y: yPos, w: 8.25, h: 0.9,
-      fill: { color: LIGHT_GRAY }, line: { color: "E5E7EB", width: 1 }
+      x: 0.5, y: yPos, w: 0.06, h: 0.95,
+      fill: { color: s.accent }, line: { color: s.accent }
     });
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x: 1.25, y: yPos, w: 0.08, h: 0.9,
-      fill: { color: s.color }, line: { color: s.color }
-    });
+
     slide.addText(s.title, {
-      x: 1.45, y: yPos + 0.04, w: 2.6, h: 0.38,
-      fontSize: 15, bold: true, color: s.color === GOLD ? "7A5C00" : GREEN,
-      fontFace: "Calibri", align: "left", margin: 0
+      x: 1.4, y: yPos + 0.06, w: 7.95, h: 0.36,
+      fontSize: 16, bold: true, color: WHITE,
+      fontFace: "Trebuchet MS", align: "left", margin: 0
     });
     slide.addText(s.body, {
-      x: 1.45, y: yPos + 0.42, w: 7.9, h: 0.45,
-      fontSize: 12, color: DARK_TEXT, fontFace: "Calibri", align: "left", valign: "top", margin: 0, wrap: true
+      x: 1.4, y: yPos + 0.45, w: 7.95, h: 0.42,
+      fontSize: 12, color: GRAY_LT,
+      fontFace: "Trebuchet MS", align: "left", valign: "top", margin: 0, wrap: true
     });
   });
 
-  // Contact card
+  // Contact bar
   slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.45, y: 5.0, w: 9.1, h: 0.55,
-    fill: { color: GREEN }, line: { color: GREEN }
+    x: 0.5, y: 5.0, w: 9.1, h: 0.48,
+    fill: { color: BG_CARD2 }, line: { color: CYAN_DIM, width: 0.75 }
   });
   slide.addText(
-    "Jonathan Rodriguez  ·  LunarLogic  ·  jrodriguez@lunarlogic.ai  ·  [Phone]",
+    "Jonathan Rodriguez  ·  LunarLogic  ·  jrodriguez@lunarlogic.ai  ·  lunarlogic.ai",
     {
-      x: 0.55, y: 5.05, w: 9.0, h: 0.45,
-      fontSize: 13, color: WHITE, fontFace: "Calibri", align: "center", bold: false
+      x: 0.55, y: 5.05, w: 9.0, h: 0.38,
+      fontSize: 13, color: CYAN, fontFace: "Trebuchet MS", align: "center"
     }
   );
 }
 
-// ─── WRITE FILE ───────────────────────────────────────────────────────────────
+// ── WRITE FILE ────────────────────────────────────────────────────────────────
 pres.writeFile({ fileName: "LunarLogic_CarolinaTurf_PitchDeck.pptx" })
   .then(() => console.log("✅ Saved: LunarLogic_CarolinaTurf_PitchDeck.pptx"))
   .catch(err => { console.error("ERROR:", err); process.exit(1); });
