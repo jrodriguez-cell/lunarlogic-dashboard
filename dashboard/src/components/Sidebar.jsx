@@ -54,6 +54,13 @@ const Icons = {
   ),
 };
 
+Icons.sprint = () => (
+  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="7.5" cy="7.5" r="6.5"/>
+    <path d="M7.5 4v3.5l2.5 1.5"/>
+  </svg>
+);
+
 const NAV_AR = [
   { key: 'overview',   label: 'Overview',   Icon: Icons.overview   },
   { key: 'invoices',   label: 'Invoices',   Icon: Icons.invoices   },
@@ -64,6 +71,10 @@ const NAV_AR = [
 
 const NAV_PAYMENTS = [
   { key: 'payments', label: 'Cash Application', Icon: Icons.payments },
+];
+
+const NAV_SPRINT = [
+  { key: 'sprint', label: 'Sales Sprint', Icon: Icons.sprint },
 ];
 
 export default function Sidebar({ activeView, onNav, session, onLogout, pendingPayments }) {
@@ -104,6 +115,18 @@ export default function Sidebar({ activeView, onNav, session, onLogout, pendingP
             {pendingPayments > 0 && activeView !== key && (
               <span className="nav-pending-badge">{pendingPayments}</span>
             )}
+          </button>
+        ))}
+
+        <div className="nav-section-label" style={{ marginTop: 8 }}>Sales</div>
+        {NAV_SPRINT.map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            className={`nav-item${activeView === key ? ' active' : ''}`}
+            onClick={() => onNav(key)}
+          >
+            <Icon />
+            {label}
           </button>
         ))}
       </nav>
