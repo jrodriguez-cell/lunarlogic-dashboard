@@ -3,7 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "LunarLogic Sprint Dashboard",
-  description: "June 2026 Sales Sprint Command Center",
+  description: "AI-Powered Accounting Automation — June 2026 Sales Sprint Command Center",
+  openGraph: {
+    description: "AI-Powered Accounting Automation — June 2026 Sales Sprint Command Center",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

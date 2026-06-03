@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronRight, Check, X, Minus } from "lucide-react";
 
@@ -20,10 +21,20 @@ function Section({ title, children, defaultOpen = false }: { title: string; chil
   );
 }
 
-function QualifyQ({ q, yes, no, tilde }: { q: string; yes: string; no?: string; tilde?: string }) {
+function QualifyQ({
+  q, yes, no, tilde, isNew = false, accent,
+}: {
+  q: string; yes: string; no?: string; tilde?: string; isNew?: boolean; accent?: string;
+}) {
   return (
-    <div className="border border-border rounded-lg p-4 mb-3">
-      <p className="font-medium text-sm mb-3 italic">{q}</p>
+    <div className={cn(
+      "border rounded-lg p-4 mb-3",
+      accent ? accent : "border-border"
+    )}>
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <p className="font-medium text-sm italic">{q}</p>
+        {isNew && <Badge variant="info" className="shrink-0 text-[10px] px-1.5 py-0.5">NEW</Badge>}
+      </div>
       <div className="space-y-1.5 text-sm">
         <div className="flex gap-2">
           <Check className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />
@@ -77,7 +88,7 @@ function VerticalScript({ name, opener, email, pain }: { name: string; opener: s
   );
 }
 
-function ScriptBlock({ title, text }: { title: string; text: string }) {
+function ScriptBlock({ title, text, isNew = false }: { title: string; text: string; isNew?: boolean }) {
   const [copied, setCopied] = useState(false);
   function copy() {
     navigator.clipboard.writeText(text).then(() => {
@@ -87,12 +98,15 @@ function ScriptBlock({ title, text }: { title: string; text: string }) {
   }
   return (
     <div className="mb-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-semibold">{title}</div>
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-semibold">{title}</div>
+          {isNew && <Badge variant="info" className="text-[10px] px-1.5 py-0.5">NEW</Badge>}
+        </div>
         <button
           onClick={copy}
           className={cn(
-            "text-xs px-2 py-1 rounded border transition-colors",
+            "text-xs px-2 py-1 rounded border transition-colors shrink-0",
             copied ? "border-green-500 text-green-400" : "border-border text-muted-foreground hover:text-foreground"
           )}
         >
@@ -110,7 +124,18 @@ const SHADOW_CLOSE = "Here's what I want to do. Let me connect to your QuickBook
 
 const STALLED_RESCUE = "[Name] — I've reached out a few times and haven't heard back. I'm going to assume the timing isn't right and close out your file for now — no hard feelings at all. If that changes and cash flow becomes a priority, just reply to this email and we'll pick up exactly where we left off. Wishing you a strong rest of the month.";
 
-const ROI_CALC = "You're at [X]-day DSO. Healthy benchmark for a service business is 35 days. That [X-35] day gap, multiplied by your daily revenue, is working capital sitting in your aging report right now instead of your bank account. For a business your size, that's roughly $[X] locked up. We typically close that gap by 40% in 90 days — that's $[0.4 x gap] back in your account.";
+const ROI_CALC = "You're at [X]-day DSO. Healthy benchmark for a service business is 35 days — but with LunarLogic, our clients average 18-28 days. That [X-28] day gap, multiplied by your daily revenue, is working capital sitting in your aging report instead of your bank account. For a business your size, that's roughly $[X] locked up. We typically close that gap in 90 days. That's the number we're going after.";
+
+const COMPOUNDING_MOAT = "Every month LunarLogic runs in your business, it builds a richer picture of your clients' payment behavior, your seasonality, your exceptions. That institutional knowledge doesn't live in a person who can quit — it lives in the system and it compounds. The business that starts this in June has a 12-month head start on the business that starts in January. That gap widens every month. Every month you wait is a month you're giving that head start to someone else.";
+
+const PLATFORM_VISION = "We start with AR because it's where you're bleeding most visibly — the money you've already earned that isn't in your bank account yet. Once your DSO is compressed and cash flow is predictable, we move to AP automation: bill intake, approval workflows, payment scheduling. Then full accounting infrastructure: cash flow forecasting, month-end close, payroll integration. You're not buying a reminder tool. You're building the financial operating layer your business has never had. AR is just the right door to walk in through — because the ROI is visible in 30 days and it funds everything that comes next.";
+
+const DISQUALIFIERS = [
+  { dimension: "Billing model", signal: "Point of sale / insurance billing", why: "No AR cycle to automate." },
+  { dimension: "Software", signal: "NetSuite / SAP / Oracle", why: "Enterprise system — wrong buyer, wrong cycle." },
+  { dimension: "Decision maker", signal: "Committee or CFO approval required", why: "No single owner. Sales cycle becomes months." },
+  { dimension: "Technology-resistant mindset", signal: "Wants to hire a person, not build a system", why: "Will not implement correctly or see results. Not worth a demo slot.", isNew: true, qualifying: "When you hit an operational bottleneck, do you hire or automate?" },
+];
 
 export default function ScriptsPage() {
   return (
@@ -120,7 +145,7 @@ export default function ScriptsPage() {
         <p className="text-muted-foreground text-sm">Reference guide for calls — pull up mid-conversation</p>
       </div>
 
-      <Section title="A — 4-Question Qualifier" defaultOpen={true}>
+      <Section title="A — 5-Question Qualifier" defaultOpen={true}>
         <div className="space-y-1">
           <QualifyQ
             q="Do you invoice clients after completing the work, or collect at time of service?"
@@ -143,6 +168,37 @@ export default function ScriptsPage() {
             yes="Names a real number or 'too much' — Stage 2-3, close fast"
             tilde="'Not that bad' — Stage 1, nurture"
           />
+          <QualifyQ
+            q="When you hit an operational bottleneck — like collections — do you tend to hire someone to handle it, or look for a system to automate it?"
+            yes="'A system' / 'automate it' / 'technology first' — perfect fit, this is the right buyer"
+            no="'Hire someone' / 'need a person' — Stage 1 mindset at best, not a June close"
+            isNew={true}
+            accent="border-blue-500/40 bg-blue-500/5"
+          />
+        </div>
+      </Section>
+
+      <Section title="A2 — Disqualifiers Reference">
+        <div className="space-y-2">
+          {DISQUALIFIERS.map((d) => (
+            <div key={d.dimension} className={cn(
+              "border rounded-lg p-3",
+              d.isNew ? "border-blue-500/40 bg-blue-500/5" : "border-border"
+            )}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm font-semibold">{d.dimension}</span>
+                {d.isNew && <Badge variant="info" className="text-[10px] px-1.5 py-0.5">NEW</Badge>}
+              </div>
+              <div className="flex gap-2 text-sm mb-1">
+                <X className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                <span className="text-muted-foreground">{d.signal}</span>
+              </div>
+              <div className="text-xs text-muted-foreground ml-6">{d.why}</div>
+              {d.qualifying && (
+                <div className="ml-6 mt-1 text-xs text-blue-400 italic">Qualifying question: &ldquo;{d.qualifying}&rdquo;</div>
+              )}
+            </div>
+          ))}
         </div>
       </Section>
 
@@ -183,7 +239,23 @@ export default function ScriptsPage() {
         <ScriptBlock title="Shadow Mode Close" text={SHADOW_CLOSE} />
         <ScriptBlock title="Stalled Deal Rescue (Permission to Close File)" text={STALLED_RESCUE} />
         <ScriptBlock title="Live ROI Calculation" text={ROI_CALC} />
+        <ScriptBlock title="The Compounding Moat Close" text={COMPOUNDING_MOAT} isNew={true} />
+        <ScriptBlock title="The Platform Vision Pitch" text={PLATFORM_VISION} isNew={true} />
       </Section>
+
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex items-start gap-3">
+            <div className="text-primary text-lg font-bold shrink-0">$</div>
+            <div>
+              <div className="text-sm font-semibold mb-1">Pricing &amp; commitment</div>
+              <div className="text-sm text-muted-foreground leading-relaxed">
+                We earn your business every month through results. Month-to-month after pilot. Annual contract available with discount. No lock-in contracts.
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

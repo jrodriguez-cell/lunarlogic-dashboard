@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Target, PhoneCall, CalendarDays, BookOpen, Users, Settings } from "lucide-react";
+import { LayoutDashboard, Target, PhoneCall, CalendarDays, BookOpen, Users, Settings, UserCheck, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMetrics } from "@/lib/store";
 
@@ -15,6 +15,8 @@ const NAV = [
   { href: "/contacts", label: "Contacts", icon: PhoneCall },
   { href: "/weekly", label: "Weekly Plan", icon: CalendarDays },
   { href: "/scripts", label: "Scripts", icon: BookOpen },
+  { href: "/icp", label: "ICP & Platform", icon: UserCheck },
+  { href: "/prospects", label: "Prospect Lists", icon: MapPin },
   { href: "/partners", label: "Referrals", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -54,7 +56,7 @@ export default function SprintShell({ children }: { children: React.ReactNode })
         )}>
           <div className="p-4 border-b border-border">
             <div className="text-lg font-bold text-primary">LunarLogic</div>
-            <div className="text-xs text-muted-foreground">Sprint Dashboard</div>
+            <div className="text-xs text-muted-foreground">AI-Powered Accounting Automation</div>
           </div>
           <div className="flex flex-col gap-1 p-2 flex-1">
             {NAV.map(({ href, label, icon: Icon }) => (

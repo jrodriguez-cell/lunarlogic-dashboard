@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { getMetrics, saveMetrics, getContacts } from "@/lib/store";
-import { SprintMetrics } from "@/lib/types";
-import { TrendingUp, Users, Phone, Presentation, FileText, CheckCircle2, Edit2, Save } from "lucide-react";
+import { SprintMetrics, ContactLog } from "@/lib/types";
+import { TrendingUp, Users, Phone, Presentation, FileText, CheckCircle2, Edit2, Save, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const SPRINT_START = new Date("2026-06-01");
 
@@ -49,8 +50,8 @@ function MetricCard({
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
         <div className={`text-3xl font-bold ${color}`}>
-          {prefix}{current}
-          <span className="text-base font-normal text-muted-foreground">/{target}</span>
+          {prefix}{current.toLocaleString()}
+          <span className="text-base font-normal text-muted-foreground">/{target.toLocaleString()}</span>
         </div>
         <Progress value={pct} className="mt-2 h-1.5" />
         <div className="text-xs text-muted-foreground mt-1">{pct}% to goal</div>
@@ -67,6 +68,93 @@ const FUNNEL = [
   { label: "Signed", target: 5, rate: "63%" },
 ];
 
+function computeStreak(contacts: ContactLog[]) {
+  // Build a set of dates that hit the 5-contact target
+  const countByDate: Record<string, number> = {};
+  contacts.forEach((c) => {
+    countByDate[c.date] = (countByDate[c.date] || 0) + 1;
+  });
+
+  const sprintDays: { date: string; hit: boolean; future: boolean }[] = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(SPRINT_START);
+    d.setDate(d.getDate() + i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
+    sprintDays.push({
+      date: dateStr,
+      hit: (countByDate[dateStr] || 0) >= 5,
+      future: dateStr > today,
+    });
+  }
+
+  // Current streak: consecutive hit days ending today (or yesterday if today not done)
+  let currentStreak = 0;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  // Walk backward from today
+  for (let i = sprintDays.length - 1; i >= 0; i--) {
+    if (sprintDays[i].date > todayStr) continue;
+    if (sprintDays[i].hit) currentStreak++;
+    else break;
+  }
+
+  // Longest streak
+  let longest = 0, running = 0;
+  sprintDays.forEach((d) => {
+    if (d.future) return;
+    if (d.hit) { running++; longest = Math.max(longest, running); }
+    else running = 0;
+  });
+
+  return { sprintDays, currentStreak, longest };
+}
+
+function StreakTracker({ contacts }: { contacts: ContactLog[] }) {
+  const { sprintDays, currentStreak, longest } = computeStreak(contacts);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Flame className="h-4 w-4 text-orange-400" /> Daily Contact Streak
+          </CardTitle>
+          <div className="flex items-center gap-3 text-sm">
+            <span>
+              <span className="font-bold text-orange-400">{currentStreak}</span>
+              <span className="text-muted-foreground ml-1">current</span>
+            </span>
+            <span>
+              <span className="font-bold text-primary">{longest}</span>
+              <span className="text-muted-foreground ml-1">best</span>
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex gap-1 flex-wrap">
+          {sprintDays.map((d) => (
+            <div
+              key={d.date}
+              title={`${d.date}${d.future ? " (future)" : d.hit ? " — hit 5+" : " — missed"}`}
+              className={cn(
+                "w-5 h-5 rounded-sm transition-colors",
+                d.future ? "bg-secondary opacity-30" :
+                d.hit ? "bg-green-500" : "bg-red-500/60"
+              )}
+            />
+          ))}
+        </div>
+        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-green-500 inline-block" /> 5+ contacts</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500/60 inline-block" /> Missed</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-secondary opacity-30 inline-block" /> Upcoming</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function OverviewPage() {
   const [metrics, setMetrics] = useState<SprintMetrics>({
     clientsSigned: 0,
@@ -81,6 +169,7 @@ export default function OverviewPage() {
   const [daysRemaining, setDaysRemaining] = useState(30);
   const [todayContacts, setTodayContacts] = useState(0);
   const [weekContacts, setWeekContacts] = useState(0);
+  const [allContacts, setAllContacts] = useState<ContactLog[]>([]);
 
   useEffect(() => {
     const m = getMetrics();
@@ -93,6 +182,7 @@ export default function OverviewPage() {
     setDaysRemaining(Math.max(0, total - elapsed));
 
     const contacts = getContacts();
+    setAllContacts(contacts);
     const today = new Date().toISOString().slice(0, 10);
     setTodayContacts(contacts.filter((c) => c.date === today).length);
 
@@ -180,6 +270,9 @@ export default function OverviewPage() {
         <MetricCard label="Demos Delivered" current={metrics.demosDelivered} target={TARGETS.demosDelivered} icon={Presentation} />
         <MetricCard label="Proposals Sent" current={metrics.proposalsSent} target={TARGETS.proposalsSent} icon={FileText} />
       </div>
+
+      {/* Streak Tracker */}
+      <StreakTracker contacts={allContacts} />
 
       {/* Funnel + Weekly KPIs */}
       <div className="grid md:grid-cols-2 gap-4">

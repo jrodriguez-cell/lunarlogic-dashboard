@@ -152,8 +152,13 @@ function DealCard({ deal, onEdit, onDelete }: { deal: Deal; onEdit: () => void; 
         <div className="flex items-center justify-between mt-2 flex-wrap gap-1">
           <span className={cn("text-xs font-medium", priorityColors[deal.priority])}>{deal.priority}</span>
           <span className="text-xs text-muted-foreground">{deal.dealValue}</span>
-          <span className={cn("text-xs", daysSinceContact > 3 ? "text-red-400" : "text-muted-foreground")}>
+          <span className={cn("text-xs font-medium",
+            daysSinceContact >= 6 ? "text-red-400" :
+            daysSinceContact >= 3 ? "text-amber-400" :
+            "text-green-400"
+          )}>
             {daysSinceContact}d since contact
+            {daysSinceContact >= 6 && <span className="ml-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded px-1 py-0.5 text-[10px] font-bold">OVERDUE</span>}
           </span>
         </div>
       </CardContent>
@@ -191,9 +196,18 @@ export default function PipelinePage() {
   }
 
   const overdueCount = deals.filter((d) => d.nextActionDue && isOverdue(d.nextActionDue) && d.stage !== "Archived").length;
+  const staleCount = deals.filter((d) => d.stage !== "Archived" && daysSince(d.lastContactDate) >= 6).length;
 
   return (
     <div className="p-4 md:p-6 space-y-4">
+      {overdueCount > 0 && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center gap-2 text-red-400 text-sm font-medium">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          {overdueCount} deal{overdueCount > 1 ? "s have" : " has"} overdue actions — address these first.
+          {staleCount > 0 && <span className="ml-2 opacity-80">· {staleCount} deal{staleCount > 1 ? "s" : ""} not contacted in 6+ days.</span>}
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">Pipeline</h1>
