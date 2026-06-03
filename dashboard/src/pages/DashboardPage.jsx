@@ -11,7 +11,6 @@ import PaymentQueue from '../components/PaymentQueue';
 import PaymentMatchDrawer from '../components/PaymentMatchDrawer';
 import MatchConfidenceChart from '../components/MatchConfidenceChart';
 import ARReminderTracker from '../components/ARReminderTracker';
-import SprintDashboard from '../components/SprintDashboard';
 import { fetchDashboardData } from '../lib/quickbooks';
 
 const REFRESH_MS = 15 * 60 * 1000;
@@ -23,7 +22,6 @@ const VIEW_TITLES = {
   reminders:  { title: 'Reminder Sequence',   sub: 'Escalation tracker · Gualapack POC'      },
   reports:    { title: 'Reports',             sub: 'Coming soon'                             },
   payments:   { title: 'Cash Application',    sub: 'Plaid-powered payment matching · WF3'   },
-  sprint:     { title: 'Sales Sprint',        sub: 'June 2026 · 30-day command center'       },
 };
 
 export default function DashboardPage({ session, onLogout }) {
@@ -176,10 +174,6 @@ export default function DashboardPage({ session, onLogout }) {
             />
           ) : activeView === 'customers' ? (
             <PaymentTable data={paymentBehavior} onOpenCustomer={handleOpenCustomer} />
-          ) : activeView === 'sprint' ? (
-            <div style={{ margin: '-32px -32px -56px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-              <SprintDashboard />
-            </div>
           ) : (
             <>
               <section className="hero">
