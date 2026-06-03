@@ -11,6 +11,7 @@ import PaymentQueue from '../components/PaymentQueue';
 import PaymentMatchDrawer from '../components/PaymentMatchDrawer';
 import MatchConfidenceChart from '../components/MatchConfidenceChart';
 import ARReminderTracker from '../components/ARReminderTracker';
+import ROICalculator from '../components/ROICalculator';
 import { fetchDashboardData } from '../lib/quickbooks';
 
 const REFRESH_MS = 15 * 60 * 1000;
@@ -22,6 +23,7 @@ const VIEW_TITLES = {
   reminders:  { title: 'Reminder Sequence',   sub: 'Escalation tracker · Gualapack POC'      },
   reports:    { title: 'Reports',             sub: 'Coming soon'                             },
   payments:   { title: 'Cash Application',    sub: 'Plaid-powered payment matching · WF3'   },
+  roi:        { title: 'ROI Calculator',      sub: 'Estimate your Year-1 value from LunarLogic' },
 };
 
 export default function DashboardPage({ session, onLogout }) {
@@ -115,7 +117,9 @@ export default function DashboardPage({ session, onLogout }) {
         </header>
 
         <main className="main-content">
-          {activeView === 'payments' ? (
+          {activeView === 'roi' ? (
+            <ROICalculator />
+          ) : activeView === 'payments' ? (
             <>
               <section className="payments-hero">
                 <div className="payments-hero-metric">
@@ -277,11 +281,11 @@ function MobileBottomNav({ activeView, onNav, pendingPayments }) {
         <path d="M7 9.5h4" strokeWidth="1.5"/>
       </svg>
     )},
-    { key: 'reports',   label: 'Reports',   icon: (
-      <svg width="20" height="20" viewBox="0 0 15 15" fill="currentColor">
-        <rect x="1.5" y="9" width="3" height="4.5" rx="0.5"/>
-        <rect x="6" y="5.5" width="3" height="8" rx="0.5"/>
-        <rect x="10.5" y="2.5" width="3" height="11" rx="0.5"/>
+    { key: 'roi',   label: 'ROI',   icon: (
+      <svg width="20" height="20" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="7.5" cy="7.5" r="6"/>
+        <path d="M5 9.5l2-2 1.5 1.5L11 5.5"/>
+        <path d="M9.5 5.5H11V7"/>
       </svg>
     )},
   ];
