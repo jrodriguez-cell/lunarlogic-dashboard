@@ -41,12 +41,16 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2.5 mb-4">
-            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-              <path d="M10 2a8 8 0 1 0 8 8 6 6 0 1 1-8-8z" fill="#00CFFF" />
-            </svg>
-            <span className="text-white font-bold tracking-wide text-xl">
-              lunar<span style={{ color: '#00CFFF' }}>logic</span>
+          <div className="flex items-center justify-center mb-4">
+            <span
+              className="font-bold tracking-wide text-xl"
+              style={{
+                fontFamily: 'var(--font-display, sans-serif)',
+                color: '#00CFFF',
+                textShadow: '0 0 20px rgba(0,207,255,0.6), 0 0 40px rgba(0,207,255,0.3)',
+              }}
+            >
+              lunarlogic
             </span>
           </div>
           <h1 className="text-xl font-bold text-white">Admin Dashboard</h1>

@@ -16,26 +16,26 @@ interface Props {
 }
 
 const creationOptions = [
-  { value: 'Manually in QuickBooks', label: 'Manually in QuickBooks', icon: '✍️' },
-  { value: 'Manually in spreadsheet', label: 'Manually in spreadsheet', icon: '📊' },
-  { value: 'From sales orders / estimates', label: 'From sales orders / estimates', icon: '📋' },
-  { value: 'Third-party software', label: 'Third-party software', icon: '🔧' },
-  { value: 'Mostly automated', label: 'Mostly automated already', icon: '⚡' },
+  { value: 'Manually in QuickBooks', label: 'Manually in QuickBooks' },
+  { value: 'Manually in spreadsheet', label: 'Manually in spreadsheet' },
+  { value: 'From sales orders / estimates', label: 'From sales orders / estimates' },
+  { value: 'Third-party software', label: 'Third-party software' },
+  { value: 'Mostly automated', label: 'Mostly automated already' },
 ];
 
 const deliveryOptions = [
-  { value: 'QuickBooks email', label: 'QuickBooks email', icon: '📧' },
-  { value: 'Regular email (Gmail/Outlook)', label: 'Regular email', icon: '✉️' },
-  { value: 'Printed and mailed', label: 'Printed and mailed', icon: '📬' },
-  { value: 'Customer portal', label: 'Customer portal', icon: '🌐' },
-  { value: 'Mixed methods', label: 'Mixed methods', icon: '🔀' },
+  { value: 'QuickBooks email', label: 'QuickBooks email' },
+  { value: 'Regular email (Gmail/Outlook)', label: 'Regular email (Gmail / Outlook)' },
+  { value: 'Printed and mailed', label: 'Printed and mailed' },
+  { value: 'Customer portal', label: 'Customer portal' },
+  { value: 'Mixed methods', label: 'Mixed methods' },
 ];
 
 const followupOptions = [
-  { value: 'No formal process', label: 'No formal process — ad hoc', icon: '🤷' },
-  { value: 'Manual email/call', label: 'Manual email or phone call', icon: '📞' },
-  { value: 'Templated emails', label: 'Templated reminder emails', icon: '📝' },
-  { value: 'Third-party AR tool', label: 'Third-party AR tool', icon: '🛠️' },
+  { value: 'No formal process', label: 'No formal process — ad hoc' },
+  { value: 'Manual email/call', label: 'Manual email or phone call' },
+  { value: 'Templated emails', label: 'Templated reminder emails' },
+  { value: 'Third-party AR tool', label: 'Third-party AR tool' },
 ];
 
 const frequencyOptions = [
@@ -49,23 +49,31 @@ const frequencyOptions = [
 interface RadioCardProps {
   selected: boolean;
   onClick: () => void;
-  icon: string;
   label: string;
 }
 
-function RadioCard({ selected, onClick, icon, label }: RadioCardProps) {
+function RadioCard({ selected, onClick, label }: RadioCardProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-lg border-2 p-3 text-left transition-all duration-200 flex items-center gap-3 w-full',
+        'rounded-lg border p-3 text-left transition-all duration-200 flex items-center gap-3 w-full',
         selected
-          ? 'border-indigo-500 bg-indigo-500/10 text-white'
-          : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:bg-white/10'
+          ? 'text-white'
+          : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:bg-white/8'
       )}
+      style={selected ? {
+        borderColor: 'rgba(0,207,255,0.5)',
+        background: 'rgba(0,207,255,0.08)',
+      } : undefined}
     >
-      <span className="text-xl">{icon}</span>
+      <span
+        className="w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
+        style={selected ? { borderColor: '#00CFFF', background: '#00CFFF' } : { borderColor: 'rgba(255,255,255,0.2)' }}
+      >
+        {selected && <span className="w-1.5 h-1.5 rounded-full bg-[#080D1A]" />}
+      </span>
       <span className="text-sm font-medium">{label}</span>
     </button>
   );
@@ -100,7 +108,6 @@ export function Step3_ARWorkflow({ data, onUpdate, onValidChange }: Props) {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
 
-  // Force validation on mount so pre-filled data reports correct validity
   useEffect(() => { void trigger(); }, [trigger]);
 
   return (
@@ -119,7 +126,6 @@ export function Step3_ARWorkflow({ data, onUpdate, onValidChange }: Props) {
               key={opt.value}
               selected={watchedValues.invoiceCreation === opt.value}
               onClick={() => setValue('invoiceCreation', opt.value, { shouldValidate: true })}
-              icon={opt.icon}
               label={opt.label}
             />
           ))}
@@ -135,7 +141,6 @@ export function Step3_ARWorkflow({ data, onUpdate, onValidChange }: Props) {
               key={opt.value}
               selected={watchedValues.invoiceDelivery === opt.value}
               onClick={() => setValue('invoiceDelivery', opt.value, { shouldValidate: true })}
-              icon={opt.icon}
               label={opt.label}
             />
           ))}
@@ -151,7 +156,6 @@ export function Step3_ARWorkflow({ data, onUpdate, onValidChange }: Props) {
               key={opt.value}
               selected={watchedValues.followupProcess === opt.value}
               onClick={() => setValue('followupProcess', opt.value, { shouldValidate: true })}
-              icon={opt.icon}
               label={opt.label}
             />
           ))}

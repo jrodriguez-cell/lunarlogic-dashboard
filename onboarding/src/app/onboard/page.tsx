@@ -96,7 +96,8 @@ export default function OnboardPage() {
       const json = await res.json() as { success: boolean; id?: string; roi?: ROIResult; errors?: unknown; error?: string };
 
       if (!res.ok || !json.success) {
-        setSubmitError('Something went wrong. Please try again or contact Jonathan directly.');
+        const detail = json.error ?? (json.errors ? 'Validation error — check all fields.' : 'Server error');
+        setSubmitError(`Submission failed: ${detail}. Email jonathan@lunarlogic.ai if this persists.`);
         return;
       }
 

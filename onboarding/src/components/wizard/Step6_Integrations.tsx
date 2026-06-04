@@ -19,7 +19,6 @@ interface IntegrationTile {
   key: keyof Step6Data;
   name: string;
   description: string;
-  icon: string;
   requiredFor: string;
 }
 
@@ -28,35 +27,30 @@ const integrations: IntegrationTile[] = [
     key: 'usesSlack',
     name: 'Slack',
     description: 'Human-in-the-loop approvals, daily AR summaries, invoice notifications',
-    icon: '💬',
     requiredFor: 'WF1, WF2',
   },
   {
     key: 'usesStripe',
     name: 'Stripe',
     description: 'Payment processing and reconciliation against QB invoices',
-    icon: '💳',
     requiredFor: 'WF3',
   },
   {
     key: 'usesGoogleSheets',
     name: 'Google Sheets',
     description: 'Token storage, VIP exemption lists, audit logs',
-    icon: '📊',
     requiredFor: 'WF1, WF2',
   },
   {
     key: 'usesQBPayments',
     name: 'QuickBooks Payments',
     description: 'Built-in QB payment links for customers paying online',
-    icon: '🏦',
     requiredFor: 'WF3',
   },
   {
     key: 'usesEmail',
     name: 'Outlook / Gmail',
     description: 'Customer-facing reminder emails via Microsoft Graph or Gmail API',
-    icon: '✉️',
     requiredFor: 'WF2',
   },
 ];
@@ -89,10 +83,9 @@ export function Step6_Integrations({ data, onUpdate, onValidChange }: Props) {
   }, [JSON.stringify(watchedValues)]);
 
   useEffect(() => {
-    onValidChange(true); // Step 6 is always valid (all optional)
+    onValidChange(true);
   }, [isValid, onValidChange]);
 
-  // Force validation on mount so pre-filled data reports correct validity
   useEffect(() => { void trigger(); }, [trigger]);
 
   const toggleIntegration = (key: keyof Step6Data) => {
@@ -117,34 +110,40 @@ export function Step6_Integrations({ data, onUpdate, onValidChange }: Props) {
               type="button"
               onClick={() => toggleIntegration(integration.key)}
               className={cn(
-                'rounded-xl border-2 p-4 text-left transition-all duration-200 flex items-center gap-4',
-                isEnabled
-                  ? 'border-indigo-500 bg-indigo-500/10'
-                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                'rounded-xl border p-4 text-left transition-all duration-200 flex items-center gap-4',
+                !isEnabled && 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8'
               )}
+              style={isEnabled ? {
+                borderColor: 'rgba(0,207,255,0.4)',
+                background: 'rgba(0,207,255,0.07)',
+              } : undefined}
             >
-              <span className="text-3xl flex-shrink-0">{integration.icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className={cn('font-semibold', isEnabled ? 'text-white' : 'text-gray-300')}>
+                  <span className={cn('font-semibold text-sm', isEnabled ? 'text-white' : 'text-gray-300')}>
                     {integration.name}
                   </span>
-                  <span className={cn('text-xs px-1.5 py-0.5 rounded', {
-                    'bg-indigo-500/20 text-indigo-300': isEnabled,
-                    'bg-white/5 text-gray-500': !isEnabled,
-                  })}>
+                  <span className={cn('text-xs px-1.5 py-0.5 rounded font-mono', {
+                    'bg-white/8 text-gray-500': !isEnabled,
+                  })}
+                  style={isEnabled ? { background: 'rgba(0,207,255,0.15)', color: '#00CFFF' } : undefined}
+                  >
                     {integration.requiredFor}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">{integration.description}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{integration.description}</p>
               </div>
-              <div className={cn(
-                'w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0 relative',
-                isEnabled ? 'bg-indigo-600' : 'bg-white/10'
-              )}>
+              {/* Toggle switch */}
+              <div
+                className="w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0 relative"
+                style={isEnabled
+                  ? { background: 'linear-gradient(135deg, #00CFFF, #0098C0)' }
+                  : { background: 'rgba(255,255,255,0.1)' }
+                }
+              >
                 <div className={cn(
-                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300',
-                  isEnabled ? 'left-7' : 'left-1'
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm',
+                  isEnabled ? 'left-6' : 'left-1'
                 )} />
               </div>
             </button>
@@ -162,9 +161,9 @@ export function Step6_Integrations({ data, onUpdate, onValidChange }: Props) {
         />
       </div>
 
-      <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
         <p className="text-gray-400 text-sm">
-          💡 <strong className="text-white">Don&apos;t have all of these?</strong> That&apos;s fine. QuickBooks Online is the only hard requirement. Jonathan will recommend which integrations to add based on your workflow.
+          <strong className="text-gray-300">QuickBooks Online is the only hard requirement.</strong> Jonathan will recommend which additional integrations to activate based on your workflow during the implementation call.
         </p>
       </div>
     </div>

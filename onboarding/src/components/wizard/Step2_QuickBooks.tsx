@@ -36,10 +36,10 @@ const managerOptions = [
 ];
 
 const stateOptions = [
-  { value: 'Clean and up to date', label: 'Clean and up to date ✅' },
+  { value: 'Clean and up to date', label: 'Clean and up to date' },
   { value: 'Mostly clean, minor issues', label: 'Mostly clean, minor issues' },
-  { value: 'Needs some cleanup', label: 'Needs some cleanup ⚠️' },
-  { value: 'Needs significant cleanup', label: 'Needs significant cleanup 🔴' },
+  { value: 'Needs some cleanup', label: 'Needs some cleanup' },
+  { value: 'Needs significant cleanup', label: 'Needs significant cleanup' },
   { value: "Not sure / haven't looked", label: "Not sure / haven't looked" },
 ];
 
@@ -75,7 +75,6 @@ export function Step2_QuickBooks({ data, onUpdate, onValidChange }: Props) {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
 
-  // Force validation on mount so pre-filled data reports correct validity
   useEffect(() => { void trigger(); }, [trigger]);
 
   const needsCleanup = qbCurrentState?.toLowerCase().includes('cleanup');
@@ -96,16 +95,22 @@ export function Step2_QuickBooks({ data, onUpdate, onValidChange }: Props) {
               type="button"
               onClick={() => setValue('qbVersion', version, { shouldValidate: true })}
               className={cn(
-                'rounded-xl border-2 p-5 text-left transition-all duration-200 cursor-pointer',
+                'rounded-xl border p-5 text-left transition-all duration-200 cursor-pointer',
                 qbVersion === version
-                  ? 'border-indigo-500 bg-indigo-500/10 text-white'
-                  : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:bg-white/10'
+                  ? 'text-white'
+                  : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:bg-white/8'
               )}
+              style={qbVersion === version ? {
+                borderColor: 'rgba(0,207,255,0.5)',
+                background: 'rgba(0,207,255,0.08)',
+              } : undefined}
             >
-              <div className="text-lg font-bold">{version === 'Online' ? '☁️' : '💻'}</div>
-              <div className="mt-1 font-semibold">QuickBooks {version}</div>
-              <div className="text-xs text-gray-400 mt-0.5">
-                {version === 'Online' ? 'Cloud-based, any device' : 'Desktop software'}
+              <div className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-2">
+                {version === 'Online' ? 'Cloud' : 'Desktop'}
+              </div>
+              <div className="font-semibold text-white text-sm">QuickBooks {version}</div>
+              <div className="text-xs text-gray-500 mt-0.5">
+                {version === 'Online' ? 'Browser-based, any device' : 'Installed software'}
               </div>
             </button>
           ))}
@@ -148,10 +153,10 @@ export function Step2_QuickBooks({ data, onUpdate, onValidChange }: Props) {
       </div>
 
       {needsCleanup && (
-        <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-4">
-          <p className="text-sky-400 text-sm font-medium">ℹ️ QB cleanup included</p>
-          <p className="text-sky-300/80 text-sm mt-1">
-            No problem — QuickBooks cleanup is included in our onboarding process. We will audit your chart of accounts, customer records, and open invoices before automating anything.
+        <div className="rounded-lg border p-4" style={{ borderColor: 'rgba(0,207,255,0.2)', background: 'rgba(0,207,255,0.06)' }}>
+          <p className="text-sm font-semibold" style={{ color: '#00CFFF' }}>QB cleanup is included in onboarding</p>
+          <p className="text-gray-400 text-sm mt-1">
+            We audit your chart of accounts, customer records, and open invoices before automating anything. No work required on your end beforehand.
           </p>
         </div>
       )}

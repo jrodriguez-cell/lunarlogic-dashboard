@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('Onboard POST error:', err);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: err instanceof Error ? err.message : 'Internal server error' },
       { status: 500 }
     );
   }

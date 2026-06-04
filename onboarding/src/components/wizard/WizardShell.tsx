@@ -62,18 +62,16 @@ export function WizardShell({
 
       {/* Header */}
       <div className="relative z-10 flex items-center px-6 py-5">
-        <div className="flex items-center gap-2.5">
-          {/* Crescent moon mark */}
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M10 2a8 8 0 1 0 8 8 6 6 0 1 1-8-8z"
-              fill="#00CFFF"
-            />
-          </svg>
-          <span className="text-white font-bold tracking-wide text-base leading-none" style={{ fontFamily: 'var(--font-display, sans-serif)' }}>
-            lunar<span className="text-[#00CFFF]">logic</span>
-          </span>
-        </div>
+        <span
+          className="font-bold tracking-wide text-base leading-none"
+          style={{
+            fontFamily: 'var(--font-display, sans-serif)',
+            color: '#00CFFF',
+            textShadow: '0 0 20px rgba(0,207,255,0.6), 0 0 40px rgba(0,207,255,0.3)',
+          }}
+        >
+          lunarlogic
+        </span>
       </div>
 
       {/* Main content */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import type { OnboardingData } from '@/types/onboarding';
@@ -39,7 +39,6 @@ const slowPayerOptions = [
 export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
   const {
     register,
-    control,
     watch,
     formState: { errors, isValid },
     trigger,
@@ -69,7 +68,6 @@ export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
 
-  // Force validation on mount so pre-filled data reports correct validity
   useEffect(() => { void trigger(); }, [trigger]);
 
   const toggleCategory = (value: string) => {
@@ -94,7 +92,7 @@ export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
         <Textarea
           id="biggestArPain"
           rows={4}
-          placeholder="e.g., We have 3 clients who pay 60-90 days late no matter what. I spend 4 hours a week sending follow-up emails, and I still missed a $12,000 payment last month that I had to scramble to find..."
+          placeholder="e.g., We have 3 clients who pay 60–90 days late no matter what. I spend 4 hours a week sending follow-up emails, and I still missed a $12,000 payment last month..."
           {...register('biggestArPain')}
           className="mt-1"
         />
@@ -124,19 +122,26 @@ export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
                 type="button"
                 onClick={() => toggleCategory(cat.value)}
                 className={cn(
-                  'rounded-lg border-2 p-3 text-left text-sm transition-all duration-200',
+                  'rounded-lg border p-3 text-left text-sm transition-all duration-200',
                   isSelected
-                    ? 'border-indigo-500 bg-indigo-500/10 text-white'
-                    : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:bg-white/10'
+                    ? 'text-white'
+                    : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:bg-white/8'
                 )}
+                style={isSelected ? {
+                  borderColor: 'rgba(0,207,255,0.5)',
+                  background: 'rgba(0,207,255,0.08)',
+                } : undefined}
               >
                 <span className="flex items-center gap-2">
-                  <span className={cn('w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center', {
-                    'border-indigo-500 bg-indigo-500': isSelected,
-                    'border-white/30': !isSelected,
-                  })}>
+                  <span
+                    className="w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center"
+                    style={isSelected
+                      ? { borderColor: '#00CFFF', background: '#00CFFF' }
+                      : { borderColor: 'rgba(255,255,255,0.2)' }
+                    }
+                  >
                     {isSelected && (
-                      <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-2.5 h-2.5 text-[#080D1A]" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
@@ -153,21 +158,26 @@ export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
         <Label>Have you ever nearly missed payroll due to slow AR? *</Label>
         <div className="flex gap-3 mt-2">
           {[
-            { value: true, label: 'Yes', emoji: '😰', color: 'border-amber-500 bg-amber-500/10 text-amber-300' },
-            { value: false, label: 'No', emoji: '✅', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-300' },
+            { value: true, label: 'Yes — this has happened' },
+            { value: false, label: 'No, not yet' },
           ].map((opt) => (
             <button
               key={String(opt.value)}
               type="button"
               onClick={() => setValue('nearlyMissedPayroll', opt.value, { shouldValidate: true })}
               className={cn(
-                'flex-1 rounded-xl border-2 p-4 text-center transition-all duration-200 font-semibold',
+                'flex-1 rounded-xl border p-4 text-center transition-all duration-200 font-semibold text-sm',
                 nearlyMissedPayroll === opt.value
-                  ? opt.color
+                  ? opt.value
+                    ? 'border-amber-500/60 bg-amber-500/10 text-amber-300'
+                    : 'text-white'
                   : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20'
               )}
+              style={nearlyMissedPayroll === opt.value && !opt.value ? {
+                borderColor: 'rgba(0,207,255,0.4)',
+                background: 'rgba(0,207,255,0.07)',
+              } : undefined}
             >
-              <span className="text-2xl block mb-1">{opt.emoji}</span>
               {opt.label}
             </button>
           ))}
