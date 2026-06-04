@@ -19,7 +19,7 @@ const defaultLabels = [
 export function StepIndicator({ currentStep, totalSteps, stepLabels = defaultLabels }: StepIndicatorProps) {
   return (
     <div className="flex flex-col items-center gap-3">
-      <p className="text-sm text-gray-400">
+      <p className="text-xs text-gray-500 tracking-widest uppercase">
         Step <span className="text-white font-semibold">{currentStep}</span> of{' '}
         <span className="text-white font-semibold">{totalSteps}</span>
       </p>
@@ -35,13 +35,20 @@ export function StepIndicator({ currentStep, totalSteps, stepLabels = defaultLab
               <div
                 title={stepLabels[i]}
                 className={cn(
-                  'flex items-center justify-center rounded-full transition-all duration-300',
+                  'flex items-center justify-center rounded-full transition-all duration-300 text-xs font-bold',
                   {
-                    'w-7 h-7 bg-indigo-600 text-white text-xs font-bold shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-400/50': isCurrent,
-                    'w-6 h-6 bg-indigo-600/80 text-white text-xs font-semibold': isCompleted,
-                    'w-5 h-5 bg-white/10 text-gray-500 text-xs': isFuture,
+                    'w-7 h-7 text-[#080D1A]': isCurrent,
+                    'w-6 h-6 text-[#080D1A]': isCompleted,
+                    'w-5 h-5 bg-white/8 text-gray-600': isFuture,
                   }
                 )}
+                style={
+                  isCurrent
+                    ? { background: '#00CFFF', boxShadow: '0 0 12px rgba(0,207,255,0.4)' }
+                    : isCompleted
+                    ? { background: 'rgba(0,207,255,0.6)' }
+                    : undefined
+                }
               >
                 {isCompleted ? (
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -53,17 +60,17 @@ export function StepIndicator({ currentStep, totalSteps, stepLabels = defaultLab
               </div>
               {step < totalSteps && (
                 <div
-                  className={cn('h-0.5 w-4 transition-all duration-300', {
-                    'bg-indigo-600': step < currentStep,
-                    'bg-white/10': step >= currentStep,
-                  })}
+                  className="h-px w-4 transition-all duration-300"
+                  style={{
+                    background: step < currentStep ? 'rgba(0,207,255,0.5)' : 'rgba(255,255,255,0.08)',
+                  }}
                 />
               )}
             </div>
           );
         })}
       </div>
-      <p className="text-sm font-medium text-indigo-300">
+      <p className="text-sm font-medium" style={{ color: '#00CFFF' }}>
         {stepLabels[currentStep - 1]}
       </p>
     </div>

@@ -75,6 +75,7 @@ export function Step3_ARWorkflow({ data, onUpdate, onValidChange }: Props) {
   const {
     watch,
     formState: { errors, isValid },
+    trigger,
     setValue,
     register,
   } = useForm<Step3Data>({
@@ -98,6 +99,9 @@ export function Step3_ARWorkflow({ data, onUpdate, onValidChange }: Props) {
   useEffect(() => {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
+
+  // Force validation on mount so pre-filled data reports correct validity
+  useEffect(() => { void trigger(); }, [trigger]);
 
   return (
     <div className="space-y-6">

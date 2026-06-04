@@ -37,35 +37,30 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#080D1A] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M12 3C7.03 3 3 7.03 3 12s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z" fill="#4A9FFF" opacity="0.9" />
-              <circle cx="6.5" cy="11.5" r="1.5" fill="#F7F9FC" opacity="0.8" />
-              <circle cx="9.5" cy="7.5" r="1.5" fill="#F7F9FC" opacity="0.8" />
-              <circle cx="14.5" cy="7.5" r="1.5" fill="#F7F9FC" opacity="0.8" />
-              <circle cx="17.5" cy="11.5" r="1.5" fill="#F7F9FC" opacity="0.8" />
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2a8 8 0 1 0 8 8 6 6 0 1 1-8-8z" fill="#00CFFF" />
             </svg>
-            <div>
-              <span className="text-sky-400 font-black tracking-tight text-xl">LUNAR</span>
-              <span className="text-white font-black tracking-tight text-xl">LOGIC</span>
-            </div>
+            <span className="text-white font-bold tracking-wide text-xl">
+              lunar<span style={{ color: '#00CFFF' }}>logic</span>
+            </span>
           </div>
           <h1 className="text-xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-gray-400 text-sm mt-1">Sign in to manage onboarding submissions</p>
+          <p className="text-gray-500 text-sm mt-1">Sign in to manage onboarding submissions</p>
         </div>
 
         {/* Card */}
         <div
-          className="rounded-2xl border border-white/10 p-8"
-          style={{ background: 'rgba(14, 20, 40, 0.9)', backdropFilter: 'blur(20px)' }}
+          className="rounded-2xl border border-white/8 p-8"
+          style={{ background: 'rgba(10, 16, 32, 0.95)', backdropFilter: 'blur(24px)' }}
         >
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label htmlFor="email" className="block text-xs font-medium text-gray-400 mb-1.5 tracking-wider uppercase">
                 Email
               </label>
               <input
@@ -75,13 +70,13 @@ export default function AdminLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-10 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                placeholder="admin@lunarlogic.ai"
+                className="w-full h-10 rounded-lg border border-white/8 bg-white/4 px-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#00CFFF]/40 focus:ring-1 focus:ring-[#00CFFF]/30 transition-colors"
+                placeholder="jonathan@lunarlogic.ai"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label htmlFor="password" className="block text-xs font-medium text-gray-400 mb-1.5 tracking-wider uppercase">
                 Password
               </label>
               <input
@@ -91,7 +86,7 @@ export default function AdminLoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-10 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                className="w-full h-10 rounded-lg border border-white/8 bg-white/4 px-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#00CFFF]/40 focus:ring-1 focus:ring-[#00CFFF]/30 transition-colors"
                 placeholder="••••••••"
               />
             </div>
@@ -105,7 +100,8 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-11 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full h-11 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-[#080D1A]"
+              style={{ background: 'linear-gradient(135deg, #00CFFF, #0098C0)', boxShadow: '0 0 20px rgba(0,207,255,0.2)' }}
             >
               {isLoading ? (
                 <>

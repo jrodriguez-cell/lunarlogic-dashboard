@@ -66,6 +66,7 @@ export function Step6_Integrations({ data, onUpdate, onValidChange }: Props) {
     register,
     watch,
     formState: { isValid },
+    trigger,
     setValue,
   } = useForm<Step6Data>({
     resolver: zodResolver(step6Schema),
@@ -90,6 +91,9 @@ export function Step6_Integrations({ data, onUpdate, onValidChange }: Props) {
   useEffect(() => {
     onValidChange(true); // Step 6 is always valid (all optional)
   }, [isValid, onValidChange]);
+
+  // Force validation on mount so pre-filled data reports correct validity
+  useEffect(() => { void trigger(); }, [trigger]);
 
   const toggleIntegration = (key: keyof Step6Data) => {
     if (key === 'usesOther') return;

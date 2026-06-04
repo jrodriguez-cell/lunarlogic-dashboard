@@ -48,6 +48,7 @@ export function Step2_QuickBooks({ data, onUpdate, onValidChange }: Props) {
     register,
     watch,
     formState: { errors, isValid },
+    trigger,
     setValue,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<any>({
@@ -73,6 +74,9 @@ export function Step2_QuickBooks({ data, onUpdate, onValidChange }: Props) {
   useEffect(() => {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
+
+  // Force validation on mount so pre-filled data reports correct validity
+  useEffect(() => { void trigger(); }, [trigger]);
 
   const needsCleanup = qbCurrentState?.toLowerCase().includes('cleanup');
 

@@ -50,12 +50,12 @@ export function SubmissionsTable({ submissions: initialSubmissions }: Props) {
           placeholder="Search by business, owner, or industry..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 h-10 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 h-10 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:outline-none focus:border-[#00CFFF]/40 focus:ring-1 focus:ring-[#00CFFF]/30"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white focus:outline-none focus:outline-none focus:border-[#00CFFF]/40 focus:ring-1 focus:ring-[#00CFFF]/30"
         >
           <option value="all" className="bg-[#0A0F1E]">All statuses</option>
           <option value="new" className="bg-[#0A0F1E]">New</option>
@@ -118,8 +118,24 @@ export function SubmissionsTable({ submissions: initialSubmissions }: Props) {
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      {hasPain && <span title="Nearly missed payroll" className="mr-1">🔴</span>}
-                      {hasQBIssue && <span title="QB needs cleanup">⚠️</span>}
+                      <div className="flex gap-1.5">
+                        {hasPain && (
+                          <span
+                            title="Nearly missed payroll"
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-500/15 text-red-400 border border-red-500/20"
+                          >
+                            Payroll risk
+                          </span>
+                        )}
+                        {hasQBIssue && (
+                          <span
+                            title="QuickBooks needs cleanup"
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/20"
+                          >
+                            QB cleanup
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

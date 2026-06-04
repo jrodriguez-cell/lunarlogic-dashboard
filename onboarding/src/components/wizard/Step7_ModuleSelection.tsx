@@ -61,6 +61,7 @@ export function Step7_ModuleSelection({ data, onUpdate, onValidChange }: Props) 
     register,
     watch,
     formState: { errors, isValid },
+    trigger,
     setValue,
   } = useForm<Step7Data>({
     resolver: zodResolver(step7Schema),
@@ -83,6 +84,9 @@ export function Step7_ModuleSelection({ data, onUpdate, onValidChange }: Props) 
   useEffect(() => {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
+
+  // Force validation on mount so pre-filled data reports correct validity
+  useEffect(() => { void trigger(); }, [trigger]);
 
   const toggleModule = (code: 'IA' | 'PR' | 'SO' | 'AR') => {
     const current = selectedModules;

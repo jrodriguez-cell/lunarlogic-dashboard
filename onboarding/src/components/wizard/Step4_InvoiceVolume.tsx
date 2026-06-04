@@ -57,6 +57,7 @@ export function Step4_InvoiceVolume({ data, onUpdate, onValidChange }: Props) {
     register,
     watch,
     formState: { errors, isValid },
+    trigger,
     setValue,
   } = useForm<Step4Data>({
     resolver: zodResolver(step4Schema),
@@ -81,6 +82,9 @@ export function Step4_InvoiceVolume({ data, onUpdate, onValidChange }: Props) {
   useEffect(() => {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
+
+  // Force validation on mount so pre-filled data reports correct validity
+  useEffect(() => { void trigger(); }, [trigger]);
 
   const selectedTier = invoiceCountTiers.find((t) => t.value === selectedCount);
   const showSoftDisqualifier = selectedTier?.flag;

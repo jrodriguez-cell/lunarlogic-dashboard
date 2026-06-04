@@ -53,6 +53,7 @@ export function Step1_BusinessInfo({ data, onUpdate, onValidChange }: Props) {
     handleSubmit,
     watch,
     formState: { errors, isValid },
+    trigger,
   } = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
@@ -80,6 +81,9 @@ export function Step1_BusinessInfo({ data, onUpdate, onValidChange }: Props) {
   useEffect(() => {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
+
+  // Force validation on mount so pre-filled data reports correct validity
+  useEffect(() => { void trigger(); }, [trigger]);
 
   const isSmallRevenue = selectedRevenue === 'Under $500K';
 

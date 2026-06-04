@@ -42,6 +42,7 @@ export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
     control,
     watch,
     formState: { errors, isValid },
+    trigger,
     setValue,
   } = useForm<Step5Data>({
     resolver: zodResolver(step5Schema),
@@ -67,6 +68,9 @@ export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
   useEffect(() => {
     onValidChange(isValid);
   }, [isValid, onValidChange]);
+
+  // Force validation on mount so pre-filled data reports correct validity
+  useEffect(() => { void trigger(); }, [trigger]);
 
   const toggleCategory = (value: string) => {
     const current = selectedCategories;
