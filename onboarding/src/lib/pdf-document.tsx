@@ -410,7 +410,7 @@ export function PDFDocument({ submission }: PDFDocumentProps) {
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.indigo }]}>
-          <Text style={[styles.cardTitle, { color: colors.white }]}>Contact Jonathan</Text>
+          <Text style={[styles.cardTitle, { color: colors.white }]}>Contact LunarLogic</Text>
           <View style={styles.row}><Text style={[styles.label, { color: colors.silver }]}>Email</Text><Text style={[styles.value, { color: colors.white }]}>jrodriguez@lunarlogic.ai</Text></View>
           <View style={styles.rowLast}><Text style={[styles.label, { color: colors.silver }]}>Overage Rate</Text><Text style={[styles.value, { color: colors.white }]}>$5/invoice above plan limit</Text></View>
         </View>
@@ -420,7 +420,7 @@ export function PDFDocument({ submission }: PDFDocumentProps) {
             We earn your business every month through results.
           </Text>
           <Text style={{ fontSize: 10, color: colors.gray, marginTop: 8, textAlign: 'center' }}>
-            — Jonathan Rodriguez, Founder
+            — LunarLogic LLC
           </Text>
         </View>
 

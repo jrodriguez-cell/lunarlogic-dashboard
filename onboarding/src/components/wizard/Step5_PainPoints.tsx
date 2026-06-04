@@ -82,7 +82,7 @@ export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-white font-display">Your AR pain points</h2>
-        <p className="text-gray-400 mt-1">This is the most important part of your onboarding. Be specific — it helps Jonathan personalize your plan.</p>
+        <p className="text-gray-400 mt-1">This is the most important part of your onboarding. Be specific — it helps our team build the right configuration for you.</p>
       </div>
 
       <div>
@@ -186,7 +186,7 @@ export function Step5_PainPoints({ data, onUpdate, onValidChange }: Props) {
           <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
             <p className="text-red-300 text-sm font-semibold">This is exactly what LunarLogic eliminates.</p>
             <p className="text-red-300/70 text-sm mt-1">
-              Our anchor client Kaptain Clean went from payroll stress to 19 days faster collections. Jonathan will prioritize your implementation.
+              Our anchor client Kaptain Clean went from payroll stress to 19 days faster collections. Our team will prioritize your implementation.
             </p>
           </div>
         )}

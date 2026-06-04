@@ -17,21 +17,20 @@ function CompleteContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#080D1A] flex flex-col items-center justify-center px-4 py-12">
       {/* Animated background */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 30%, #2D5BE3 0%, transparent 60%)',
-          opacity: 0.1,
+          background: 'radial-gradient(ellipse at 50% 30%, rgba(0,207,255,0.08) 0%, transparent 60%)',
           animation: 'completePulse 4s ease-in-out infinite',
         }}
       />
 
       <style jsx>{`
         @keyframes completePulse {
-          0%, 100% { opacity: 0.08; }
-          50% { opacity: 0.14; }
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
         }
         @keyframes checkDraw {
           0% { stroke-dashoffset: 100; }
@@ -59,7 +58,7 @@ function CompleteContent() {
         <div className="flex justify-center mb-8">
           <div className="animate-circle">
             <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="38" fill="rgba(0, 196, 140, 0.15)" stroke="#00C48C" strokeWidth="2" />
+              <circle cx="40" cy="40" r="38" fill="rgba(0, 196, 140, 0.12)" stroke="#00C48C" strokeWidth="2" />
               <path className="animate-check" d="M22 40 L35 53 L58 28" fill="none" stroke="#00C48C" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -67,17 +66,17 @@ function CompleteContent() {
 
         <div className="fade-up-1">
           <h1 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: 'var(--font-display), Space Grotesk, sans-serif' }}>
-            You&apos;re all set!
+            Onboarding complete.
           </h1>
           <p className="text-gray-400 mt-2 text-lg">
-            Jonathan will review your submission and reach out within 24 hours.
+            Our team will review your submission and reach out within 24 hours.
           </p>
         </div>
 
         {roi && (
-          <div className="fade-up-2 mt-8 rounded-2xl border border-white/10 overflow-hidden" style={{ background: 'rgba(14, 20, 40, 0.85)', backdropFilter: 'blur(20px)' }}>
-            <div className="p-6 border-b border-white/10">
-              <p className="text-gray-400 text-sm uppercase tracking-wider mb-2">Your projected Year 1 value</p>
+          <div className="fade-up-2 mt-8 rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(10, 16, 32, 0.9)', backdropFilter: 'blur(20px)' }}>
+            <div className="p-6 border-b border-white/8">
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">Your projected Year 1 value</p>
               <p className="text-5xl font-black text-emerald-400">{formatCurrency(roi.totalYear1)}</p>
               <p className="text-gray-400 text-sm mt-2">
                 DSO: <span className="text-amber-400 font-semibold">{roi.currentDSO} days</span>
@@ -85,10 +84,10 @@ function CompleteContent() {
                 <span className="text-emerald-400 font-semibold">{roi.targetDSO} days</span>
               </p>
             </div>
-            <div className="grid grid-cols-2 divide-x divide-white/10">
+            <div className="grid grid-cols-2 divide-x divide-white/8">
               <div className="p-4">
                 <p className="text-gray-500 text-xs uppercase tracking-wider">Capital Released</p>
-                <p className="text-sky-400 font-bold text-lg mt-0.5">{formatCurrency(roi.wcReleased)}</p>
+                <p className="font-bold text-lg mt-0.5" style={{ color: '#00CFFF' }}>{formatCurrency(roi.wcReleased)}</p>
               </div>
               <div className="p-4">
                 <p className="text-gray-500 text-xs uppercase tracking-wider">ROI Multiple</p>
@@ -98,18 +97,21 @@ function CompleteContent() {
           </div>
         )}
 
-        <div className="fade-up-3 mt-8 text-left rounded-2xl border border-white/10 overflow-hidden" style={{ background: 'rgba(14, 20, 40, 0.85)', backdropFilter: 'blur(20px)' }}>
+        <div className="fade-up-3 mt-8 text-left rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(10, 16, 32, 0.9)', backdropFilter: 'blur(20px)' }}>
           <div className="p-6">
             <h2 className="text-lg font-bold text-white mb-4">What happens next</h2>
             <div className="space-y-4">
               {[
-                { step: '1', title: 'Review (within 24 hrs)', desc: "Jonathan reviews your submission and prepares your custom ROI model." },
+                { step: '1', title: 'Review (within 24 hrs)', desc: "Our team reviews your submission and prepares your custom ROI model." },
                 { step: '2', title: 'Discovery Call', desc: "45-minute call to finalize scope, answer questions, and align on timeline." },
                 { step: '3', title: 'Custom Proposal', desc: "You receive a detailed proposal with pricing, timeline, and ROI model." },
                 { step: '4', title: 'Go Live & Measure', desc: "Your AR automation activates. We track DSO weekly and send monthly reports." },
               ].map((item) => (
                 <div key={item.step} className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[#080D1A] text-sm font-bold flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, #00CFFF, #0098C0)' }}
+                  >
                     {item.step}
                   </div>
                   <div>
@@ -122,10 +124,10 @@ function CompleteContent() {
           </div>
         </div>
 
-        <div className="fade-up-4 mt-6 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-5 text-center">
-          <p className="text-white font-semibold">Questions? Reach out directly</p>
-          <a href="mailto:jrodriguez@lunarlogic.ai" className="text-sky-400 hover:text-sky-300 transition-colors mt-1 block">
-            jrodriguez@lunarlogic.ai
+        <div className="fade-up-4 mt-6 rounded-xl border border-white/8 p-5 text-center" style={{ background: 'rgba(10,16,32,0.7)' }}>
+          <p className="text-white font-semibold">Questions? Reach out to our team</p>
+          <a href="mailto:team@lunarlogic.ai" className="hover:opacity-80 transition-opacity mt-1 block text-sm" style={{ color: '#00CFFF' }}>
+            team@lunarlogic.ai
           </a>
           <p className="text-gray-500 text-sm mt-3 italic">&ldquo;We earn your business every month through results.&rdquo;</p>
         </div>
@@ -137,7 +139,7 @@ function CompleteContent() {
 export default function CompletePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+      <div className="min-h-screen bg-[#080D1A] flex items-center justify-center">
         <div className="text-gray-400">Loading...</div>
       </div>
     }>

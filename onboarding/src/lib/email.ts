@@ -125,7 +125,7 @@ export async function sendClientConfirmation(data: OnboardingData, roi: ROIResul
               <div style="width: 32px; height: 32px; background: #2D5BE3; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; flex-shrink: 0; text-align: center; line-height: 32px;">1</div>
               <div>
                 <p style="margin: 0; font-weight: bold; color: #F7F9FC;">Review & Discovery Call</p>
-                <p style="margin: 4px 0 0; color: #8A94A6; font-size: 14px;">Jonathan will review your submission within 24 hours and schedule a 45-minute discovery call to finalize the scope.</p>
+                <p style="margin: 4px 0 0; color: #8A94A6; font-size: 14px;">Our team will review your submission within 24 hours and schedule a 45-minute discovery call to finalize the scope.</p>
               </div>
             </div>
             <div style="display: flex; align-items: flex-start; margin-bottom: 16px;">
@@ -153,7 +153,7 @@ export async function sendClientConfirmation(data: OnboardingData, roi: ROIResul
 
           <div style="background: #1a2236; border-radius: 8px; padding: 20px; margin-top: 24px; border: 1px solid #2D5BE3;">
             <p style="margin: 0 0 8px; font-weight: bold; color: #F7F9FC;">Questions? Reach out directly:</p>
-            <p style="margin: 4px 0; color: #8A94A6;">Jonathan Rodriguez — <a href="mailto:jrodriguez@lunarlogic.ai" style="color: #4A9FFF;">jrodriguez@lunarlogic.ai</a></p>
+            <p style="margin: 4px 0; color: #8A94A6;">LunarLogic — <a href="mailto:team@lunarlogic.ai" style="color: #4A9FFF;">jrodriguez@lunarlogic.ai</a></p>
             <p style="margin: 4px 0; color: #8A94A6; font-size: 14px; font-style: italic;">"We earn your business every month through results."</p>
           </div>
 

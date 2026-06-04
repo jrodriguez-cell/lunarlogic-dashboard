@@ -98,7 +98,7 @@ export function Step1_BusinessInfo({ data, onUpdate, onValidChange }: Props) {
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
           <p className="text-amber-400 text-sm font-medium">ℹ️ Revenue note</p>
           <p className="text-amber-300/80 text-sm mt-1">
-            LunarLogic works best for businesses with $500K+ in annual revenue. You may still qualify — Jonathan will reach out to discuss.
+            LunarLogic works best for businesses with $500K+ in annual revenue. You may still qualify — our team will review your fit during the discovery call.
           </p>
         </div>
       )}

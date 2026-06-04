@@ -97,7 +97,7 @@ export default function OnboardPage() {
 
       if (!res.ok || !json.success) {
         const detail = json.error ?? (json.errors ? 'Validation error — check all fields.' : 'Server error');
-        setSubmitError(`Submission failed: ${detail}. Email jonathan@lunarlogic.ai if this persists.`);
+        setSubmitError(`Submission failed: ${detail}. Email team@lunarlogic.ai if this persists.`);
         return;
       }
 

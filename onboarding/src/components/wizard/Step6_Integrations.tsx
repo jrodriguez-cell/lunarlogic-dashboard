@@ -163,7 +163,7 @@ export function Step6_Integrations({ data, onUpdate, onValidChange }: Props) {
 
       <div className="rounded-lg border border-white/8 bg-white/3 p-4">
         <p className="text-gray-400 text-sm">
-          <strong className="text-gray-300">QuickBooks Online is the only hard requirement.</strong> Jonathan will recommend which additional integrations to activate based on your workflow during the implementation call.
+          <strong className="text-gray-300">QuickBooks Online is the only hard requirement.</strong> Our team will recommend which integrations to activate based on your workflow during the setup call.
         </p>
       </div>
     </div>

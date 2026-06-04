@@ -127,7 +127,7 @@ export function Step4_InvoiceVolume({ data, onUpdate, onValidChange }: Props) {
         {showSoftDisqualifier && (
           <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
             <p className="text-amber-300 text-sm">
-              💡 At under 30 invoices/month, automation ROI is smaller but still meaningful. Jonathan will help you determine if LunarLogic is the right fit.
+              💡 At under 30 invoices/month, automation ROI is smaller but still meaningful. our team will help you determine if LunarLogic is the right fit.
             </p>
           </div>
         )}
