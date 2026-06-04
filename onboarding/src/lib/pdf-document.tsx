@@ -248,7 +248,7 @@ export function PDFDocument({ submission }: PDFDocumentProps) {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>CONFIDENTIAL · LunarLogic LLC · jrodriguez@lunarlogic.ai</Text>
+          <Text style={styles.footerText}>CONFIDENTIAL · LunarLogic LLC · support@lunarlogic.ai</Text>
           <Text style={styles.footerText}>{dateStr}</Text>
         </View>
       </Page>
@@ -298,7 +298,7 @@ export function PDFDocument({ submission }: PDFDocumentProps) {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>CONFIDENTIAL · LunarLogic LLC · jrodriguez@lunarlogic.ai</Text>
+          <Text style={styles.footerText}>CONFIDENTIAL · LunarLogic LLC · support@lunarlogic.ai</Text>
           <Text style={styles.footerText}>ROI projections based on Kaptain Clean LLC results</Text>
         </View>
       </Page>
@@ -364,7 +364,7 @@ export function PDFDocument({ submission }: PDFDocumentProps) {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>CONFIDENTIAL · LunarLogic LLC · jrodriguez@lunarlogic.ai</Text>
+          <Text style={styles.footerText}>CONFIDENTIAL · LunarLogic LLC · support@lunarlogic.ai</Text>
           <Text style={styles.footerText}>Target start: {submission.targetStartDate ?? 'TBD'}</Text>
         </View>
       </Page>
@@ -411,7 +411,7 @@ export function PDFDocument({ submission }: PDFDocumentProps) {
 
         <View style={[styles.card, { backgroundColor: colors.indigo }]}>
           <Text style={[styles.cardTitle, { color: colors.white }]}>Contact LunarLogic</Text>
-          <View style={styles.row}><Text style={[styles.label, { color: colors.silver }]}>Email</Text><Text style={[styles.value, { color: colors.white }]}>jrodriguez@lunarlogic.ai</Text></View>
+          <View style={styles.row}><Text style={[styles.label, { color: colors.silver }]}>Email</Text><Text style={[styles.value, { color: colors.white }]}>support@lunarlogic.ai</Text></View>
           <View style={styles.rowLast}><Text style={[styles.label, { color: colors.silver }]}>Overage Rate</Text><Text style={[styles.value, { color: colors.white }]}>$5/invoice above plan limit</Text></View>
         </View>
 
@@ -425,7 +425,7 @@ export function PDFDocument({ submission }: PDFDocumentProps) {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>CONFIDENTIAL · LunarLogic LLC · jrodriguez@lunarlogic.ai</Text>
+          <Text style={styles.footerText}>CONFIDENTIAL · LunarLogic LLC · support@lunarlogic.ai</Text>
           <Text style={[styles.footerText, { color: colors.sky }]}>lunarlogic.ai</Text>
         </View>
       </Page>

@@ -153,7 +153,7 @@ export async function sendClientConfirmation(data: OnboardingData, roi: ROIResul
 
           <div style="background: #1a2236; border-radius: 8px; padding: 20px; margin-top: 24px; border: 1px solid #2D5BE3;">
             <p style="margin: 0 0 8px; font-weight: bold; color: #F7F9FC;">Questions? Reach out directly:</p>
-            <p style="margin: 4px 0; color: #8A94A6;">LunarLogic — <a href="mailto:team@lunarlogic.ai" style="color: #4A9FFF;">jrodriguez@lunarlogic.ai</a></p>
+            <p style="margin: 4px 0; color: #8A94A6;">LunarLogic — <a href="mailto:support@lunarlogic.ai" style="color: #4A9FFF;">support@lunarlogic.ai</a></p>
             <p style="margin: 4px 0; color: #8A94A6; font-size: 14px; font-style: italic;">"We earn your business every month through results."</p>
           </div>
 

@@ -126,8 +126,8 @@ function CompleteContent() {
 
         <div className="fade-up-4 mt-6 rounded-xl border border-white/8 p-5 text-center" style={{ background: 'rgba(10,16,32,0.7)' }}>
           <p className="text-white font-semibold">Questions? Reach out to our team</p>
-          <a href="mailto:team@lunarlogic.ai" className="hover:opacity-80 transition-opacity mt-1 block text-sm" style={{ color: '#00CFFF' }}>
-            team@lunarlogic.ai
+          <a href="mailto:support@lunarlogic.ai" className="hover:opacity-80 transition-opacity mt-1 block text-sm" style={{ color: '#00CFFF' }}>
+            support@lunarlogic.ai
           </a>
           <p className="text-gray-500 text-sm mt-3 italic">&ldquo;We earn your business every month through results.&rdquo;</p>
         </div>
