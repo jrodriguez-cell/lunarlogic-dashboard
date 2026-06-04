@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import type { OnboardingData, ROIResult } from '@/types/onboarding';
+import type { GapAnalysisReport } from './gap-analysis';
 import { formatCurrency } from './roi';
 
 function getResend() {
@@ -92,6 +93,119 @@ export async function sendJonathanNotification(
     });
   } catch (err) {
     console.error('Failed to send Jonathan notification:', err);
+  }
+}
+
+export async function sendAnalysisReport(
+  submission: OnboardingData & { id: string },
+  gapAnalysis: GapAnalysisReport,
+  proposalDraft: string
+): Promise<void> {
+  try {
+    const to = process.env.NOTIFY_EMAIL ?? 'jonathan@lunarlogic.ai';
+    const appUrl = process.env.NEXTAUTH_URL ?? 'https://lunarlogic.ai';
+    const readiness = gapAnalysis.overallReadiness;
+
+    const readinessColor =
+      readiness >= 80 ? '#00C48C' : readiness >= 60 ? '#F59E0B' : '#EF4444';
+
+    const statusBadgeColor = (status: string): string => {
+      if (status === 'ready') return '#00C48C';
+      if (status === 'minor-gaps') return '#F59E0B';
+      if (status === 'major-gaps') return '#F97316';
+      return '#EF4444';
+    };
+
+    const workflowRows = gapAnalysis.workflowAnalyses
+      .filter((a) => a.selected)
+      .map(
+        (a) => `
+        <tr style="border-bottom: 1px solid #2a3450;">
+          <td style="padding: 8px 12px; color: #F7F9FC;">${a.workflowName}</td>
+          <td style="padding: 8px 12px; color: ${readinessColor}; font-weight: bold;">${a.readinessScore}%</td>
+          <td style="padding: 8px 12px;">
+            <span style="background: ${statusBadgeColor(a.status)}22; color: ${statusBadgeColor(a.status)}; border: 1px solid ${statusBadgeColor(a.status)}44; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+              ${a.status.replace('-', ' ').toUpperCase()}
+            </span>
+          </td>
+          <td style="padding: 8px 12px; color: #8A94A6; font-size: 13px;">
+            ${a.gaps.length > 0 ? a.gaps.map((g) => g.item).join('; ') : 'No gaps'}
+          </td>
+        </tr>`
+      )
+      .join('');
+
+    const blockersHtml =
+      gapAnalysis.blockers.length > 0
+        ? `<div style="background: #EF444415; border: 1px solid #EF444440; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <h3 style="color: #EF4444; margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Blockers</h3>
+          <ul style="margin: 0; padding-left: 20px; color: #F7F9FC;">
+            ${gapAnalysis.blockers.map((b) => `<li style="margin-bottom: 4px;">${b}</li>`).join('')}
+          </ul>
+        </div>`
+        : '';
+
+    const quickWinsHtml =
+      gapAnalysis.quickWins.length > 0
+        ? `<div style="background: #00C48C15; border: 1px solid #00C48C40; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <h3 style="color: #00C48C; margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Quick Wins</h3>
+          <ul style="margin: 0; padding-left: 20px; color: #F7F9FC;">
+            ${gapAnalysis.quickWins.map((w) => `<li style="margin-bottom: 4px;">${w}</li>`).join('')}
+          </ul>
+        </div>`
+        : '';
+
+    await getResend().emails.send({
+      from: 'onboard@lunarlogic.ai',
+      to,
+      subject: `[Analysis Ready] ${submission.businessName} — Readiness: ${readiness}%`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; background: #0A0F1E; color: #F7F9FC; padding: 32px; border-radius: 12px;">
+          <h1 style="color: #4A9FFF; margin: 0 0 4px;">Gap Analysis Ready</h1>
+          <p style="color: #8A94A6; margin: 0 0 24px;">${submission.businessName} — ${submission.ownerName}</p>
+
+          <div style="background: #1a2236; border-radius: 8px; padding: 24px; margin-bottom: 20px; text-align: center;">
+            <p style="color: #8A94A6; margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Overall Readiness</p>
+            <p style="font-size: 64px; font-weight: 900; color: ${readinessColor}; margin: 0 0 4px; line-height: 1;">${readiness}%</p>
+            <p style="color: #8A94A6; margin: 0; font-size: 14px;">
+              ${gapAnalysis.blockers.length} blocker${gapAnalysis.blockers.length !== 1 ? 's' : ''} · ${gapAnalysis.quickWins.length} quick win${gapAnalysis.quickWins.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+
+          <div style="background: #1a2236; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h2 style="color: #2D5BE3; margin: 0 0 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Selected Workflow Readiness</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid #2D5BE3;">
+                  <th style="text-align: left; padding: 6px 12px; color: #8A94A6; font-size: 12px; font-weight: 600; text-transform: uppercase;">Workflow</th>
+                  <th style="text-align: left; padding: 6px 12px; color: #8A94A6; font-size: 12px; font-weight: 600; text-transform: uppercase;">Score</th>
+                  <th style="text-align: left; padding: 6px 12px; color: #8A94A6; font-size: 12px; font-weight: 600; text-transform: uppercase;">Status</th>
+                  <th style="text-align: left; padding: 6px 12px; color: #8A94A6; font-size: 12px; font-weight: 600; text-transform: uppercase;">Key Gaps</th>
+                </tr>
+              </thead>
+              <tbody>${workflowRows}</tbody>
+            </table>
+          </div>
+
+          ${blockersHtml}
+          ${quickWinsHtml}
+
+          <div style="background: #1a2236; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h2 style="color: #2D5BE3; margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">AI-Generated Proposal Draft</h2>
+            <pre style="font-family: 'Courier New', monospace; font-size: 13px; color: #D1D9E6; white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.6;">${proposalDraft.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+          </div>
+
+          <div style="text-align: center; margin-top: 24px;">
+            <a href="${appUrl}/admin/analysis/${submission.id}"
+               style="background: #2D5BE3; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+              View Full Analysis in Admin →
+            </a>
+          </div>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error('Failed to send analysis report email:', err);
   }
 }
 

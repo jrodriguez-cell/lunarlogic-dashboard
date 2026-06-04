@@ -74,7 +74,7 @@ export function SubmissionsTable({ submissions: initialSubmissions }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
-                {['Submitted', 'Business', 'Owner', 'Industry', 'Revenue', 'DSO', 'Modules', 'Status', 'Flags'].map((h) => (
+                {['Submitted', 'Business', 'Owner', 'Industry', 'Revenue', 'DSO', 'Modules', 'Status', 'Flags', 'Analysis'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-gray-400 font-medium text-xs uppercase tracking-wider whitespace-nowrap">
                     {h}
                   </th>
@@ -136,6 +136,14 @@ export function SubmissionsTable({ submissions: initialSubmissions }: Props) {
                           </span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <a
+                        href={`/admin/analysis/${s.id}`}
+                        className="text-xs font-medium text-[#00CFFF] hover:text-[#00CFFF]/80 transition-colors"
+                      >
+                        Analysis →
+                      </a>
                     </td>
                   </tr>
                 );

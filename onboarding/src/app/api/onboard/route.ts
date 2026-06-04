@@ -31,6 +31,15 @@ export async function POST(request: NextRequest) {
       postSlackNotification(data, roi, id),
     ]);
 
+    // Kick off gap analysis + proposal generation async — don't block response
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
+    void fetch(`${appUrl}/api/onboard/${id}/analysis`, {
+      method: 'POST',
+      headers: { 'x-internal-key': process.env.INTERNAL_API_KEY ?? '' },
+    }).catch((err) => {
+      console.error('Failed to trigger analysis for submission', id, err);
+    });
+
     return NextResponse.json({ success: true, id, roi });
   } catch (err) {
     console.error('Onboard POST error:', err);

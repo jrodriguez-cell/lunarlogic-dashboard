@@ -1,5 +1,6 @@
 import { sql } from '@vercel/postgres';
 import type { OnboardingData, ROIResult, Submission } from '@/types/onboarding';
+import type { GapAnalysisReport } from './gap-analysis';
 
 export async function saveSubmission(data: OnboardingData, roi: ROIResult): Promise<string> {
   const result = await sql`
@@ -56,6 +57,45 @@ export async function updateAdminNotes(id: string, notes: string): Promise<void>
   await sql`
     UPDATE onboarding_submissions SET admin_notes = ${notes}, updated_at = NOW() WHERE id = ${id}
   `;
+}
+
+export async function saveAnalysis(
+  id: string,
+  gapAnalysis: GapAnalysisReport,
+  proposalDraft: string
+): Promise<void> {
+  await sql`
+    UPDATE onboarding_submissions
+    SET
+      gap_analysis = ${JSON.stringify(gapAnalysis)}::jsonb,
+      proposal_draft = ${proposalDraft},
+      analysis_generated_at = NOW(),
+      updated_at = NOW()
+    WHERE id = ${id}
+  `;
+}
+
+export async function getAnalysis(id: string): Promise<{
+  gapAnalysis: GapAnalysisReport | null;
+  proposalDraft: string | null;
+  analysisGeneratedAt: string | null;
+}> {
+  const result = await sql`
+    SELECT gap_analysis, proposal_draft, analysis_generated_at
+    FROM onboarding_submissions
+    WHERE id = ${id}
+  `;
+
+  if (result.rows.length === 0) {
+    return { gapAnalysis: null, proposalDraft: null, analysisGeneratedAt: null };
+  }
+
+  const row = result.rows[0];
+  return {
+    gapAnalysis: row.gap_analysis ? (row.gap_analysis as GapAnalysisReport) : null,
+    proposalDraft: row.proposal_draft ? String(row.proposal_draft) : null,
+    analysisGeneratedAt: row.analysis_generated_at ? String(row.analysis_generated_at) : null,
+  };
 }
 
 function mapRowToSubmission(row: Record<string, unknown>): Submission {
