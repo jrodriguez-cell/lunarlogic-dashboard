@@ -20,15 +20,16 @@ function getPricingTier(monthlyInvoiceCount: string): { tier: string; price: str
 function buildSystemPrompt(): string {
   return `You are a senior solutions consultant at LunarLogic LLC, an AR automation company that helps small professional services firms (8–20 employees) using QuickBooks Online and Slack automate their Order-to-Cash cycle.
 
-Your task is to write professional business proposals for prospective clients. Each proposal should be:
-- Specific to the client's business name, industry, and stated pain points
-- Grounded in the actual gap analysis and ROI figures provided
-- Professional but direct — no filler, no fluff
-- Structured with clear section headers
+Your task is to write a concise, one-page proposal brief — not a long-form document. The output will be included directly in an email body, so it must be tight.
 
-LunarLogic's core proof point: Kaptain Clean LLC achieved an 84% reduction in invoice processing time and a 19-day DSO improvement. Lead with DSO reduction as the core value proposition.
+Rules:
+- Total length: 400–550 words maximum. Every sentence must earn its place.
+- No section should exceed 4–5 lines.
+- Be specific to the client's pain point and numbers — no generic filler.
+- Professional and direct. No padding, no throat-clearing.
+- Use plain text with ALL CAPS section headers, no markdown.
 
-The proposal should feel like it was written by someone who deeply understands the client's situation, not a template.`;
+LunarLogic's proof point: Kaptain Clean LLC — 84% reduction in invoice processing time, 19-day DSO improvement. Reference it once, briefly.`;
 }
 
 function buildUserPrompt(
@@ -62,7 +63,7 @@ function buildUserPrompt(
   const deploymentOrder = gapAnalysis.recommendedDeploymentOrder.join(' → ');
   const wf3Selected = submission.modulesSelected.includes('SO');
 
-  return `Write a complete business proposal for the following prospect. Use plain text with clear section headers (using ALL CAPS or dashes for headers, not markdown).
+  return `Write a concise proposal brief (400–550 words) for the following prospect. This will be sent as the body of an email — keep it tight. Use plain text with ALL CAPS section headers.
 
 CLIENT DETAILS:
 - Business Name: ${submission.businessName}
@@ -104,15 +105,13 @@ PRICING:
 - Guarantee: 60-day satisfaction guarantee
 ${wf3Selected ? '- NOTE: WF3 (Payment Receipt & Cash Application) is in development — estimated Q3 2026 delivery' : ''}
 
-Write the proposal with these exact sections:
-1. EXECUTIVE SUMMARY
-2. RECOMMENDED MODULES
-3. IMPLEMENTATION READINESS
-4. DEPLOYMENT TIMELINE
-5. ROI PROJECTION
-6. INVESTMENT
-7. NEXT STEPS
-8. CLOSING
+Write the proposal with these exact sections (each section: 3–5 lines max):
+1. SITUATION — one sharp paragraph referencing their specific pain point and current DSO
+2. RECOMMENDED MODULES — bulleted list: module name + one-line reason it fits this client
+3. READINESS — overall score, list blockers only if any, note quick wins
+4. ROI — four numbers only: DSO improvement, working capital released, Year 1 value, ROI multiple
+5. INVESTMENT — tier, monthly price, implementation fee, guarantee. One line each.
+6. NEXT STEPS — three bullet points maximum
 
 End with exactly this line: "We earn your business every month through results. — LunarLogic LLC"`;
 }
@@ -129,7 +128,7 @@ export async function generateProposalDraft(
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
+      max_tokens: 800,
       system: [
         {
           type: 'text',
