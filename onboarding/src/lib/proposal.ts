@@ -18,18 +18,11 @@ function getPricingTier(monthlyInvoiceCount: string): { tier: string; price: str
 }
 
 function buildSystemPrompt(): string {
-  return `You are a senior solutions consultant at LunarLogic LLC, an AR automation company that helps small professional services firms (8–20 employees) using QuickBooks Online and Slack automate their Order-to-Cash cycle.
+  return `You are a solutions consultant at LunarLogic LLC writing a proposal email body.
 
-Your task is to write a concise, one-page proposal brief — not a long-form document. The output will be included directly in an email body, so it must be tight.
+HARD CONSTRAINT: The entire output must be 350 words or fewer. Count your words. Stop writing when you hit 350.
 
-Rules:
-- Total length: 400–550 words maximum. Every sentence must earn its place.
-- No section should exceed 4–5 lines.
-- Be specific to the client's pain point and numbers — no generic filler.
-- Professional and direct. No padding, no throat-clearing.
-- Use plain text with ALL CAPS section headers, no markdown.
-
-LunarLogic's proof point: Kaptain Clean LLC — 84% reduction in invoice processing time, 19-day DSO improvement. Reference it once, briefly.`;
+This is an email body, not a document. It will be sent directly to the prospect. Write like a sharp consultant, not a copywriter. One tight paragraph per section. No elaboration.`;
 }
 
 function buildUserPrompt(
@@ -63,7 +56,7 @@ function buildUserPrompt(
   const deploymentOrder = gapAnalysis.recommendedDeploymentOrder.join(' → ');
   const wf3Selected = submission.modulesSelected.includes('SO');
 
-  return `Write a concise proposal brief (400–550 words) for the following prospect. This will be sent as the body of an email — keep it tight. Use plain text with ALL CAPS section headers.
+  return `Write a proposal email body. Maximum 350 words — this is a strict limit. Use ALL CAPS section headers. One short paragraph per section, no exceptions.
 
 CLIENT DETAILS:
 - Business Name: ${submission.businessName}
@@ -105,15 +98,30 @@ PRICING:
 - Guarantee: 60-day satisfaction guarantee
 ${wf3Selected ? '- NOTE: WF3 (Payment Receipt & Cash Application) is in development — estimated Q3 2026 delivery' : ''}
 
-Write the proposal with these exact sections (each section: 3–5 lines max):
-1. SITUATION — one sharp paragraph referencing their specific pain point and current DSO
-2. RECOMMENDED MODULES — bulleted list: module name + one-line reason it fits this client
-3. READINESS — overall score, list blockers only if any, note quick wins
-4. ROI — four numbers only: DSO improvement, working capital released, Year 1 value, ROI multiple
-5. INVESTMENT — tier, monthly price, implementation fee, guarantee. One line each.
-6. NEXT STEPS — three bullet points maximum
+Write exactly these 6 sections. Each section is ONE paragraph or a short bulleted list. No elaboration.
 
-End with exactly this line: "We earn your business every month through results. — LunarLogic LLC"`;
+SITUATION (2–3 sentences): Their specific pain point, current DSO, and the DSO target with working capital impact.
+
+RECOMMENDED MODULES (bullet list): Module name — one clause explaining why it fits. Nothing more.
+
+READINESS (2 sentences): Overall score. Blockers only if any — one line each. Skip if none.
+
+ROI (4 lines, numbers only):
+DSO: X days → Y days
+Working Capital Released: $X
+Year 1 Value: $X
+ROI: Xx
+
+INVESTMENT (3 lines):
+Tier: name — $X/mo
+Implementation: $2,500 (waived on 12-month commitment)
+60-day satisfaction guarantee
+
+NEXT STEPS (3 bullets max): Action items for the prospect.
+
+End with: "We earn your business every month through results. — LunarLogic LLC"
+
+STOP after the closing line. Do not add commentary. Total output must be under 350 words.`;
 }
 
 export async function generateProposalDraft(
@@ -128,7 +136,7 @@ export async function generateProposalDraft(
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 800,
+      max_tokens: 600,
       system: [
         {
           type: 'text',
