@@ -21,9 +21,9 @@ export async function saveSubmission(data: OnboardingData, roi: ROIResult): Prom
       ${data.qbVersion}, ${data.qbDesktopVersion ?? null}, ${data.qbManager}, ${data.qbCurrentState},
       ${data.invoiceCreation}, ${data.invoiceDelivery}, ${data.followupProcess}, ${data.followupFrequency},
       ${data.monthlyInvoiceCount}, ${data.avgInvoiceSize}, ${data.currentDso}, ${data.paymentTerms},
-      ${data.biggestArPain}, ${data.biggestPainCategory.join(', ')}, ${data.nearlyMissedPayroll}, ${data.biggestSlowPayer ?? null},
+      ${data.biggestArPain}, ${JSON.stringify(data.biggestPainCategory)}::jsonb, ${data.nearlyMissedPayroll}, ${data.biggestSlowPayer ?? null},
       ${data.usesStripe}, ${data.usesSlack}, ${data.usesGoogleSheets}, ${data.usesQBPayments ?? false}, ${data.usesEmail ?? false}, ${data.usesOther ?? null},
-      ${`{${data.modulesSelected.join(',')}}`}, ${data.targetStartDate ?? null}, ${data.additionalNotes ?? null},
+      ${JSON.stringify(data.modulesSelected)}::jsonb, ${data.targetStartDate ?? null}, ${data.additionalNotes ?? null},
       ${roi.wcLocked + roi.badDebtSavings + roi.unbilledRecovered + roi.laborSaved}, ${roi.currentDSO}, ${roi.wcLocked}, ${roi.wcReleased},
       'new'
     )
@@ -99,7 +99,9 @@ export async function getAnalysis(id: string): Promise<{
 }
 
 function mapRowToSubmission(row: Record<string, unknown>): Submission {
-  const biggestPainCategory = typeof row.biggest_pain_category === 'string'
+  const biggestPainCategory = Array.isArray(row.biggest_pain_category)
+    ? (row.biggest_pain_category as string[])
+    : typeof row.biggest_pain_category === 'string'
     ? row.biggest_pain_category.split(', ').filter(Boolean)
     : [];
 
