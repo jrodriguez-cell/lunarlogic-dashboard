@@ -19,7 +19,7 @@ export async function sendJonathanNotification(
     const moduleList = data.modulesSelected.join(', ');
 
     await getResend().emails.send({
-      from: 'onboard@lunarlogic.ai',
+      from: 'LunarLogic <onboarding@resend.dev>',
       to,
       subject: `New Onboarding: ${data.businessName} — ${data.industry} — ${data.annualRevenue}`,
       html: `
@@ -156,7 +156,7 @@ export async function sendAnalysisReport(
         : '';
 
     await getResend().emails.send({
-      from: 'onboard@lunarlogic.ai',
+      from: 'LunarLogic <onboarding@resend.dev>',
       to,
       subject: `[Analysis Ready] ${submission.businessName} — Readiness: ${readiness}%`,
       html: `
@@ -213,7 +213,7 @@ export async function sendClientConfirmation(data: OnboardingData, roi: ROIResul
   try {
     const firstName = data.ownerName.split(' ')[0];
     await getResend().emails.send({
-      from: 'onboard@lunarlogic.ai',
+      from: 'LunarLogic <onboarding@resend.dev>',
       to: data.ownerEmail,
       subject: "Your LunarLogic onboarding is complete — what's next",
       html: `
