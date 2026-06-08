@@ -83,7 +83,7 @@ export async function sendJonathanNotification(
           </div>
 
           <div style="text-align: center; margin-top: 24px;">
-            <a href="${process.env.NEXTAUTH_URL ?? 'https://lunarlogic.ai'}/admin/dashboard/${id}"
+            <a href="${process.env.NEXTAUTH_URL ?? 'https://lunarlogic.ai'}/admin/analysis/${id}"
                style="background: #2D5BE3; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
               View in Admin Dashboard →
             </a>
