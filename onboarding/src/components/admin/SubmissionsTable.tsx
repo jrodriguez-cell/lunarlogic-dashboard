@@ -12,6 +12,7 @@ interface Props {
 }
 
 const statusConfig: Record<Submission['status'], { label: string; variant: 'default' | 'success' | 'warn' | 'muted' | 'indigo' }> = {
+  lead: { label: 'Lead', variant: 'muted' },
   new: { label: 'New', variant: 'warn' },
   reviewed: { label: 'Reviewed', variant: 'indigo' },
   proposal_sent: { label: 'Proposal Sent', variant: 'default' },
@@ -58,7 +59,8 @@ export function SubmissionsTable({ submissions: initialSubmissions }: Props) {
           className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white focus:outline-none focus:outline-none focus:border-[#00CFFF]/40 focus:ring-1 focus:ring-[#00CFFF]/30"
         >
           <option value="all" className="bg-[#0A0F1E]">All statuses</option>
-          <option value="new" className="bg-[#0A0F1E]">New</option>
+          <option value="lead" className="bg-[#0A0F1E]">Lead</option>
+          <option value="new" className="bg-[#0A0F1E]">New (Intake)</option>
           <option value="reviewed" className="bg-[#0A0F1E]">Reviewed</option>
           <option value="proposal_sent" className="bg-[#0A0F1E]">Proposal Sent</option>
           <option value="active" className="bg-[#0A0F1E]">Active</option>
@@ -109,9 +111,13 @@ export function SubmissionsTable({ submissions: initialSubmissions }: Props) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 flex-wrap">
-                        {s.modulesSelected.map((m) => (
-                          <Badge key={m} variant="indigo">{m}</Badge>
-                        ))}
+                        {(s.modulesSelected ?? []).length === 0 ? (
+                          <span className="text-gray-600 text-xs">—</span>
+                        ) : (
+                          (s.modulesSelected ?? []).map((m) => (
+                            <Badge key={m} variant="indigo">{m}</Badge>
+                          ))
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3">

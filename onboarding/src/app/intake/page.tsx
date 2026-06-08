@@ -2,18 +2,19 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ROIResult } from '@/types/onboarding';
-import type { QualifyStep1Data, QualifyStep2Data, QualifyStep3Data } from '@/lib/qualify-validations';
+import type { OnboardingData, ROIResult } from '@/types/onboarding';
 import { WizardShell } from '@/components/wizard/WizardShell';
-import { QualifyStep1_Basics } from '@/components/qualify/QualifyStep1_Basics';
-import { QualifyStep2_Pain } from '@/components/qualify/QualifyStep2_Pain';
-import { QualifyStep3_Volume } from '@/components/qualify/QualifyStep3_Volume';
+import { Step1_BusinessInfo } from '@/components/wizard/Step1_BusinessInfo';
+import { Step2_QuickBooks } from '@/components/wizard/Step2_QuickBooks';
+import { Step3_ARWorkflow } from '@/components/wizard/Step3_ARWorkflow';
+import { Step4_InvoiceVolume } from '@/components/wizard/Step4_InvoiceVolume';
+import { Step5_PainPoints } from '@/components/wizard/Step5_PainPoints';
+import { Step6_Integrations } from '@/components/wizard/Step6_Integrations';
+import { Step7_ModuleSelection } from '@/components/wizard/Step7_ModuleSelection';
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 7;
 
-type FormData = Partial<QualifyStep1Data & QualifyStep2Data & QualifyStep3Data>;
-
-const defaultData: FormData = {
+const defaultData: OnboardingData = {
   businessName: '',
   ownerName: '',
   ownerEmail: '',
@@ -22,22 +23,42 @@ const defaultData: FormData = {
   industry: '',
   industryOther: '',
   employeeCount: '',
+  qbVersion: '',
+  qbDesktopVersion: '',
+  qbManager: '',
+  qbCurrentState: '',
+  invoiceCreation: '',
+  invoiceDelivery: '',
+  followupProcess: '',
+  followupFrequency: '',
+  monthlyInvoiceCount: '',
+  avgInvoiceSize: '',
+  currentDso: '',
+  paymentTerms: '',
   biggestArPain: '',
   biggestPainCategory: [],
   nearlyMissedPayroll: false,
-  monthlyInvoiceCount: '',
-  currentDso: '',
+  biggestSlowPayer: '',
+  usesStripe: false,
+  usesSlack: false,
+  usesGoogleSheets: false,
+  usesQBPayments: false,
+  usesEmail: false,
+  usesOther: '',
+  modulesSelected: ['IA', 'PR'],
+  targetStartDate: '',
+  additionalNotes: '',
 };
 
-export default function OnboardPage() {
+export default function IntakePage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>(defaultData);
+  const [formData, setFormData] = useState<OnboardingData>(defaultData);
   const [stepValid, setStepValid] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleUpdate = useCallback((data: Partial<FormData>) => {
+  const handleUpdate = useCallback((data: Partial<OnboardingData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
   }, []);
 
@@ -66,7 +87,7 @@ export default function OnboardPage() {
     setSubmitError(null);
 
     try {
-      const res = await fetch('/api/qualify', {
+      const res = await fetch('/api/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -80,13 +101,19 @@ export default function OnboardPage() {
         return;
       }
 
-      const roiParam = encodeURIComponent(JSON.stringify(json.roi));
-      router.push(`/onboard/complete?id=${json.id}&roi=${roiParam}`);
+      const name = encodeURIComponent(formData.ownerName);
+      router.push(`/intake/complete?name=${name}`);
     } catch {
       setSubmitError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const stepProps = {
+    data: formData,
+    onUpdate: handleUpdate,
+    onValidChange: handleValidChange,
   };
 
   return (
@@ -104,30 +131,14 @@ export default function OnboardPage() {
         onSubmit={handleSubmit}
         isLoading={isLoading}
         canProgress={stepValid}
-        submitLabel="Book My Discovery Call →"
       >
-        {currentStep === 1 && (
-          <QualifyStep1_Basics
-            data={formData}
-            onUpdate={handleUpdate}
-            onValidChange={handleValidChange}
-          />
-        )}
-        {currentStep === 2 && (
-          <QualifyStep2_Pain
-            data={formData}
-            onUpdate={handleUpdate}
-            onValidChange={handleValidChange}
-          />
-        )}
-        {currentStep === 3 && (
-          <QualifyStep3_Volume
-            data={formData}
-            annualRevenue={formData.annualRevenue ?? ''}
-            onUpdate={handleUpdate}
-            onValidChange={handleValidChange}
-          />
-        )}
+        {currentStep === 1 && <Step1_BusinessInfo {...stepProps} />}
+        {currentStep === 2 && <Step2_QuickBooks {...stepProps} />}
+        {currentStep === 3 && <Step3_ARWorkflow {...stepProps} />}
+        {currentStep === 4 && <Step4_InvoiceVolume {...stepProps} />}
+        {currentStep === 5 && <Step5_PainPoints {...stepProps} />}
+        {currentStep === 6 && <Step6_Integrations {...stepProps} />}
+        {currentStep === 7 && <Step7_ModuleSelection {...stepProps} />}
       </WizardShell>
     </>
   );

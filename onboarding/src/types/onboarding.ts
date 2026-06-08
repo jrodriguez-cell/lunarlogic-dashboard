@@ -57,7 +57,7 @@ export interface Submission extends OnboardingData {
   id: string;
   createdAt: string;
   updatedAt: string;
-  status: 'new' | 'reviewed' | 'proposal_sent' | 'active';
+  status: 'lead' | 'new' | 'reviewed' | 'proposal_sent' | 'active';
   adminNotes?: string;
   roiAnnualRevenue?: number;
   roiCurrentDso?: number;

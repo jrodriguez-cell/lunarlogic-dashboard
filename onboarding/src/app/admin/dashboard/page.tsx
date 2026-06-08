@@ -8,19 +8,21 @@ import { signOut } from 'next-auth/react';
 
 async function StatsBar({ submissions }: { submissions: Submission[] }) {
   const total = submissions.length;
+  const leads = submissions.filter((s) => s.status === 'lead').length;
   const newCount = submissions.filter((s) => s.status === 'new').length;
   const proposalSent = submissions.filter((s) => s.status === 'proposal_sent').length;
   const active = submissions.filter((s) => s.status === 'active').length;
 
   const stats = [
     { label: 'Total', value: total, color: 'text-white' },
-    { label: 'New', value: newCount, color: 'text-amber-400' },
+    { label: 'Leads', value: leads, color: 'text-violet-400' },
+    { label: 'Intakes', value: newCount, color: 'text-amber-400' },
     { label: 'Proposal Sent', value: proposalSent, color: 'text-sky-400' },
     { label: 'Active', value: active, color: 'text-emerald-400' },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
       {stats.map((stat) => (
         <div key={stat.label} className="rounded-xl border border-white/10 bg-white/5 p-4">
           <p className="text-gray-400 text-xs uppercase tracking-wider">{stat.label}</p>

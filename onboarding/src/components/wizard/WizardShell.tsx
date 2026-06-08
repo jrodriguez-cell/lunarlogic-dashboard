@@ -14,6 +14,7 @@ interface WizardShellProps {
   isLoading?: boolean;
   children: React.ReactNode;
   canProgress?: boolean;
+  submitLabel?: string;
 }
 
 export function WizardShell({
@@ -25,6 +26,7 @@ export function WizardShell({
   isLoading = false,
   children,
   canProgress = true,
+  submitLabel = 'Complete My Onboarding →',
 }: WizardShellProps) {
   const isLastStep = currentStep === totalSteps;
   const isFirstStep = currentStep === 1;
@@ -136,7 +138,7 @@ export function WizardShell({
                       </>
                     ) : (
                       <span className={canProgress ? 'text-[#080D1A]' : 'text-gray-500'}>
-                        Complete My Onboarding →
+                        {submitLabel}
                       </span>
                     )}
                   </Button>

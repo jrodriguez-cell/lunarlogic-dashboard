@@ -87,10 +87,10 @@ function CompleteContent() {
 
         <div className="fade-up-1">
           <h1 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: 'var(--font-display), Space Grotesk, sans-serif' }}>
-            Onboarding complete.
+            Your ROI is ready.
           </h1>
           <p className="text-gray-400 mt-2 text-lg">
-            Our team will review your submission and reach out within 24 hours.
+            Book a free 30-minute call and we'll walk through it together.
           </p>
         </div>
 
@@ -161,30 +161,22 @@ function CompleteContent() {
           </div>
         )}
 
-        <div className="fade-up-3 mt-8 text-left rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(10, 16, 32, 0.9)', backdropFilter: 'blur(20px)' }}>
-          <div className="p-6">
-            <h2 className="text-lg font-bold text-white mb-4">What happens next</h2>
-            <div className="space-y-4">
-              {[
-                { step: '1', title: 'Review (within 24 hrs)', desc: "Our team reviews your submission and prepares your custom ROI model." },
-                { step: '2', title: 'Discovery Call', desc: "45-minute call to finalize scope, answer questions, and align on timeline." },
-                { step: '3', title: 'Custom Proposal', desc: "You receive a detailed proposal with pricing, timeline, and ROI model." },
-                { step: '4', title: 'Go Live & Measure', desc: "Your AR automation activates. We track DSO weekly and send monthly reports." },
-              ].map((item) => (
-                <div key={item.step} className="flex gap-4">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[#080D1A] text-sm font-bold flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #00CFFF, #0098C0)' }}
-                  >
-                    {item.step}
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm">{item.title}</p>
-                    <p className="text-gray-400 text-sm mt-0.5">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Book a call CTA */}
+        <div className="fade-up-3 mt-8 rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,207,255,0.25)', background: 'rgba(0,207,255,0.05)' }}>
+          <div className="p-6 text-center">
+            <p className="text-xs uppercase tracking-wider text-cyan-400 font-semibold mb-2">Next step</p>
+            <h2 className="text-xl font-bold text-white mb-1">Book your free discovery call</h2>
+            <p className="text-gray-400 text-sm mb-5">30 minutes. We'll walk through your ROI model and answer every question.</p>
+            <a
+              href="https://calendly.com/jrodriguez-lunarlogic/discovery"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 font-semibold text-[#080D1A] transition-all hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg, #00CFFF, #0098C0)', boxShadow: '0 0 24px rgba(0,207,255,0.3)' }}
+            >
+              Schedule Now →
+            </a>
+            <p className="text-gray-600 text-xs mt-3">No sales pressure. Cancel anytime.</p>
           </div>
         </div>
 
