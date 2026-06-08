@@ -659,6 +659,7 @@ export async function generateProposalPDF(
     roi,
     proposalDraft,
   });
-  const uint8 = await renderToBuffer(element);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const uint8 = await renderToBuffer(element as unknown as React.ReactElement<any>);
   return Buffer.from(uint8);
 }
