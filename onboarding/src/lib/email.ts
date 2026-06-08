@@ -13,7 +13,7 @@ export async function sendJonathanNotification(
   id: string
 ): Promise<void> {
   try {
-    const to = process.env.NOTIFY_EMAIL ?? 'jonathan@lunarlogic.ai';
+    const to = process.env.NOTIFY_EMAIL ?? 'jrodriguez@lunarlogic.ai';
     const payrollFlag = data.nearlyMissedPayroll ? '🔴 <strong>PAYROLL SCARE — high urgency close</strong>' : '✅ No payroll scare reported';
     const qbFlag = data.qbCurrentState.toLowerCase().includes('cleanup') ? '⚠️ QB needs cleanup — may affect timeline' : '✅ QB state acceptable';
     const moduleList = data.modulesSelected.join(', ');
@@ -102,7 +102,7 @@ export async function sendAnalysisReport(
   proposalDraft: string
 ): Promise<void> {
   try {
-    const to = process.env.NOTIFY_EMAIL ?? 'jonathan@lunarlogic.ai';
+    const to = process.env.NOTIFY_EMAIL ?? 'jrodriguez@lunarlogic.ai';
     const appUrl = process.env.NEXTAUTH_URL ?? 'https://lunarlogic.ai';
     const readiness = gapAnalysis.overallReadiness;
 

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { getSubmission, getAnalysis } from '@/lib/db';
 import { GapAnalysisReportView } from '@/components/admin/GapAnalysisReport';
+import { ResendNotificationButton } from '@/components/admin/ResendNotificationButton';
 import { format } from 'date-fns';
 import type { GapAnalysisReport } from '@/lib/gap-analysis';
 
@@ -51,7 +52,7 @@ export default async function AnalysisPage({ params }: PageProps) {
             Dashboard
           </a>
           <span className="text-white/20">/</span>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div>
                 <span className="text-sky-400 font-black tracking-tight text-sm">LUNAR</span>
@@ -65,6 +66,7 @@ export default async function AnalysisPage({ params }: PageProps) {
                 {format(new Date(submission.createdAt), 'MMM d, yyyy')}
               </span>
             </div>
+            <ResendNotificationButton submissionId={id} />
           </div>
         </div>
       </div>
