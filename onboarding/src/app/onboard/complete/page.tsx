@@ -168,7 +168,7 @@ function CompleteContent() {
             <h2 className="text-xl font-bold text-white mb-1">Book your free discovery call</h2>
             <p className="text-gray-400 text-sm mb-5">30 minutes. We'll walk through your ROI model and answer every question.</p>
             <a
-              href="https://calendly.com/jrodriguez-lunarlogic/discovery"
+              href="https://calendly.com/jrodriguez-lunarlogic/30min"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 font-semibold text-[#080D1A] transition-all hover:opacity-90"
