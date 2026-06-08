@@ -186,6 +186,7 @@ export function GapAnalysisReportView({ submissionId, initialData }: Props) {
   const [data, setData] = useState(initialData ?? null);
   const [loading, setLoading] = useState(false);
   const [copyLabel, setCopyLabel] = useState('Copy to Clipboard');
+  const [slideLabel, setSlideLabel] = useState('Download Slide Deck');
   const [error, setError] = useState<string | null>(null);
 
   const generateAnalysis = useCallback(async () => {
@@ -217,6 +218,26 @@ export function GapAnalysisReportView({ submissionId, initialData }: Props) {
       setTimeout(() => setCopyLabel('Copy to Clipboard'), 2000);
     });
   }, [data?.proposalDraft]);
+
+  const handleSlideDeck = useCallback(async () => {
+    setSlideLabel('Generating...');
+    try {
+      const res = await fetch(`/api/onboard/${submissionId}/slides`);
+      if (!res.ok) throw new Error('Failed to generate slide deck');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lunarlogic-discovery-${submissionId}.pptx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setSlideLabel('Downloaded!');
+      setTimeout(() => setSlideLabel('Download Slide Deck'), 3000);
+    } catch {
+      setSlideLabel('Error — Retry');
+      setTimeout(() => setSlideLabel('Download Slide Deck'), 3000);
+    }
+  }, [submissionId]);
 
   const handleDownload = useCallback(() => {
     if (!data?.proposalDraft) return;
@@ -404,7 +425,7 @@ export function GapAnalysisReportView({ submissionId, initialData }: Props) {
       <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
         <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-white/10">
           <h3 className="text-sm font-semibold text-white">AI-Generated Proposal Draft</h3>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap justify-end">
             <button
               onClick={handleCopy}
               className="inline-flex items-center gap-1.5 text-xs rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-gray-300 transition-colors"
@@ -431,6 +452,16 @@ export function GapAnalysisReportView({ submissionId, initialData }: Props) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               Download PDF
+            </button>
+            <button
+              onClick={() => void handleSlideDeck()}
+              disabled={slideLabel === 'Generating...'}
+              className="inline-flex items-center gap-1.5 text-xs rounded-lg border border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 disabled:opacity-50 px-3 py-1.5 text-violet-300 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+              </svg>
+              {slideLabel}
             </button>
           </div>
         </div>
