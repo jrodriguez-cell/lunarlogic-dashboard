@@ -1,13 +1,16 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import type { ROIResult } from '@/types/onboarding';
 import { formatCurrency } from '@/lib/roi';
 
 function CompleteContent() {
   const searchParams = useSearchParams();
   const roiParam = searchParams.get('roi');
+  const submissionId = searchParams.get('id');
+
+  const [emailLabel, setEmailLabel] = useState('Email me a copy');
 
   let roi: ROIResult | null = null;
   try {
@@ -15,6 +18,23 @@ function CompleteContent() {
   } catch {
     // ignore parse errors
   }
+
+  const isSmallProfile =
+    roi &&
+    (roi.currentDSO <= 20 || roi.totalYear1 < 15000);
+
+  const handleEmailCopy = async () => {
+    if (!submissionId) return;
+    setEmailLabel('Sending…');
+    try {
+      const res = await fetch(`/api/onboard/${submissionId}/send-copy`, { method: 'POST' });
+      if (!res.ok) throw new Error();
+      setEmailLabel('Sent! Check your inbox');
+    } catch {
+      setEmailLabel('Failed — try again');
+      setTimeout(() => setEmailLabel('Email me a copy'), 3000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#080D1A] flex flex-col items-center justify-center px-4 py-12">
@@ -51,6 +71,7 @@ function CompleteContent() {
         .fade-up-2 { animation: fadeUp 0.5s ease-out 0.5s forwards; opacity: 0; }
         .fade-up-3 { animation: fadeUp 0.5s ease-out 0.7s forwards; opacity: 0; }
         .fade-up-4 { animation: fadeUp 0.5s ease-out 0.9s forwards; opacity: 0; }
+        .fade-up-5 { animation: fadeUp 0.5s ease-out 1.1s forwards; opacity: 0; }
       `}</style>
 
       <div className="relative z-10 w-full max-w-xl text-center">
@@ -74,16 +95,34 @@ function CompleteContent() {
         </div>
 
         {roi && (
-          <div className="fade-up-2 mt-8 rounded-2xl border border-white/8 overflow-hidden" style={{ background: 'rgba(10, 16, 32, 0.9)', backdropFilter: 'blur(20px)' }}>
+          <div className="fade-up-2 mt-8 rounded-2xl border border-white/8 overflow-hidden text-left" style={{ background: 'rgba(10, 16, 32, 0.9)', backdropFilter: 'blur(20px)' }}>
             <div className="p-6 border-b border-white/8">
-              <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">Your projected Year 1 value</p>
-              <p className="text-5xl font-black text-emerald-400">{formatCurrency(roi.totalYear1)}</p>
-              <p className="text-gray-400 text-sm mt-2">
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-2 text-center">Your projected Year 1 value</p>
+              <p className="text-5xl font-black text-emerald-400 text-center">{formatCurrency(roi.totalYear1)}</p>
+              <p className="text-gray-400 text-sm mt-2 text-center">
                 DSO: <span className="text-amber-400 font-semibold">{roi.currentDSO} days</span>
                 {' → '}
                 <span className="text-emerald-400 font-semibold">{roi.targetDSO} days</span>
               </p>
+
+              {/* ROI breakdown */}
+              <div className="mt-5 pt-4 border-t border-white/8 space-y-2">
+                <p className="text-gray-500 text-xs uppercase tracking-wider mb-3">How we calculated this</p>
+                {[
+                  { label: 'Working capital released from faster collections', value: roi.wcReleased },
+                  { label: 'Bad debt savings from fewer write-offs', value: roi.badDebtSavings },
+                  { label: 'Unbilled revenue recovered', value: roi.unbilledRecovered },
+                  { label: 'Labor hours saved on manual AR tasks', value: roi.laborSaved },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-baseline justify-between gap-4">
+                    <span className="text-gray-400 text-sm">{item.label}</span>
+                    <span className="text-cyan-400 font-semibold text-sm whitespace-nowrap">{formatCurrency(item.value)}</span>
+                  </div>
+                ))}
+                <p className="text-gray-600 text-xs italic pt-1">Based on industry benchmarks for your revenue range. Actual results vary.</p>
+              </div>
             </div>
+
             <div className="grid grid-cols-2 divide-x divide-white/8">
               <div className="p-4">
                 <p className="text-gray-500 text-xs uppercase tracking-wider">Capital Released</p>
@@ -94,6 +133,31 @@ function CompleteContent() {
                 <p className="text-amber-400 font-bold text-lg mt-0.5">{roi.roi}x</p>
               </div>
             </div>
+
+            {/* Email copy button */}
+            <div className="px-6 py-4 border-t border-white/8">
+              <button
+                onClick={() => void handleEmailCopy()}
+                disabled={!submissionId || emailLabel === 'Sending…' || emailLabel === 'Sent! Check your inbox'}
+                className="w-full rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 disabled:opacity-50 py-2.5 text-sm font-medium text-gray-300 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                {emailLabel}
+              </button>
+              <p className="text-gray-600 text-xs text-center mt-1.5">Sends your ROI breakdown and answers to your email</p>
+            </div>
+          </div>
+        )}
+
+        {/* Reassurance for smaller profiles — moved from inline form steps */}
+        {isSmallProfile && (
+          <div className="fade-up-2 mt-4 rounded-xl border border-amber-500/20 bg-amber-500/8 p-4 text-left">
+            <p className="text-amber-400 text-sm font-semibold">Your numbers are on the smaller side — and that's fine.</p>
+            <p className="text-amber-300/70 text-sm mt-1">
+              Every client starts somewhere. Our team will review your fit on the discovery call and make sure the ROI makes sense for your specific situation before recommending anything.
+            </p>
           </div>
         )}
 

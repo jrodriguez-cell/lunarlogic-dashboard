@@ -7,7 +7,6 @@ import type { OnboardingData } from '@/types/onboarding';
 import { step3Schema, type Step3Data } from '@/lib/validations';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 
 interface Props {
   data: Partial<OnboardingData>;
@@ -46,45 +45,11 @@ const frequencyOptions = [
   { value: 'Multiple per week', label: 'Multiple times per week' },
 ];
 
-interface RadioCardProps {
-  selected: boolean;
-  onClick: () => void;
-  label: string;
-}
-
-function RadioCard({ selected, onClick, label }: RadioCardProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'rounded-lg border p-3 text-left transition-all duration-200 flex items-center gap-3 w-full',
-        selected
-          ? 'text-white'
-          : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:bg-white/8'
-      )}
-      style={selected ? {
-        borderColor: 'rgba(0,207,255,0.5)',
-        background: 'rgba(0,207,255,0.08)',
-      } : undefined}
-    >
-      <span
-        className="w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
-        style={selected ? { borderColor: '#00CFFF', background: '#00CFFF' } : { borderColor: 'rgba(255,255,255,0.2)' }}
-      >
-        {selected && <span className="w-1.5 h-1.5 rounded-full bg-[#080D1A]" />}
-      </span>
-      <span className="text-sm font-medium">{label}</span>
-    </button>
-  );
-}
-
 export function Step3_ARWorkflow({ data, onUpdate, onValidChange }: Props) {
   const {
     watch,
     formState: { errors, isValid },
     trigger,
-    setValue,
     register,
   } = useForm<Step3Data>({
     resolver: zodResolver(step3Schema),
@@ -118,48 +83,36 @@ export function Step3_ARWorkflow({ data, onUpdate, onValidChange }: Props) {
       </div>
 
       <div>
-        <Label>How are invoices currently created? *</Label>
-        {errors.invoiceCreation && <p className="text-red-400 text-xs mb-1">{errors.invoiceCreation.message}</p>}
-        <div className="space-y-2 mt-2">
-          {creationOptions.map((opt) => (
-            <RadioCard
-              key={opt.value}
-              selected={watchedValues.invoiceCreation === opt.value}
-              onClick={() => setValue('invoiceCreation', opt.value, { shouldValidate: true })}
-              label={opt.label}
-            />
-          ))}
-        </div>
+        <Label htmlFor="invoiceCreation">How are invoices currently created? *</Label>
+        <Select
+          id="invoiceCreation"
+          placeholder="Select method..."
+          options={creationOptions}
+          {...register('invoiceCreation')}
+        />
+        {errors.invoiceCreation && <p className="text-red-400 text-xs mt-1">{errors.invoiceCreation.message}</p>}
       </div>
 
       <div>
-        <Label>How are invoices delivered to customers? *</Label>
-        {errors.invoiceDelivery && <p className="text-red-400 text-xs mb-1">{errors.invoiceDelivery.message}</p>}
-        <div className="space-y-2 mt-2">
-          {deliveryOptions.map((opt) => (
-            <RadioCard
-              key={opt.value}
-              selected={watchedValues.invoiceDelivery === opt.value}
-              onClick={() => setValue('invoiceDelivery', opt.value, { shouldValidate: true })}
-              label={opt.label}
-            />
-          ))}
-        </div>
+        <Label htmlFor="invoiceDelivery">How are invoices delivered to customers? *</Label>
+        <Select
+          id="invoiceDelivery"
+          placeholder="Select method..."
+          options={deliveryOptions}
+          {...register('invoiceDelivery')}
+        />
+        {errors.invoiceDelivery && <p className="text-red-400 text-xs mt-1">{errors.invoiceDelivery.message}</p>}
       </div>
 
       <div>
-        <Label>Current follow-up process *</Label>
-        {errors.followupProcess && <p className="text-red-400 text-xs mb-1">{errors.followupProcess.message}</p>}
-        <div className="space-y-2 mt-2">
-          {followupOptions.map((opt) => (
-            <RadioCard
-              key={opt.value}
-              selected={watchedValues.followupProcess === opt.value}
-              onClick={() => setValue('followupProcess', opt.value, { shouldValidate: true })}
-              label={opt.label}
-            />
-          ))}
-        </div>
+        <Label htmlFor="followupProcess">Current follow-up process *</Label>
+        <Select
+          id="followupProcess"
+          placeholder="Select process..."
+          options={followupOptions}
+          {...register('followupProcess')}
+        />
+        {errors.followupProcess && <p className="text-red-400 text-xs mt-1">{errors.followupProcess.message}</p>}
       </div>
 
       <div>

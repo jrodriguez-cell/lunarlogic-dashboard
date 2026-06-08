@@ -70,7 +70,6 @@ export function Step1_BusinessInfo({ data, onUpdate, onValidChange }: Props) {
   });
 
   const watchedValues = watch();
-  const selectedRevenue = watchedValues.annualRevenue;
   const selectedIndustry = watchedValues.industry;
 
   useEffect(() => {
@@ -85,7 +84,12 @@ export function Step1_BusinessInfo({ data, onUpdate, onValidChange }: Props) {
   // Force validation on mount so pre-filled data reports correct validity
   useEffect(() => { void trigger(); }, [trigger]);
 
-  const isSmallRevenue = selectedRevenue === 'Under $500K';
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
 
   return (
     <form onSubmit={handleSubmit(() => {})} className="space-y-5">
@@ -93,15 +97,6 @@ export function Step1_BusinessInfo({ data, onUpdate, onValidChange }: Props) {
         <h2 className="text-2xl font-bold text-white font-display">Tell us about your business</h2>
         <p className="text-gray-400 mt-1">We use this to build your custom automation plan and ROI model.</p>
       </div>
-
-      {isSmallRevenue && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
-          <p className="text-amber-400 text-sm font-medium">ℹ️ Revenue note</p>
-          <p className="text-amber-300/80 text-sm mt-1">
-            LunarLogic works best for businesses with $500K+ in annual revenue. You may still qualify — our team will review your fit during the discovery call.
-          </p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -124,7 +119,17 @@ export function Step1_BusinessInfo({ data, onUpdate, onValidChange }: Props) {
         </div>
         <div>
           <Label htmlFor="ownerPhone">Phone (optional)</Label>
-          <Input id="ownerPhone" type="tel" placeholder="(555) 123-4567" {...register('ownerPhone')} />
+          <Input
+            id="ownerPhone"
+            type="tel"
+            placeholder="(555) 123-4567"
+            {...register('ownerPhone')}
+            onChange={(e) => {
+              const formatted = formatPhone(e.target.value);
+              e.target.value = formatted;
+              void register('ownerPhone').onChange(e);
+            }}
+          />
         </div>
       </div>
 

@@ -209,6 +209,90 @@ export async function sendAnalysisReport(
   }
 }
 
+export async function sendAnswersCopy(data: OnboardingData, roi: ROIResult): Promise<void> {
+  try {
+    const firstName = data.ownerName.split(' ')[0];
+    const moduleLabels: Record<string, string> = {
+      IA: 'Invoice Automation',
+      PR: 'Proactive Reminders',
+      SO: 'Payment Receipt & Cash Application',
+      AR: 'AR Aging Dashboard',
+    };
+    const moduleList = data.modulesSelected.map((m) => moduleLabels[m] ?? m).join(', ');
+
+    await getResend().emails.send({
+      from: 'LunarLogic <onboarding@resend.dev>',
+      to: data.ownerEmail,
+      subject: `Your LunarLogic onboarding summary — ${data.businessName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0A0F1E; color: #F7F9FC; padding: 32px; border-radius: 12px;">
+          <div style="text-align: center; margin-bottom: 28px;">
+            <span style="font-size: 22px; font-weight: 900; letter-spacing: -1px; color: #00CFFF;">LUNAR</span>
+            <span style="font-size: 22px; font-weight: 900; letter-spacing: -1px; color: #F7F9FC;">LOGIC</span>
+          </div>
+
+          <h1 style="color: #F7F9FC; margin: 0 0 6px; font-size: 22px;">Your onboarding summary, ${firstName}</h1>
+          <p style="color: #8A94A6; margin: 0 0 28px; font-size: 14px;">Here's everything you submitted for <strong style="color: #F7F9FC;">${data.businessName}</strong>, along with your projected ROI breakdown.</p>
+
+          <!-- ROI -->
+          <div style="background: #1a2236; border-radius: 8px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,196,140,0.3);">
+            <p style="color: #8A94A6; margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;">Projected Year 1 Value</p>
+            <p style="font-size: 38px; font-weight: 900; color: #00C48C; margin: 0 0 4px;">${formatCurrency(roi.totalYear1)}</p>
+            <p style="color: #8A94A6; margin: 0 0 16px; font-size: 13px;">DSO: <span style="color: #EF4444;">${roi.currentDSO} days</span> → <span style="color: #00C48C;">${roi.targetDSO} days</span></p>
+            <p style="color: #8A94A6; margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">How we calculated this</p>
+            <ul style="margin: 0; padding-left: 18px; color: #D1D9E6; font-size: 13px; line-height: 1.8;">
+              <li>Working capital released from faster collections: <strong style="color: #00CFFF;">${formatCurrency(roi.wcReleased)}</strong></li>
+              <li>Bad debt savings from fewer write-offs: <strong style="color: #00CFFF;">${formatCurrency(roi.badDebtSavings)}</strong></li>
+              <li>Unbilled revenue recovered: <strong style="color: #00CFFF;">${formatCurrency(roi.unbilledRecovered)}</strong></li>
+              <li>Labor hours saved on manual AR tasks: <strong style="color: #00CFFF;">${formatCurrency(roi.laborSaved)}</strong></li>
+            </ul>
+            <p style="color: #8A94A6; margin: 12px 0 0; font-size: 11px; font-style: italic;">Based on industry benchmarks for businesses in your revenue range. Actual results vary.</p>
+          </div>
+
+          <!-- Your answers -->
+          <div style="background: #1a2236; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <p style="color: #2D5BE3; margin: 0 0 14px; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Your Answers</p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr><td style="padding: 5px 0; color: #8A94A6; width: 45%;">Business</td><td style="color: #F7F9FC;">${data.businessName}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Industry</td><td style="color: #F7F9FC;">${data.industry}${data.industryOther ? ` — ${data.industryOther}` : ''}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Annual Revenue</td><td style="color: #F7F9FC;">${data.annualRevenue}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Employees</td><td style="color: #F7F9FC;">${data.employeeCount ?? 'Not specified'}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6; border-top: 1px solid #2a3450;">QuickBooks Version</td><td style="color: #F7F9FC; border-top: 1px solid #2a3450;">${data.qbVersion}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">QB Managed by</td><td style="color: #F7F9FC;">${data.qbManager}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">QB Data State</td><td style="color: #F7F9FC;">${data.qbCurrentState}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6; border-top: 1px solid #2a3450;">Invoice Creation</td><td style="color: #F7F9FC; border-top: 1px solid #2a3450;">${data.invoiceCreation}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Invoice Delivery</td><td style="color: #F7F9FC;">${data.invoiceDelivery}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Follow-up Process</td><td style="color: #F7F9FC;">${data.followupProcess}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Follow-up Frequency</td><td style="color: #F7F9FC;">${data.followupFrequency}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6; border-top: 1px solid #2a3450;">Monthly Invoices</td><td style="color: #F7F9FC; border-top: 1px solid #2a3450;">${data.monthlyInvoiceCount}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Avg Invoice Size</td><td style="color: #F7F9FC;">${data.avgInvoiceSize}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Current DSO</td><td style="color: #F7F9FC;">${data.currentDso}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6;">Payment Terms</td><td style="color: #F7F9FC;">${data.paymentTerms}</td></tr>
+              <tr><td style="padding: 5px 0; color: #8A94A6; border-top: 1px solid #2a3450;">Areas of Interest</td><td style="color: #F7F9FC; border-top: 1px solid #2a3450;">${moduleList}</td></tr>
+              ${data.targetStartDate ? `<tr><td style="padding: 5px 0; color: #8A94A6;">Target Start Date</td><td style="color: #F7F9FC;">${data.targetStartDate}</td></tr>` : ''}
+            </table>
+          </div>
+
+          <!-- Pain point -->
+          <div style="background: #1a2236; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <p style="color: #2D5BE3; margin: 0 0 10px; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Your Biggest AR Challenge</p>
+            <blockquote style="border-left: 3px solid #2D5BE3; margin: 0; padding: 10px 14px; font-style: italic; color: #D1D9E6; font-size: 13px;">
+              ${data.biggestArPain}
+            </blockquote>
+          </div>
+
+          <div style="background: #1a2236; border-radius: 8px; padding: 16px; border: 1px solid rgba(45,91,227,0.3);">
+            <p style="margin: 0 0 4px; font-size: 13px; color: #F7F9FC;">Our team will be in touch within <strong>24 hours</strong> to schedule your discovery call.</p>
+            <p style="margin: 0; font-size: 12px; color: #8A94A6; font-style: italic;">"We earn your business every month through results." — LunarLogic LLC</p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error('Failed to send answers copy email:', err);
+  }
+}
+
 export async function sendClientConfirmation(data: OnboardingData, roi: ROIResult): Promise<void> {
   try {
     const firstName = data.ownerName.split(' ')[0];

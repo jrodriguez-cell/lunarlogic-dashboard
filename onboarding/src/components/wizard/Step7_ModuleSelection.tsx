@@ -29,29 +29,29 @@ const modules: Module[] = [
   {
     code: 'IA',
     name: 'Invoice Automation',
-    description: 'AI-powered invoice creation from PDFs and text commands. Claude parses sales orders, validates customers in QB, and sends via approval workflow in Slack.',
-    metrics: ['84% faster processing', 'Zero manual data entry', 'Claude + structured AI'],
+    description: 'Eliminate manual invoice entry. Invoices are created from PDFs or a Slack message, validated against QuickBooks, and sent for approval — without touching a spreadsheet.',
+    metrics: ['84% faster processing', 'Zero manual data entry', 'AI-powered parsing'],
     recommended: true,
   },
   {
     code: 'PR',
     name: 'Proactive Reminders',
-    description: 'Automated payment reminder sequences triggered daily. Filters VIP customers, sends personalized emails via Outlook, posts AR aging summary to Slack.',
-    metrics: ['19-day DSO reduction', 'Daily scheduling', 'Outlook integration'],
+    description: 'Stop chasing payments manually. Personalized reminder emails go out automatically on a daily schedule, with AR aging summaries posted to Slack so you always know where things stand.',
+    metrics: ['19-day DSO reduction', 'Automated follow-up', 'Outlook integration'],
     recommended: true,
   },
   {
     code: 'SO',
-    name: 'Sales Order Processing',
-    description: 'End-to-end order-to-invoice automation. PDF upload → AI parsing → customer matching → QB estimate → milestone approval → invoice creation.',
-    metrics: ['92-node workflow', 'PDF + text input', 'Human-in-the-loop'],
+    name: 'Payment Receipt & Cash Application',
+    description: 'Automatically match incoming payments to open invoices in QuickBooks. Ambiguous or bulk payments get flagged in Slack for a quick human decision instead of falling through the cracks.',
+    metrics: ['90%+ auto-match rate', 'Bank-connected via Plaid', 'Coming Q3 2026'],
     recommended: false,
   },
   {
     code: 'AR',
-    name: 'AR Dashboard',
-    description: 'Real-time AR aging waterfall, DSO trend chart with go-live annotation, invoice status board, and customer payment behavior analytics.',
-    metrics: ['15-min refresh', 'DSO trend line', 'Aging waterfall'],
+    name: 'AR Aging Dashboard',
+    description: 'A live, bookmarkable view of your AR health — aging buckets, DSO trend over time, invoice status, and which customers pay slowest. No more digging through QuickBooks reports.',
+    metrics: ['15-min data refresh', 'DSO trend chart', 'Aging waterfall'],
     recommended: false,
   },
 ];
@@ -101,8 +101,8 @@ export function Step7_ModuleSelection({ data, onUpdate, onValidChange }: Props) 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white font-display">Choose your automation modules</h2>
-        <p className="text-gray-400 mt-1">Select the workflows you want to activate. You can expand later — we recommend starting with IA and PR.</p>
+        <h2 className="text-2xl font-bold text-white font-display">What are you most interested in?</h2>
+        <p className="text-gray-400 mt-1">Select everything that looks useful — our team will recommend the right starting point on your discovery call.</p>
       </div>
 
       {errors.modulesSelected && (
@@ -134,7 +134,7 @@ export function Step7_ModuleSelection({ data, onUpdate, onValidChange }: Props) 
                   </span>
                   {mod.recommended && (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-                      Recommended
+                      Most popular
                     </span>
                   )}
                 </div>
