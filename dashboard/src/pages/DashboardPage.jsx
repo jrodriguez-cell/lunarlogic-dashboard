@@ -11,7 +11,32 @@ import PaymentQueue from '../components/PaymentQueue';
 import PaymentMatchDrawer from '../components/PaymentMatchDrawer';
 import MatchConfidenceChart from '../components/MatchConfidenceChart';
 import ARReminderTracker from '../components/ARReminderTracker';
+import DrillDrawer from '../components/DrillDrawer';
 import { fetchDashboardData } from '../lib/quickbooks';
+
+const INV_COLS = [
+  { key: 'id',          label: 'Invoice' },
+  { key: 'customer',    label: 'Customer' },
+  { key: 'amount',      label: 'Amount',       render: v => `$${v.toLocaleString()}`, csvVal: r => r.amount },
+  { key: 'issued',      label: 'Issue Date' },
+  { key: 'due',         label: 'Due Date' },
+  { key: 'daysOut',     label: 'Days Out',      render: (v, r) => r.status === 'Paid' ? '—' : `${v}d` },
+  { key: 'daysOverdue', label: 'Days Overdue',  render: v => v > 0 ? `${v}d` : '—' },
+  { key: 'status',      label: 'Status' },
+];
+
+const PMT_COLS = [
+  { key: 'txId',            label: 'Txn ID' },
+  { key: 'amount',          label: 'Amount',      render: v => `$${v.toLocaleString()}` },
+  { key: 'received',        label: 'Received' },
+  { key: 'bank',            label: 'Bank' },
+  { key: 'description',     label: 'Description' },
+  { key: 'matchedCustomer', label: 'Customer' },
+  { key: 'matchedInvoice',  label: 'Invoice',     render: v => v || '—' },
+  { key: 'confidence',      label: 'Confidence',  render: v => `${v}%` },
+  { key: 'status',          label: 'Status' },
+  { key: 'rule',            label: 'Match Rule' },
+];
 
 const REFRESH_MS = 15 * 60 * 1000;
 
@@ -33,6 +58,8 @@ export default function DashboardPage({ session, onLogout }) {
   const [openInvoice, setOpenInvoice]   = useState(null);
   const [openCustomer, setOpenCustomer] = useState(null);
   const [openPayment, setOpenPayment]   = useState(null);
+  const [drill, setDrill] = useState(null);
+  const openDrill = config => setDrill(config);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -118,35 +145,76 @@ export default function DashboardPage({ session, onLogout }) {
           {activeView === 'payments' ? (
             <>
               <section className="payments-hero">
-                <div className="payments-hero-metric">
+                <button
+                  className="payments-hero-metric"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                  onClick={() => openDrill({
+                    title: `Auto-Match Rate — ${autoMatchRate}%`,
+                    source: 'Percentage of transactions matched at ≥90% confidence and posted automatically. Remaining transactions land in the Pending Review queue for manual routing.',
+                    filename: 'auto_matched.csv',
+                    columns: PMT_COLS,
+                    rows: autoApplied,
+                  })}
+                >
                   <div className="ph-label">Auto-Match Rate</div>
                   <div className="ph-value" style={{ color: 'var(--teal)' }}>{autoMatchRate}%</div>
                   <div className="ph-sub">of transactions applied automatically</div>
-                </div>
+                </button>
                 <div className="payments-hero-divider" />
                 <div className="payments-hero-stats">
-                  <div className="stat">
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'All Transactions — Last 10 Days',
+                    source: 'Bank feed transactions received via Plaid integration. Includes auto-applied, pending review, and manually confirmed payments.',
+                    filename: 'transactions_all.csv',
+                    columns: PMT_COLS,
+                    rows: payments,
+                  })}>
                     <div className="stat-value stat-good">{payments.length}</div>
                     <div className="stat-label">Transactions Received</div>
                     <div className="stat-sub">last 10 days</div>
-                  </div>
-                  <div className="stat">
+                  </button>
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Cash Applied — Auto-Matched',
+                    source: 'Transactions matched at ≥90% confidence and posted to the ledger automatically without staff intervention.',
+                    filename: 'cash_applied.csv',
+                    columns: PMT_COLS,
+                    rows: autoApplied,
+                  })}>
                     <div className="stat-value">${(totalAppliedAmt / 1000).toFixed(0)}k</div>
                     <div className="stat-label">Cash Applied</div>
                     <div className="stat-sub">auto-matched</div>
-                  </div>
-                  <div className="stat">
+                  </button>
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Pending Review Transactions',
+                    source: 'Transactions held below the 90% confidence threshold, or bulk/partial payments requiring manual routing decision.',
+                    filename: 'pending_review.csv',
+                    columns: PMT_COLS,
+                    rows: payments.filter(p => p.status === 'Pending Review'),
+                  })}>
                     <div className={`stat-value${pendingPayments > 0 ? ' stat-warn' : ' stat-good'}`}>
                       {pendingPayments}
                     </div>
                     <div className="stat-label">Pending Review</div>
                     <div className="stat-sub">need manual routing</div>
-                  </div>
-                  <div className="stat">
+                  </button>
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Avg Apply Time — How It Is Calculated',
+                    subtitle: 'methodology',
+                    source: 'Time from payment receipt (Plaid webhook) to ledger posting. Auto-applied transactions average 8 minutes end-to-end (webhook → match → post). Manual review adds ~15 minutes for staff decision. Traditional manual process averages 3–5 business days per close cycle.',
+                    filename: 'apply_time_log.csv',
+                    columns: [
+                      { key: 'txId',       label: 'Txn ID' },
+                      { key: 'received',   label: 'Received' },
+                      { key: 'appliedAt',  label: 'Applied At', render: v => v || 'Pending' },
+                      { key: 'status',     label: 'Status' },
+                      { key: 'confidence', label: 'Confidence', render: v => `${v}%` },
+                    ],
+                    rows: payments.filter(p => p.status !== 'Pending Review'),
+                  })}>
                     <div className="stat-value stat-good">{avgApplyMinutes}m</div>
                     <div className="stat-label">Avg Apply Time</div>
                     <div className="stat-sub">vs days manually</div>
-                  </div>
+                  </button>
                 </div>
               </section>
 
@@ -155,7 +223,7 @@ export default function DashboardPage({ session, onLogout }) {
               <CommonQuestions />
 
               <div className="grid">
-                <MatchConfidenceChart payments={payments} />
+                <MatchConfidenceChart payments={payments} onDrill={openDrill} />
                 <PaymentActivityFeed payments={payments} />
               </div>
             </>
@@ -173,53 +241,91 @@ export default function DashboardPage({ session, onLogout }) {
               filterBucket={selectedBucket}
               onClearBucket={() => setSelectedBucket(null)}
               onOpenInvoice={handleOpenInvoice}
+              onDrill={openDrill}
             />
           ) : activeView === 'customers' ? (
-            <PaymentTable data={paymentBehavior} onOpenCustomer={handleOpenCustomer} />
+            <PaymentTable data={paymentBehavior} onOpenCustomer={handleOpenCustomer} onDrill={openDrill} />
           ) : (
             <>
               <section className="hero">
-                <DSOMeter current={currentDSO} delta={delta} preLive={preLiveDSO} efficiency={collectionEfficiency} />
+                <DSOMeter
+                  current={currentDSO}
+                  delta={delta}
+                  preLive={preLiveDSO}
+                  efficiency={collectionEfficiency}
+                  onClick={() => openDrill({
+                    title: 'DSO — Days Sales Outstanding',
+                    source: 'DSO = (Total AR / Invoice revenue over trailing 90 days) × 90. Lower is better. The go-live date marks when LunarLogic automation was activated.',
+                    filename: 'dso_calculation.csv',
+                    columns: [
+                      { key: 'date', label: 'Date' },
+                      { key: 'dso',  label: 'DSO (days)' },
+                    ],
+                    rows: dsoTrend,
+                  })}
+                />
                 <div className="hero-divider" />
                 <div className="hero-stats">
-                  <div className="stat">
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Total AR Outstanding',
+                    source: 'All invoices with outstanding balance (Status ≠ Paid). Refreshed every 15 minutes from your accounting system.',
+                    filename: 'ar_outstanding.csv',
+                    columns: INV_COLS,
+                    rows: invoices.filter(i => i.status !== 'Paid'),
+                  })}>
                     <div className="stat-value">${(totalAR / 1000).toFixed(0)}k</div>
                     <div className="stat-label">Total AR Outstanding</div>
-                  </div>
-                  <div className="stat">
+                  </button>
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Overdue Invoices',
+                    source: 'Invoices past their due date with outstanding balance. Sorted by days overdue descending.',
+                    filename: 'overdue_invoices.csv',
+                    columns: INV_COLS,
+                    rows: overdue,
+                  })}>
                     <div className="stat-value stat-warn">{overdue.length}</div>
                     <div className="stat-label">Overdue Invoices</div>
                     <div className="stat-sub">${(overdueAmt / 1000).toFixed(0)}k outstanding</div>
-                  </div>
-                  <div className="stat">
+                  </button>
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Collection Efficiency — All Invoices',
+                    source: 'Ratio of invoices paid within agreed terms vs all invoices issued. Calculated over rolling 90-day window.',
+                    filename: 'collection_efficiency.csv',
+                    columns: INV_COLS,
+                    rows: invoices,
+                  })}>
                     <div className={`stat-value${collectionEfficiency >= 85 ? ' stat-good' : collectionEfficiency >= 70 ? '' : ' stat-warn'}`}>
                       {collectionEfficiency}%
                     </div>
                     <div className="stat-label">Collection Efficiency</div>
                     <div className="stat-sub">paid within terms</div>
-                  </div>
+                  </button>
                 </div>
               </section>
 
               <div className="grid">
                 <ARAgingChart
                   data={arAging}
+                  invoices={invoices}
                   selectedBucket={selectedBucket}
                   onSelectBucket={setSelectedBucket}
+                  onDrill={openDrill}
                 />
                 <DSOTrend
                   data={dsoTrend}
                   goLiveDate={goLiveDate}
                   preLiveDSO={preLiveDSO}
                   currentDSO={currentDSO}
+                  onDrill={openDrill}
                 />
                 <InvoiceBoard
                   invoices={invoices}
                   filterBucket={selectedBucket}
                   onClearBucket={() => setSelectedBucket(null)}
                   onOpenInvoice={handleOpenInvoice}
+                  onDrill={openDrill}
                 />
-                <PaymentTable data={paymentBehavior} onOpenCustomer={handleOpenCustomer} />
+                <PaymentTable data={paymentBehavior} onOpenCustomer={handleOpenCustomer} onDrill={openDrill} />
               </div>
             </>
           )}
@@ -234,8 +340,10 @@ export default function DashboardPage({ session, onLogout }) {
         invoices={invoices}
         onClose={() => setOpenCustomer(null)}
         onOpenInvoice={handleOpenInvoice}
+        onDrill={openDrill}
       />
       <PaymentMatchDrawer payment={openPayment} onClose={() => setOpenPayment(null)} />
+      <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
     </div>
   );
 }

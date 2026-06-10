@@ -58,7 +58,33 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
         </span>
       </div>
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+        <BarChart
+          data={data}
+          margin={{ top: 4, right: 8, left: -20, bottom: 0 }}
+          onClick={({ activePayload }) => {
+            if (!activePayload?.length) return;
+            const bucket = activePayload[0].payload;
+            const filtered = payments.filter(p => p.confidence >= bucket.min && p.confidence <= bucket.max);
+            onDrill?.({
+              title: `Confidence Band — ${bucket.label}`,
+              subtitle: `${filtered.length} transactions`,
+              source: 'Confidence score combines: exact amount match, fuzzy name match (Levenshtein), payment history, and bank description normalization. ≥90% = auto-applied, <90% = manual review queue.',
+              filename: `confidence_${bucket.label.replace(/[^a-z0-9]/gi,'_')}.csv`,
+              columns: [
+                { key: 'txId',            label: 'Txn ID' },
+                { key: 'amount',          label: 'Amount',      render: v => `$${v.toLocaleString()}` },
+                { key: 'received',        label: 'Received' },
+                { key: 'matchedCustomer', label: 'Customer' },
+                { key: 'matchedInvoice',  label: 'Invoice',     render: v => v || '—' },
+                { key: 'confidence',      label: 'Confidence',  render: v => `${v}%` },
+                { key: 'status',          label: 'Status' },
+                { key: 'rule',            label: 'Match Rule' },
+              ],
+              rows: filtered,
+            });
+          }}
+          style={{ cursor: 'pointer' }}
+        >
           <XAxis dataKey="label" tick={{ fill: '#5a7a9e', fontSize: 10 }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fill: '#5a7a9e', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />

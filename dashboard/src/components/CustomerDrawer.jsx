@@ -15,15 +15,12 @@ function riskColor(level) {
   return 'var(--red)';
 }
 
-export default function CustomerDrawer({ customer, invoices, onClose, onOpenInvoice }) {
+export default function CustomerDrawer({ customer, invoices, onClose, onOpenInvoice, onDrill }) {
   if (!customer) return null;
 
-  const customerInvoices = invoices.filter(
-    inv => inv.customer === customer.customer && inv.status !== 'Paid'
-  );
-  const recentPaid = invoices.filter(
-    inv => inv.customer === customer.customer && inv.status === 'Paid'
-  );
+  const allInvoices = invoices.filter(inv => inv.customer === customer.customer);
+  const customerInvoices = allInvoices.filter(inv => inv.status !== 'Paid');
+  const recentPaid = allInvoices.filter(inv => inv.status === 'Paid');
   const overdueCount = customerInvoices.filter(inv => inv.status === 'Overdue').length;
   const totalOpen    = customerInvoices.reduce((s, inv) => s + inv.amount, 0);
 
@@ -157,6 +154,31 @@ export default function CustomerDrawer({ customer, invoices, onClose, onOpenInvo
         </div>
 
         <div className="drawer-actions">
+          <button
+            className="card-export-btn"
+            onClick={() => onDrill?.({
+              title: `${customer.customer} — All Invoices`,
+              subtitle: `${allInvoices.length} total invoices`,
+              source: `All invoices for this customer. Includes paid and open invoices. Data sourced from your accounting system.`,
+              filename: `customer_${customer.customer.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.csv`,
+              columns: [
+                { key: 'id',          label: 'Invoice' },
+                { key: 'amount',      label: 'Amount',       render: v => `$${v.toLocaleString()}` },
+                { key: 'issued',      label: 'Issue Date' },
+                { key: 'due',         label: 'Due Date' },
+                { key: 'daysOut',     label: 'Days Out',      render: (v, r) => r.status === 'Paid' ? '—' : `${v}d` },
+                { key: 'daysOverdue', label: 'Days Overdue',  render: v => v > 0 ? `${v}d` : '—' },
+                { key: 'status',      label: 'Status' },
+              ],
+              rows: allInvoices,
+            })}
+          >
+            <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5.5 1v7M2.5 5.5l3 3 3-3"/>
+              <path d="M1 9.5h9"/>
+            </svg>
+            Export CSV
+          </button>
           {overdueCount > 0 && (
             <button className="btn-primary" onClick={() => handleAction(`Sending payment reminder to ${customer.customer}...`)}>
               Send Reminder

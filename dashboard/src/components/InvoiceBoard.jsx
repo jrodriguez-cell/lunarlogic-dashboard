@@ -15,7 +15,7 @@ function fmtDue(iso) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export default function InvoiceBoard({ invoices, filterBucket, onClearBucket, onOpenInvoice }) {
+export default function InvoiceBoard({ invoices, filterBucket, onClearBucket, onOpenInvoice, onDrill }) {
   const [tab, setTab] = useState('All');
 
   const bucketFiltered = filterBucket
@@ -35,6 +35,32 @@ export default function InvoiceBoard({ invoices, filterBucket, onClearBucket, on
     <div className="card">
       <div className="card-header">
         <h2>Invoice Status</h2>
+        <button
+          className="card-export-btn"
+          onClick={() => onDrill?.({
+            title: `Invoice Status${tab !== 'All' ? ' — ' + tab : ''}`,
+            subtitle: `${displayed.length} invoices${filterBucket ? ` · ${filterBucket} aging bucket` : ''}`,
+            source: 'Open and recent invoices from your accounting system. Days Out = days since invoice was issued. Days Overdue = days past due date.',
+            filename: `invoices_${tab.toLowerCase().replace(' ','-')}.csv`,
+            columns: [
+              { key: 'id',          label: 'Invoice' },
+              { key: 'customer',    label: 'Customer' },
+              { key: 'amount',      label: 'Amount',       render: v => `$${v.toLocaleString()}` },
+              { key: 'issued',      label: 'Issue Date' },
+              { key: 'due',         label: 'Due Date' },
+              { key: 'daysOut',     label: 'Days Out',      render: (v, r) => r.status === 'Paid' ? '—' : `${v}d` },
+              { key: 'daysOverdue', label: 'Days Overdue',  render: v => v > 0 ? `${v}d` : '—' },
+              { key: 'status',      label: 'Status' },
+            ],
+            rows: displayed,
+          })}
+        >
+          <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5.5 1v7M2.5 5.5l3 3 3-3"/>
+            <path d="M1 9.5h9"/>
+          </svg>
+          Export
+        </button>
       </div>
 
       <div className="status-tabs">
