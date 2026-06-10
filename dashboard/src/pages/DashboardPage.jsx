@@ -297,11 +297,9 @@ export default function DashboardPage({ session, onLogout }) {
 
               <PaymentQueue payments={filteredPayments || []} onOpenPayment={p => { setOpenPayment(p); }} />
 
-              <MatchConfidenceChart payments={filteredPayments || []} onDrill={openDrill} />
-
               <div className="grid">
+                <MatchConfidenceChart payments={filteredPayments || []} onDrill={openDrill} />
                 <AuditTrailPanel payments={filteredPayments || []} />
-                <MatchRulesPanel />
               </div>
 
               <PaymentActivityFeed payments={filteredPayments || []} />
@@ -644,49 +642,3 @@ function AuditTrailPanel({ payments }) {
   );
 }
 
-function MatchRulesPanel() {
-  const rules = [
-    { id: 'R-01', name: 'Exact Invoice Match',     trigger: 'Payment amount = invoice amount +/- $0.01',                         threshold: '100%',    action: 'Auto-apply',                           priority: 1 },
-    { id: 'R-02', name: 'Memo / Reference Match',  trigger: 'Bank memo contains invoice number pattern (INV-XXXXX)',              threshold: '98%',     action: 'Auto-apply (highest confidence path)', priority: 2 },
-    { id: 'R-03', name: 'Fuzzy Customer Name',     trigger: 'Bank description contains customer name (Levenshtein distance < 3)', threshold: '90-99%',  action: 'Auto-apply',                           priority: 3 },
-    { id: 'R-04', name: 'FIFO Application',        trigger: 'Customer matched, multiple open invoices',                          threshold: '90%+',    action: 'Apply to oldest open invoice first',   priority: 4 },
-    { id: 'R-05', name: 'Partial Payment Split',   trigger: 'Payment amount does not match any single invoice',                  threshold: 'Any',     action: 'Route to manual review',               priority: 5 },
-    { id: 'R-06', name: 'Low Confidence Hold',     trigger: 'Confidence score < 90% after all rule passes',                      threshold: '< 90%',   action: 'Hold for staff review — Slack alert',  priority: 6 },
-  ];
-
-  return (
-    <div className="card">
-      <div className="card-header">
-        <h2>Match Rules</h2>
-        <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600 }}>{rules.length} active</span>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {rules.map((r, i) => (
-          <div key={r.id} style={{
-            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0',
-            borderBottom: i < rules.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-          }}>
-            <div style={{
-              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 9, fontWeight: 700, background: 'rgba(0,212,232,0.1)',
-              color: 'var(--teal)', border: '1px solid rgba(0,212,232,0.2)', marginTop: 1,
-            }}>{r.priority}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{r.name}</span>
-                <span style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'monospace' }}>{r.id}</span>
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>{r.trigger}</div>
-              <div style={{ fontSize: 10, color: 'var(--teal)' }}>{r.action}</div>
-            </div>
-            <div style={{ flexShrink: 0, textAlign: 'right' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--green)' }}>{r.threshold}</div>
-              <div style={{ fontSize: 9, color: 'var(--green)', marginTop: 2 }}>● Active</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
