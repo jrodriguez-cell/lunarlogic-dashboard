@@ -12,6 +12,7 @@ import PaymentMatchDrawer from '../components/PaymentMatchDrawer';
 import MatchConfidenceChart from '../components/MatchConfidenceChart';
 import ARReminderTracker from '../components/ARReminderTracker';
 import DrillDrawer from '../components/DrillDrawer';
+import AIStatusReport from '../components/AIStatusReport';
 import { fetchDashboardData } from '../lib/quickbooks';
 
 function fmtM(v) {
@@ -176,6 +177,17 @@ export default function DashboardPage({ session, onLogout }) {
         </header>
 
         <main className="main-content">
+          <AIStatusReport
+            view={activeView}
+            metrics={{
+              invoices, payments: filteredPayments || payments || [],
+              paymentBehavior, currentDSO, delta, preLiveDSO,
+              collectionEfficiency, totalAR, overdue, overdueAmt,
+              writeOffRisk, writeOffCount, expectedCashIn,
+              unappliedAmt, autoMatchRate: filteredAutoMatchRate,
+              unappliedPayments, clientName: data.clientName,
+            }}
+          />
           {activeView === 'payments' ? (
             <>
               <div className="cash-filter-bar">
