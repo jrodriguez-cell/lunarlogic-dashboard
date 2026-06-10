@@ -17,13 +17,16 @@ const INV_COLS = [
 ];
 
 function fmtK(v) {
-  return v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`;
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
+  return `$${v}`;
 }
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
-  const pct = ((d.amount / TOTAL_AR_CAP) * 100).toFixed(0);
+  const total = payload[0].payload._total || 1;
+  const pct = ((d.amount / total) * 100).toFixed(0);
   return (
     <div className="chart-tooltip">
       <div className="tooltip-title">{label === 'Current' ? 'Current (not yet due)' : `${label} days past due`}</div>
@@ -36,6 +39,7 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function ARAgingChart({ data, invoices, selectedBucket, onSelectBucket, onDrill }) {
   const totalAR = data.reduce((s, d) => s + d.amount, 0);
+  const enriched = data.map(d => ({ ...d, _total: totalAR }));
 
   return (
     <div className="card">
@@ -49,7 +53,7 @@ export default function ARAgingChart({ data, invoices, selectedBucket, onSelectB
       </div>
       <ResponsiveContainer width="100%" height={190}>
         <BarChart
-          data={data}
+          data={enriched}
           margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
           onClick={({ activePayload }) => {
             if (!activePayload?.length) return;

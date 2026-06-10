@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine,
   ResponsiveContainer, Label,
@@ -21,29 +22,47 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
+const RANGES = [30, 60, 90];
+
 export default function DSOTrend({ data, goLiveDate, preLiveDSO, currentDSO, onDrill }) {
+  const [range, setRange] = useState(90);
   const improvement = preLiveDSO - currentDSO;
+  const displayed = data.slice(data.length - range);
 
   return (
     <div className="card">
       <div className="card-header">
-        <h2>DSO Trend — 90 Days</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <h2>DSO Trend — {range} Days</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
             ▼ {improvement}d improvement
           </span>
+          <div style={{ display: 'flex', gap: 2 }}>
+            {RANGES.map(r => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                style={{
+                  padding: '3px 8px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
+                  border: `1px solid ${range === r ? 'var(--teal)' : 'var(--border)'}`,
+                  background: range === r ? 'rgba(0,212,232,0.1)' : 'none',
+                  color: range === r ? 'var(--teal)' : 'var(--muted)',
+                }}
+              >{r}d</button>
+            ))}
+          </div>
           <button
             className="card-export-btn"
             onClick={() => onDrill?.({
-              title: 'DSO Trend — 90 Days',
+              title: `DSO Trend — ${range} Days`,
               subtitle: 'Daily rolling DSO',
               source: 'DSO = (Total AR outstanding / Invoice revenue over trailing 90 days) × 90. Calculated daily from ERP data. Go-live annotation marks LunarLogic activation date.',
-              filename: 'dso_trend_90d.csv',
+              filename: `dso_trend_${range}d`,
               columns: [
                 { key: 'date', label: 'Date' },
                 { key: 'dso',  label: 'DSO (days)' },
               ],
-              rows: data,
+              rows: displayed,
             })}
           >
             <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -55,7 +74,7 @@ export default function DSOTrend({ data, goLiveDate, preLiveDSO, currentDSO, onD
         </div>
       </div>
       <ResponsiveContainer width="100%" height={190}>
-        <AreaChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+        <AreaChart data={displayed} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
           <defs>
             <linearGradient id="dsoGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%"  stopColor="#00d4e8" stopOpacity={0.2}/>
@@ -68,7 +87,7 @@ export default function DSOTrend({ data, goLiveDate, preLiveDSO, currentDSO, onD
             axisLine={false}
             tickLine={false}
             tickFormatter={fmtDate}
-            interval={17}
+            interval={Math.floor(range / 5)}
           />
           <YAxis
             domain={['auto', 'auto']}

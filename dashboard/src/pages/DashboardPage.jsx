@@ -14,6 +14,12 @@ import ARReminderTracker from '../components/ARReminderTracker';
 import DrillDrawer from '../components/DrillDrawer';
 import { fetchDashboardData } from '../lib/quickbooks';
 
+function fmtM(v) {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
+  return `$${v}`;
+}
+
 const INV_COLS = [
   { key: 'id',          label: 'Invoice' },
   { key: 'customer',    label: 'Customer' },
@@ -93,8 +99,9 @@ export default function DashboardPage({ session, onLogout }) {
   const overdue     = invoices.filter(i => i.status === 'Overdue');
   const overdueAmt  = overdue.reduce((s, i) => s + i.amount, 0);
 
-  const writeOffRisk    = arAging.find(b => b.key === '90+')?.amount || 0;
-  const writeOffCount   = arAging.find(b => b.key === '90+')?.count || 0;
+  const writeOffInvs    = invoices.filter(i => i.daysOverdue > 90);
+  const writeOffRisk    = writeOffInvs.reduce((s, i) => s + i.amount, 0);
+  const writeOffCount   = writeOffInvs.length;
   const today           = new Date('2026-05-19');
   const in30Days        = new Date(today); in30Days.setDate(in30Days.getDate() + 30);
   const expectedCashIn  = invoices
@@ -225,7 +232,7 @@ export default function DashboardPage({ session, onLogout }) {
                     columns: PMT_COLS,
                     rows: filteredAutoApplied,
                   })}>
-                    <div className="stat-value">${(filteredTotalApplied / 1000).toFixed(0)}k</div>
+                    <div className="stat-value">{fmtM(filteredTotalApplied)}</div>
                     <div className="stat-label">Cash Applied</div>
                     <div className="stat-sub">auto-matched</div>
                   </button>
@@ -237,7 +244,7 @@ export default function DashboardPage({ session, onLogout }) {
                     rows: unappliedPayments,
                   })}>
                     <div className={`stat-value${unappliedAmt > 0 ? ' stat-warn' : ' stat-good'}`}>
-                      ${(unappliedAmt / 1000).toFixed(0)}k
+                      {fmtM(unappliedAmt)}
                     </div>
                     <div className="stat-label">Unapplied Cash</div>
                     <div className="stat-sub">ASC 606 — contract liability</div>
@@ -329,7 +336,7 @@ export default function DashboardPage({ session, onLogout }) {
                     columns: INV_COLS,
                     rows: invoices.filter(i => i.status !== 'Paid'),
                   })}>
-                    <div className="stat-value">${(totalAR / 1000).toFixed(0)}k</div>
+                    <div className="stat-value">{fmtM(totalAR)}</div>
                     <div className="stat-label">Total AR Outstanding</div>
                   </button>
                   <button className="stat-btn" onClick={() => openDrill({
@@ -341,7 +348,7 @@ export default function DashboardPage({ session, onLogout }) {
                   })}>
                     <div className="stat-value stat-warn">{overdue.length}</div>
                     <div className="stat-label">Overdue Invoices</div>
-                    <div className="stat-sub">${(overdueAmt / 1000).toFixed(0)}k outstanding</div>
+                    <div className="stat-sub">{fmtM(overdueAmt)} outstanding</div>
                   </button>
                   <button className="stat-btn" onClick={() => openDrill({
                     title: 'Collection Efficiency',
@@ -361,13 +368,10 @@ export default function DashboardPage({ session, onLogout }) {
                     source: 'Invoices in the 90+ day aging bucket. Under ASC 310-10-35-7, balances deemed uncollectable must be written off against the Allowance for Doubtful Accounts. Industry standard ADA reserve rate for 90+ day AR is 50–100%. These balances are the primary write-off risk in the portfolio and should be reviewed each period for impairment.',
                     filename: 'writeoff_risk',
                     columns: INV_COLS,
-                    rows: invoices.filter(i => {
-                      const days = i.daysOverdue;
-                      return days > 90;
-                    }).concat(invoices.filter(i => i.daysOverdue > 60 && i.daysOverdue <= 90)),
+                    rows: writeOffInvs,
                   })}>
                     <div className="stat-value" style={{ color: writeOffRisk > 0 ? 'var(--red)' : 'var(--green)' }}>
-                      ${(writeOffRisk / 1000).toFixed(0)}k
+                      {fmtM(writeOffRisk)}
                     </div>
                     <div className="stat-label">Write-off Risk</div>
                     <div className="stat-sub">{writeOffCount} inv · 90+ days</div>
@@ -386,7 +390,7 @@ export default function DashboardPage({ session, onLogout }) {
                     }),
                   })}>
                     <div className="stat-value stat-good">
-                      ${(expectedCashIn / 1000).toFixed(0)}k
+                      {fmtM(expectedCashIn)}
                     </div>
                     <div className="stat-label">Expected Cash In</div>
                     <div className="stat-sub">due in next 30 days</div>

@@ -179,6 +179,10 @@ const CLIENTS = {
       { id: 'FM-4403', customer: 'Summit Ridge Logistics',       amount:  44000, due: '2026-05-15', issued: '2026-04-15', status: 'Sent',    daysOut: 32, daysOverdue: 0  },
       { id: 'FM-4402', customer: 'Castlebrook Real Estate',      amount:  68000, due: '2026-06-01', issued: '2026-05-02', status: 'Sent',    daysOut: 15, daysOverdue: 0  },
       { id: 'FM-4401', customer: 'Vantage Healthcare Systems',   amount: 106000, due: '2026-04-20', issued: '2026-03-21', status: 'Overdue', daysOut: 57, daysOverdue: 27 },
+      { id: 'FM-4400', customer: 'Castlebrook Real Estate',      amount:  18000, due: '2026-02-12', issued: '2026-01-13', status: 'Overdue', daysOut: 126, daysOverdue: 96  },
+      { id: 'FM-4399', customer: 'Vantage Healthcare Systems',   amount:  16000, due: '2026-02-05', issued: '2026-01-06', status: 'Overdue', daysOut: 133, daysOverdue: 103 },
+      { id: 'FM-4398', customer: 'Meridian Industrial Group',    amount:  15000, due: '2026-01-28', issued: '2025-12-29', status: 'Overdue', daysOut: 141, daysOverdue: 111 },
+      { id: 'FM-4397', customer: 'Castlebrook Real Estate',      amount:  13000, due: '2026-01-15', issued: '2025-12-16', status: 'Overdue', daysOut: 154, daysOverdue: 124 },
     ],
     paymentBehavior: [
       { customer: 'Northlake Private Equity',   avgDays: 18, openCount: 2,  openAmount:  104200, trend: -4, riskLevel: 'low'    },
