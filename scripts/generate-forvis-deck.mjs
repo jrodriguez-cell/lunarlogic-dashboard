@@ -5,6 +5,7 @@ const C = {
   navy:    '0A0F1E',
   navyMid: '0D1526',
   panel:   '152035',
+  panelAlt:'0F1C30',
   blue:    '2D5BE3',
   cyan:    '00CFFF',
   green:   '00C48C',
@@ -18,463 +19,510 @@ const C = {
 
 const W = 13.33;
 const H = 7.5;
-const M = 0.55;
-const HEADER_H = 0.72;
-const CONTENT_Y = HEADER_H + 0.45;
+const M = 0.6;
+const HEADER_H = 0.68;
 const CW = W - M * 2;
 
 function bg(slide) {
   slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: C.navy } });
 }
 
-function header(slide, title, subtitle) {
-  slide.addShape('rect', { x: 0, y: 0, w: W, h: HEADER_H, fill: { color: C.navyMid } });
-  slide.addShape('rect', { x: 0, y: HEADER_H - 0.025, w: W, h: 0.025, fill: { color: C.blue } });
+function logo(slide, x, y) {
   slide.addText([
-    { text: 'LUNAR', options: { color: C.cyan, bold: true } },
-    { text: 'LOGIC', options: { color: C.white, bold: true } },
-  ], { x: M, y: 0, w: 1.8, h: HEADER_H, fontSize: 16, fontFace: 'Calibri', valign: 'middle' });
+    { text: 'Lunar', options: { color: C.cyan, bold: true } },
+    { text: 'Logic', options: { color: C.white, bold: true } },
+  ], { x, y, w: 2.2, h: 0.42, fontSize: 18, fontFace: 'Calibri' });
+}
 
-  const titleBlock = [{ text: title, options: { color: C.offWhite, bold: true } }];
-  if (subtitle) titleBlock.push({ text: `  ·  ${subtitle}`, options: { color: C.gray, bold: false } });
-  slide.addText(titleBlock, {
-    x: 2.6, y: 0, w: W - 2.6 - M, h: HEADER_H,
-    fontSize: 13, fontFace: 'Calibri', valign: 'middle', align: 'right',
+function topBar(slide, pageNum, total) {
+  slide.addShape('rect', { x: 0, y: 0, w: W, h: HEADER_H, fill: { color: C.navyMid } });
+  slide.addShape('rect', { x: 0, y: HEADER_H - 0.02, w: W, h: 0.02, fill: { color: C.blue } });
+  logo(slide, M, 0.13);
+  slide.addText(`${pageNum} / ${total}`, {
+    x: W - M - 0.8, y: 0.18, w: 0.8, h: 0.32,
+    fontSize: 10, color: C.gray, fontFace: 'Calibri', align: 'right',
   });
 }
 
 function footer(slide) {
-  slide.addShape('rect', { x: 0, y: H - 0.32, w: W, h: 0.32, fill: { color: C.navyMid } });
-  slide.addText('LunarLogic LLC  ·  Confidential', {
-    x: M, y: H - 0.32, w: CW / 2, h: 0.32,
-    fontSize: 8, color: C.gray, fontFace: 'Calibri', valign: 'middle',
-  });
-  slide.addText('Forvis Mazars  ·  Chicago Office', {
-    x: M + CW / 2, y: H - 0.32, w: CW / 2, h: 0.32,
-    fontSize: 8, color: C.gray, fontFace: 'Calibri', valign: 'middle', align: 'right',
+  slide.addShape('rect', { x: 0, y: H - 0.28, w: W, h: 0.28, fill: { color: C.navyMid } });
+  slide.addText('LunarLogic LLC  ·  Confidential  ·  jrodriguez@lunarlogic.ai', {
+    x: M, y: H - 0.28, w: CW, h: 0.28,
+    fontSize: 8, color: C.gray, fontFace: 'Calibri', valign: 'middle', align: 'center',
   });
 }
 
-function metricCard(slide, x, y, w, h, label, value, valueColor, sub) {
-  slide.addShape('roundRect', { x, y, w, h, rectRadius: 0.1, fill: { color: C.panel }, line: { color: '1E3A5F', width: 0.75 } });
-  slide.addText(label.toUpperCase(), {
-    x: x + 0.2, y: y + 0.18, w: w - 0.4, h: 0.25,
-    fontSize: 8.5, bold: true, color: C.gray, fontFace: 'Calibri', charSpacing: 1.5,
-  });
-  slide.addText(value, {
-    x: x + 0.2, y: y + 0.44, w: w - 0.4, h: h - 0.7,
-    fontSize: 26, bold: true, color: valueColor, fontFace: 'Calibri',
-  });
-  if (sub) {
-    slide.addText(sub, {
-      x: x + 0.2, y: y + h - 0.3, w: w - 0.4, h: 0.25,
-      fontSize: 9, color: C.gray, fontFace: 'Calibri',
-    });
-  }
-}
+const TOTAL = 7;
 
 // ── Slide 1: Cover ─────────────────────────────────────────────────────────────
 function slide1(pptx) {
   const slide = pptx.addSlide();
   bg(slide);
 
-  const panelW = W * 0.42;
-  slide.addShape('rect', { x: 0, y: 0, w: panelW, h: H, fill: { color: C.navyMid } });
-  slide.addShape('rect', { x: panelW, y: 0, w: 0.04, h: H, fill: { color: C.blue } });
+  // Left dark panel
+  const pw = W * 0.4;
+  slide.addShape('rect', { x: 0, y: 0, w: pw, h: H, fill: { color: C.navyMid } });
+  slide.addShape('rect', { x: pw - 0.03, y: 0, w: 0.03, h: H, fill: { color: C.blue } });
 
-  slide.addText([
-    { text: 'LUNAR', options: { color: C.cyan } },
-    { text: 'LOGIC', options: { color: C.white } },
-  ], { x: 0.7, y: 0.6, w: panelW - 1.0, h: 0.6, fontSize: 32, bold: true, fontFace: 'Calibri' });
+  logo(slide, 0.65, 0.55);
   slide.addText('AR AUTOMATION PLATFORM', {
-    x: 0.7, y: 1.2, w: panelW - 1.0, h: 0.3,
-    fontSize: 9, color: C.gray, fontFace: 'Calibri', charSpacing: 2,
+    x: 0.65, y: 0.98, w: pw - 1.1, h: 0.22,
+    fontSize: 8, color: C.gray, fontFace: 'Calibri', charSpacing: 2,
   });
-  slide.addShape('rect', { x: 0.7, y: 1.65, w: panelW - 1.4, h: 0.025, fill: { color: C.blue } });
+  slide.addShape('rect', { x: 0.65, y: 1.32, w: pw - 1.3, h: 0.02, fill: { color: C.blue } });
 
   slide.addText('PREPARED FOR', {
-    x: 0.7, y: 1.9, w: panelW - 1.0, h: 0.25,
-    fontSize: 8.5, color: C.cyan, bold: true, fontFace: 'Calibri', charSpacing: 2,
+    x: 0.65, y: 1.55, w: pw - 1.1, h: 0.22,
+    fontSize: 8, bold: true, color: C.cyan, fontFace: 'Calibri', charSpacing: 2,
   });
   slide.addText('Forvis Mazars', {
-    x: 0.7, y: 2.18, w: panelW - 1.0, h: 0.55,
+    x: 0.65, y: 1.82, w: pw - 1.0, h: 0.52,
     fontSize: 22, bold: true, color: C.white, fontFace: 'Calibri',
   });
   slide.addText('Peter Sukits', {
-    x: 0.7, y: 2.76, w: panelW - 1.0, h: 0.35,
-    fontSize: 14, color: C.grayMid, fontFace: 'Calibri',
+    x: 0.65, y: 2.38, w: pw - 1.0, h: 0.32,
+    fontSize: 13, color: C.grayMid, fontFace: 'Calibri',
   });
-  slide.addText('Accounting Advisory  ·  Chicago Office', {
-    x: 0.7, y: 3.14, w: panelW - 1.0, h: 0.28,
-    fontSize: 12, color: C.gray, fontFace: 'Calibri',
+  slide.addText('Accounting Advisory  ·  Chicago', {
+    x: 0.65, y: 2.73, w: pw - 1.0, h: 0.26,
+    fontSize: 10.5, color: C.gray, fontFace: 'Calibri',
   });
-  slide.addText('June 2026', {
-    x: 0.7, y: H - 0.7, w: panelW - 1.0, h: 0.28,
-    fontSize: 10, color: C.gray, fontFace: 'Calibri',
+  slide.addText('June 11, 2026', {
+    x: 0.65, y: H - 0.62, w: pw - 1.0, h: 0.24,
+    fontSize: 9.5, color: C.gray, fontFace: 'Calibri',
   });
 
-  const rx = panelW + 0.3;
+  // Right content
+  const rx = pw + 0.35;
   const rw = W - rx - 0.5;
 
-  slide.addText('Exploratory Call', {
-    x: rx, y: 1.0, w: rw, h: 0.75,
-    fontSize: 44, bold: true, color: C.white, fontFace: 'Calibri',
+  slide.addText('Transforming Manual AR\nInto Automated Workflows', {
+    x: rx, y: 1.0, w: rw, h: 1.5,
+    fontSize: 36, bold: true, color: C.white, fontFace: 'Calibri',
   });
-  slide.addText('AR Automation for Professional Services Firms', {
-    x: rx, y: 1.78, w: rw, h: 0.42,
-    fontSize: 18, color: C.cyan, fontFace: 'Calibri',
+  slide.addText('for professional services firms', {
+    x: rx, y: 2.55, w: rw, h: 0.36,
+    fontSize: 15, color: C.cyan, fontFace: 'Calibri',
   });
-  slide.addShape('rect', { x: rx, y: 2.35, w: rw, h: 0.025, fill: { color: C.blue } });
-  slide.addText('Automate the full Order-to-Cash cycle — from invoice creation to cash application — without changing your ERP or accounting workflows.', {
-    x: rx, y: 2.55, w: rw, h: 0.5,
-    fontSize: 12, color: C.gray, fontFace: 'Calibri',
-  });
+  slide.addShape('rect', { x: rx, y: 3.06, w: rw, h: 0.02, fill: { color: C.blue } });
 
+  // Proof point
   slide.addShape('roundRect', {
-    x: rx, y: 3.25, w: rw, h: 2.1,
-    rectRadius: 0.12, fill: { color: C.panel }, line: { color: C.green, width: 1 },
+    x: rx, y: 3.28, w: rw, h: 1.95,
+    rectRadius: 0.1, fill: { color: C.panel }, line: { color: C.green, width: 0.9 },
   });
-  slide.addShape('rect', { x: rx, y: 3.25, w: rw, h: 0.04, fill: { color: C.green } });
+  slide.addShape('rect', { x: rx, y: 3.28, w: rw, h: 0.04, fill: { color: C.green } });
   slide.addText('CLIENT PROOF POINT', {
-    x: rx + 0.3, y: 3.38, w: rw - 0.6, h: 0.28,
-    fontSize: 9, bold: true, color: C.green, fontFace: 'Calibri', charSpacing: 1.5,
+    x: rx + 0.28, y: 3.42, w: rw - 0.56, h: 0.24,
+    fontSize: 8.5, bold: true, color: C.green, fontFace: 'Calibri', charSpacing: 1.5,
   });
   slide.addText('"84% reduction in invoice processing time.\n19-day DSO improvement in under 90 days."', {
-    x: rx + 0.3, y: 3.7, w: rw - 0.6, h: 0.9,
-    fontSize: 16, italic: true, color: C.offWhite, fontFace: 'Calibri',
+    x: rx + 0.28, y: 3.72, w: rw - 0.56, h: 0.85,
+    fontSize: 14.5, italic: true, color: C.offWhite, fontFace: 'Calibri',
   });
-  slide.addText('— Kaptain Clean LLC, Anchor Client', {
-    x: rx + 0.3, y: 4.68, w: rw - 0.6, h: 0.28,
-    fontSize: 10, color: C.gray, fontFace: 'Calibri',
+  slide.addText('— Kaptain Clean LLC  ·  Anchor Client', {
+    x: rx + 0.28, y: 4.62, w: rw - 0.56, h: 0.26,
+    fontSize: 9.5, color: C.gray, fontFace: 'Calibri',
   });
 }
 
-// ── Slide 2: The Problem ───────────────────────────────────────────────────────
+// ── Slide 2: Before ────────────────────────────────────────────────────────────
 function slide2(pptx) {
   const slide = pptx.addSlide();
   bg(slide);
-  header(slide, 'The Problem', 'AR in professional services today');
+  topBar(slide, 2, TOTAL);
   footer(slide);
 
-  const topY = CONTENT_Y + 0.1;
+  const topY = HEADER_H + 0.38;
 
-  const problems = [
-    {
-      icon: '⏱',
-      title: 'Manual follow-up is time-consuming',
-      desc: 'Staff spend 3–8 hours per week manually chasing invoices, building aging reports, and sending reminder emails — work that generates zero revenue.',
-      color: C.red,
-    },
-    {
-      icon: '📊',
-      title: 'No real-time visibility into AR health',
-      desc: 'DSO, aging buckets, and overdue balances live in spreadsheets or ERP exports — not a live dashboard. By the time someone sees the data, it is already stale.',
-      color: C.amber,
-    },
-    {
-      icon: '💰',
-      title: 'Cash application is slow and error-prone',
-      desc: 'Matching bank deposits to open invoices takes days. Partial payments, bulk wires, and name mismatches create a permanent pending queue that delays the close.',
-      color: C.amber,
-    },
-    {
-      icon: '⚠',
-      title: 'Write-off risk is invisible until it is too late',
-      desc: '90+ day balances accumulate quietly. By the time they surface in a period-end review, the write-off conversation is already difficult — and ASC 310 compliance is at risk.',
-      color: C.red,
-    },
+  slide.addText('Before', {
+    x: M, y: topY, w: CW, h: 0.52,
+    fontSize: 30, bold: true, color: C.white, fontFace: 'Calibri',
+  });
+  slide.addText('How your clients manage AR today', {
+    x: M, y: topY + 0.52, w: CW, h: 0.3,
+    fontSize: 13, color: C.gray, fontFace: 'Calibri',
+  });
+  slide.addShape('rect', { x: M, y: topY + 0.9, w: CW, h: 0.02, fill: { color: C.blue } });
+
+  const pains = [
+    { label: '3–8 hrs/week',   desc: 'chasing invoices manually — staff time that generates zero revenue', color: C.red },
+    { label: '45–60 day DSO',  desc: 'industry average for professional services — cash locked in AR', color: C.amber },
+    { label: '3–5 day close',  desc: 'to match bank deposits against open invoices — manual reconciliation', color: C.amber },
+    { label: '2% bad debt',    desc: 'industry average write-off rate — preventable with proactive outreach', color: C.red },
+    { label: 'Zero visibility', desc: 'AR health lives in ERP exports and spreadsheets — stale by the time anyone sees it', color: C.gray },
+    { label: 'No audit trail', desc: 'cash application decisions undocumented — SOC 2 and internal controls gap', color: C.gray },
   ];
 
-  const cardW = (CW - 0.45) / 2;
-  const cardH = 1.7;
-  const gap = 0.25;
+  const cols = 2;
+  const cardW = (CW - 0.3) / cols;
+  const cardH = 1.05;
+  const gapX = 0.3;
+  const gapY = 0.18;
+  const startY = topY + 1.08;
 
-  problems.forEach((p, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = M + col * (cardW + gap);
-    const y = topY + row * (cardH + gap);
+  pains.forEach((p, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = M + col * (cardW + gapX);
+    const y = startY + row * (cardH + gapY);
 
-    slide.addShape('roundRect', { x, y, w: cardW, h: cardH, rectRadius: 0.1, fill: { color: C.panel }, line: { color: p.color, width: 0.6 } });
-    slide.addShape('rect', { x, y, w: 0.05, h: cardH, fill: { color: p.color } });
-    slide.addText(p.icon + '  ' + p.title, {
-      x: x + 0.25, y: y + 0.18, w: cardW - 0.45, h: 0.38,
-      fontSize: 13, bold: true, color: C.white, fontFace: 'Calibri',
+    slide.addShape('roundRect', { x, y, w: cardW, h: cardH, rectRadius: 0.08, fill: { color: C.panel }, line: { color: p.color, width: 0.5 } });
+    slide.addShape('rect', { x, y, w: 0.04, h: cardH, fill: { color: p.color } });
+    slide.addText(p.label, {
+      x: x + 0.22, y: y + 0.12, w: cardW - 0.44, h: 0.32,
+      fontSize: 14, bold: true, color: p.color, fontFace: 'Calibri',
     });
     slide.addText(p.desc, {
-      x: x + 0.25, y: y + 0.62, w: cardW - 0.45, h: cardH - 0.8,
-      fontSize: 10.5, color: C.grayMid, fontFace: 'Calibri',
+      x: x + 0.22, y: y + 0.46, w: cardW - 0.44, h: 0.48,
+      fontSize: 10, color: C.grayMid, fontFace: 'Calibri',
     });
   });
 }
 
-// ── Slide 3: Solution Overview ─────────────────────────────────────────────────
+// ── Slide 3: After ─────────────────────────────────────────────────────────────
 function slide3(pptx) {
   const slide = pptx.addSlide();
   bg(slide);
-  header(slide, 'The LunarLogic Solution', 'ERP-agnostic · multi-office ready');
+  topBar(slide, 3, TOTAL);
   footer(slide);
 
-  const topY = CONTENT_Y + 0.05;
+  const topY = HEADER_H + 0.38;
 
-  slide.addText('One platform. Four modules. Full Order-to-Cash automation.', {
-    x: M, y: topY, w: CW, h: 0.38,
-    fontSize: 15, color: C.grayMid, fontFace: 'Calibri',
+  slide.addText('After', {
+    x: M, y: topY, w: CW, h: 0.52,
+    fontSize: 30, bold: true, color: C.white, fontFace: 'Calibri',
   });
+  slide.addText('Automated Order-to-Cash — ERP-agnostic, multi-office ready', {
+    x: M, y: topY + 0.52, w: CW, h: 0.3,
+    fontSize: 13, color: C.cyan, fontFace: 'Calibri',
+  });
+  slide.addShape('rect', { x: M, y: topY + 0.9, w: CW, h: 0.02, fill: { color: C.blue } });
 
-  const modules = [
-    { code: 'WF1', name: 'Invoice Automation',    color: C.cyan,  desc: 'Create and send invoices from Slack commands or PDF uploads. AI-parsed into your ERP — no manual data entry.' },
-    { code: 'WF2', name: 'Payment Reminders',     color: C.blue,  desc: 'Scheduled escalating reminders via Outlook at 7, 14, and 30 days past due. VIP exemption list. Daily AR aging to Slack.' },
-    { code: 'WF3', name: 'Cash Application',      color: C.amber, desc: 'Bank-connected payment matching at 90%+ confidence. Auto-apply or Slack-route ambiguous bulk payments. FIFO by default.' },
-    { code: 'WF4', name: 'AR Aging Dashboard',    color: C.green, desc: 'Live DSO trend, aging waterfall, invoice board, customer behavior scoring. Bookmarkable URL — no ERP login required.' },
+  const afters = [
+    { label: '<1 hr/week',     desc: 'Automated reminders, aging reports, and cash matching — staff focused on exceptions only', color: C.green },
+    { label: '15–25 day drop', desc: 'DSO improvement observed at go-live — the trend line bends down within 30 days', color: C.cyan },
+    { label: '8 min avg',      desc: 'Bank deposit to ledger posting — 90%+ auto-matched with full audit trail', color: C.green },
+    { label: '0.6% bad debt',  desc: 'Proactive escalating reminders prevent write-offs before balances age past recovery', color: C.green },
+    { label: 'Live dashboard', desc: 'AR aging, DSO trend, invoice status — bookmarkable URL, no ERP login required', color: C.cyan },
+    { label: 'Full audit log', desc: 'Every cash application decision logged — confidence score, rule applied, reviewer', color: C.cyan },
   ];
 
-  const cardW = (CW - 0.45) / 4;
-  const cardH = H - topY - 0.38 - 0.55 - 0.32 - 0.4;
-  const gap = 0.15;
+  const cols = 2;
+  const cardW = (CW - 0.3) / cols;
+  const cardH = 1.05;
+  const gapX = 0.3;
+  const gapY = 0.18;
+  const startY = topY + 1.08;
 
-  modules.forEach((mod, i) => {
-    const x = M + i * (cardW + gap);
-    const y = topY + 0.55;
+  afters.forEach((a, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = M + col * (cardW + gapX);
+    const y = startY + row * (cardH + gapY);
 
-    slide.addShape('roundRect', { x, y, w: cardW, h: cardH, rectRadius: 0.1, fill: { color: C.panel }, line: { color: mod.color, width: 0.75 } });
-    slide.addShape('rect', { x, y, w: cardW, h: 0.06, fill: { color: mod.color } });
-
-    slide.addShape('roundRect', {
-      x: x + 0.2, y: y + 0.2, w: 0.6, h: 0.32,
-      rectRadius: 0.05, fill: { color: mod.color, transparency: 80 }, line: { color: mod.color, width: 0.5 },
+    slide.addShape('roundRect', { x, y, w: cardW, h: cardH, rectRadius: 0.08, fill: { color: C.panel }, line: { color: a.color, width: 0.5 } });
+    slide.addShape('rect', { x, y, w: 0.04, h: cardH, fill: { color: a.color } });
+    slide.addText(a.label, {
+      x: x + 0.22, y: y + 0.12, w: cardW - 0.44, h: 0.32,
+      fontSize: 14, bold: true, color: a.color, fontFace: 'Calibri',
     });
-    slide.addText(mod.code, {
-      x: x + 0.2, y: y + 0.2, w: 0.6, h: 0.32,
-      fontSize: 10, bold: true, color: mod.color, fontFace: 'Calibri', align: 'center', valign: 'middle',
-    });
-    slide.addText(mod.name, {
-      x: x + 0.2, y: y + 0.66, w: cardW - 0.4, h: 0.55,
-      fontSize: 13, bold: true, color: C.white, fontFace: 'Calibri',
-    });
-    slide.addShape('rect', { x: x + 0.2, y: y + 1.28, w: cardW - 0.4, h: 0.02, fill: { color: mod.color, transparency: 60 } });
-    slide.addText(mod.desc, {
-      x: x + 0.2, y: y + 1.44, w: cardW - 0.4, h: cardH - 1.7,
+    slide.addText(a.desc, {
+      x: x + 0.22, y: y + 0.46, w: cardW - 0.44, h: 0.48,
       fontSize: 10, color: C.grayMid, fontFace: 'Calibri',
     });
   });
-
-  slide.addText('ERP connectors: NetSuite  ·  Microsoft Dynamics  ·  SAP  ·  QuickBooks  ·  Sage  ·  Custom API', {
-    x: M, y: H - 0.32 - 0.42, w: CW, h: 0.3,
-    fontSize: 9.5, color: C.gray, fontFace: 'Calibri', align: 'center', italic: true,
-  });
 }
 
-// ── Slide 4: Live Demo ─────────────────────────────────────────────────────────
+// ── Slide 4: The Value ─────────────────────────────────────────────────────────
 function slide4(pptx) {
   const slide = pptx.addSlide();
   bg(slide);
-  header(slide, 'Live Demo', 'AR Dashboard · Forvis Mazars Chicago');
+  topBar(slide, 4, TOTAL);
   footer(slide);
 
-  const topY = CONTENT_Y + 0.05;
+  const topY = HEADER_H + 0.38;
 
-  const mW = (CW - 0.6) / 5;
-  const mH = 1.3;
-  const gap = 0.15;
-  const metrics = [
-    { label: 'Current DSO',         value: '36d',   color: C.cyan,  sub: 'down from 58d' },
-    { label: 'DSO Improvement',     value: '-22d',  color: C.green, sub: 'since go-live' },
-    { label: 'Total AR',            value: '$892k', color: C.offWhite, sub: '22 open invoices' },
-    { label: 'Overdue',             value: '7 inv', color: C.amber, sub: '$218k outstanding' },
-    { label: 'Collection Eff.',     value: '82%',   color: C.green, sub: 'paid within terms' },
-  ];
-
-  metrics.forEach((m, i) => {
-    metricCard(slide, M + i * (mW + gap), topY, mW, mH, m.label, m.value, m.color, m.sub);
+  slide.addText('The Value', {
+    x: M, y: topY, w: CW, h: 0.52,
+    fontSize: 30, bold: true, color: C.white, fontFace: 'Calibri',
   });
-
-  const demoY = topY + mH + 0.3;
-  const demoH = H - demoY - 0.32 - 0.55 - 0.1;
-
-  const features = [
-    { title: 'DSO Trend Chart',           desc: 'Rolling 90-day DSO with go-live annotation. The inflection point is the single most compelling retention visual — the line bends down at go-live.' },
-    { title: 'AR Aging Waterfall',         desc: 'Current / 1-30 / 31-60 / 61-90 / 90+ buckets. Click any bar to drill down to the source invoices — exportable to Excel with ASC 310 ADA reserve rates.' },
-    { title: 'Cash Application',           desc: '90%+ auto-match rate. Audit trail of every decision. Match rules panel shows the engine logic. Unapplied cash flagged per ASC 606 contract liability guidance.' },
-    { title: 'AI Status Report',           desc: 'GPT-style narrative generated from live data at the top of every tab. Regenerates on demand. Surfaces GAAP compliance flags automatically.' },
-  ];
-
-  const fw = (CW - 0.45) / 2;
-  const fh = (demoH - 0.2) / 2;
-  features.forEach((f, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = M + col * (fw + 0.15);
-    const y = demoY + row * (fh + 0.2);
-    slide.addShape('roundRect', { x, y, w: fw, h: fh, rectRadius: 0.08, fill: { color: C.panel }, line: { color: C.blue, width: 0.5 } });
-    slide.addText(f.title, {
-      x: x + 0.22, y: y + 0.16, w: fw - 0.44, h: 0.32,
-      fontSize: 12, bold: true, color: C.cyan, fontFace: 'Calibri',
-    });
-    slide.addText(f.desc, {
-      x: x + 0.22, y: y + 0.52, w: fw - 0.44, h: fh - 0.65,
-      fontSize: 10, color: C.grayMid, fontFace: 'Calibri',
-    });
+  slide.addText('Three compounding outcomes for every client you serve', {
+    x: M, y: topY + 0.52, w: CW, h: 0.3,
+    fontSize: 13, color: C.gray, fontFace: 'Calibri',
   });
-}
+  slide.addShape('rect', { x: M, y: topY + 0.9, w: CW, h: 0.02, fill: { color: C.blue } });
 
-// ── Slide 5: Forvis Mazars Roadmap ─────────────────────────────────────────────
-function slide5(pptx) {
-  const slide = pptx.addSlide();
-  bg(slide);
-  header(slide, 'Implementation Roadmap', 'Forvis Mazars · Suggested Path');
-  footer(slide);
-
-  const topY = CONTENT_Y + 0.05;
-
-  slide.addText('A phased rollout designed for a multi-office advisory firm. Each phase delivers measurable ROI before the next begins.', {
-    x: M, y: topY, w: CW, h: 0.38,
-    fontSize: 12, color: C.grayMid, fontFace: 'Calibri',
-  });
-
-  const phases = [
+  const values = [
     {
-      num: '01',
-      label: 'Weeks 1–4',
-      title: 'Pilot — Chicago Office',
       color: C.cyan,
+      title: 'Time Savings',
+      headline: '85–90%',
+      sub: 'reduction in collections work',
       items: [
-        'Connect ERP (read-only API — no changes to existing workflows)',
-        'Deploy WF4 AR Aging Dashboard for one practice group',
-        'Baseline DSO measurement established',
-        'Staff training: 1-hour Slack-based walkthrough',
+        '5–15 hrs/week  →  <1 hr/week',
+        '200–700 hours freed annually',
+        '$13K–$40K labor cost savings',
+        'Staff reallocated to advisory work',
       ],
     },
     {
-      num: '02',
-      label: 'Weeks 5–8',
-      title: 'Automate Reminders',
-      color: C.blue,
+      color: C.amber,
+      title: 'Working Capital',
+      headline: '15–25 days',
+      sub: 'DSO improvement at go-live',
       items: [
-        'WF2 Payment Reminders live — escalating 7 / 14 / 30 day sequences via Outlook',
-        'VIP client exemption list configured per partner input',
-        'Daily AR aging summary posted to practice-group Slack channel',
-        'DSO impact measured at 30-day mark',
+        '50 days  →  35 days (typical)',
+        '$200K+ in freed capital per firm',
+        'Near-term cash flow visibility',
+        'Trend chart bends at go-live',
       ],
     },
     {
-      num: '03',
-      label: 'Weeks 9–16',
-      title: 'Cash Application + Multi-Office',
       color: C.green,
+      title: 'Bad Debt Prevention',
+      headline: '2%  →  0.6%',
+      sub: 'write-off rate with proactive outreach',
       items: [
-        'WF3 Cash Application deployed — bank connected via Plaid / BAI2 / direct API',
-        'Match rules configured for firm-specific naming conventions',
-        'Roll out to 2–3 additional offices or practice groups',
-        'Consolidated AR dashboard across all offices',
+        '$70K+ prevented annually (est.)',
+        'Escalating reminders via Outlook',
+        '90+ day exposure surfaced weekly',
+        'ASC 310-10-35 ADA reserve support',
       ],
     },
   ];
 
-  const phaseH = (H - topY - 0.38 - 0.32 - 0.55 - 0.5) / 3;
+  const cardW = (CW - 0.4) / 3;
+  const cardH = H - topY - 1.12 - 0.28 - 0.1;
+  const gap = 0.2;
 
-  phases.forEach((p, i) => {
-    const y = topY + 0.52 + i * (phaseH + 0.18);
+  values.forEach((v, i) => {
+    const x = M + i * (cardW + gap);
+    const y = topY + 1.1;
 
-    slide.addShape('roundRect', { x: M, y, w: CW, h: phaseH, rectRadius: 0.1, fill: { color: C.panel }, line: { color: p.color, width: 0.6 } });
-    slide.addShape('rect', { x: M, y, w: 0.05, h: phaseH, fill: { color: p.color } });
+    slide.addShape('roundRect', { x, y, w: cardW, h: cardH, rectRadius: 0.1, fill: { color: C.panel }, line: { color: v.color, width: 0.8 } });
+    slide.addShape('rect', { x, y, w: cardW, h: 0.05, fill: { color: v.color } });
 
-    slide.addText(p.num, {
-      x: M + 0.25, y: y + (phaseH - 1.0) / 2, w: 0.9, h: 1.0,
-      fontSize: 52, bold: true, color: p.color, transparency: 78, fontFace: 'Calibri',
+    slide.addText(v.title.toUpperCase(), {
+      x: x + 0.22, y: y + 0.2, w: cardW - 0.44, h: 0.22,
+      fontSize: 8.5, bold: true, color: v.color, fontFace: 'Calibri', charSpacing: 1.5,
     });
-    slide.addText(p.label, {
-      x: M + 1.3, y: y + 0.12, w: 2.2, h: 0.28,
-      fontSize: 9, bold: true, color: p.color, fontFace: 'Calibri', charSpacing: 1.5,
+    slide.addText(v.headline, {
+      x: x + 0.22, y: y + 0.46, w: cardW - 0.44, h: 0.8,
+      fontSize: 36, bold: true, color: v.color, fontFace: 'Calibri',
     });
-    slide.addText(p.title, {
-      x: M + 1.3, y: y + 0.38, w: 3.0, h: 0.42,
-      fontSize: 16, bold: true, color: C.white, fontFace: 'Calibri',
+    slide.addText(v.sub, {
+      x: x + 0.22, y: y + 1.28, w: cardW - 0.44, h: 0.3,
+      fontSize: 10, color: C.gray, fontFace: 'Calibri', italic: true,
     });
+    slide.addShape('rect', { x: x + 0.22, y: y + 1.65, w: cardW - 0.44, h: 0.015, fill: { color: v.color } });
 
-    const itemColX = M + 4.6;
-    const itemW = CW - 4.6 + M - M;
-    p.items.forEach((item, j) => {
+    v.items.forEach((item, j) => {
       slide.addText('• ' + item, {
-        x: itemColX, y: y + 0.12 + j * (phaseH - 0.24) / 4, w: itemW, h: (phaseH - 0.24) / 4,
-        fontSize: 10.5, color: C.grayMid, fontFace: 'Calibri', valign: 'middle',
+        x: x + 0.22, y: y + 1.82 + j * 0.4, w: cardW - 0.44, h: 0.36,
+        fontSize: 10.5, color: C.grayMid, fontFace: 'Calibri',
       });
     });
   });
 }
 
-// ── Slide 6: Next Step ─────────────────────────────────────────────────────────
+// ── Slide 5: The Question ──────────────────────────────────────────────────────
+function slide5(pptx) {
+  const slide = pptx.addSlide();
+  bg(slide);
+  topBar(slide, 5, TOTAL);
+  footer(slide);
+
+  const topY = HEADER_H + 0.55;
+
+  slide.addText('The Question', {
+    x: M, y: topY, w: CW, h: 0.55,
+    fontSize: 30, bold: true, color: C.white, fontFace: 'Calibri',
+  });
+
+  slide.addText('With 200–700 hours freed up annually across your client portfolio...', {
+    x: M, y: topY + 0.65, w: CW, h: 0.45,
+    fontSize: 18, italic: true, color: C.grayMid, fontFace: 'Calibri',
+  });
+  slide.addText('What becomes possible for your advisory practice?', {
+    x: M, y: topY + 1.15, w: CW, h: 0.5,
+    fontSize: 24, bold: true, color: C.cyan, fontFace: 'Calibri',
+  });
+  slide.addShape('rect', { x: M, y: topY + 1.75, w: CW, h: 0.02, fill: { color: C.blue } });
+
+  const cols = [
+    {
+      heading: 'For Your Clients',
+      color: C.green,
+      items: ['Reallocate AR staff to higher-value work', 'Improve cash flow forecasting accuracy', 'Reduce period-close cycle time', 'Eliminate manual reconciliation backlog'],
+    },
+    {
+      heading: 'For Forvis Mazars',
+      color: C.cyan,
+      items: ['Differentiated advisory offering', 'Recurring technology revenue stream', 'Stickier client relationships', 'GAAP-aligned reporting built in (ASC 310 / 606)'],
+    },
+    {
+      heading: 'For the Engagement',
+      color: C.amber,
+      items: ['Live demo available today', '30-day parallel pilot — no ERP changes', 'White-label or referral partnership paths', '60-day satisfaction guarantee'],
+    },
+  ];
+
+  const colW = (CW - 0.4) / 3;
+  const gap = 0.2;
+
+  cols.forEach((c, i) => {
+    const x = M + i * (colW + gap);
+    const y = topY + 1.95;
+
+    slide.addText(c.heading, {
+      x, y, w: colW, h: 0.35,
+      fontSize: 13, bold: true, color: c.color, fontFace: 'Calibri',
+    });
+    c.items.forEach((item, j) => {
+      slide.addText('→  ' + item, {
+        x, y: y + 0.42 + j * 0.42, w: colW, h: 0.38,
+        fontSize: 10.5, color: C.grayMid, fontFace: 'Calibri',
+      });
+    });
+  });
+}
+
+// ── Slide 6: Live Demo ─────────────────────────────────────────────────────────
 function slide6(pptx) {
   const slide = pptx.addSlide();
   bg(slide);
-  header(slide, 'Next Step', 'One conversation away');
+  topBar(slide, 6, TOTAL);
   footer(slide);
 
-  const topY = CONTENT_Y + 0.1;
-  const fullH = H - topY - 0.32 - 0.55 - 0.1;
+  const topY = HEADER_H + 0.38;
 
-  // Left — value panel
-  const leftW = 5.8;
-  slide.addShape('roundRect', {
-    x: M, y: topY, w: leftW, h: fullH,
-    rectRadius: 0.12, fill: { color: C.panel }, line: { color: C.cyan, width: 1.2 },
+  slide.addText('Live Demo', {
+    x: M, y: topY, w: CW, h: 0.52,
+    fontSize: 30, bold: true, color: C.white, fontFace: 'Calibri',
   });
-  slide.addShape('rect', { x: M, y: topY, w: leftW, h: 0.05, fill: { color: C.cyan } });
-
-  slide.addText('WHAT FORVIS MAZARS GETS', {
-    x: M + 0.3, y: topY + 0.22, w: leftW - 0.6, h: 0.28,
-    fontSize: 9, bold: true, color: C.cyan, fontFace: 'Calibri', charSpacing: 1.5,
+  slide.addText('AR Dashboard — Forvis Mazars Chicago data', {
+    x: M, y: topY + 0.52, w: CW, h: 0.3,
+    fontSize: 13, color: C.gray, fontFace: 'Calibri',
   });
+  slide.addShape('rect', { x: M, y: topY + 0.9, w: CW, h: 0.02, fill: { color: C.blue } });
 
-  const bullets = [
-    { icon: '↓', text: 'DSO reduction — 15–25 days based on firm benchmarks', color: C.green },
-    { icon: '⚡', text: '80%+ of cash application handled automatically', color: C.cyan },
-    { icon: '👁', text: 'Real-time AR health visible to partners and staff — no ERP login required', color: C.offWhite },
-    { icon: '🏢', text: 'Scales across offices and practice groups from a single dashboard', color: C.offWhite },
-    { icon: '✓', text: 'Full GAAP alignment — ASC 310, ASC 606, ADA reserve estimation built in', color: C.green },
-    { icon: '🛡', text: 'Complete audit trail — every cash application decision logged for SOC 2 / internal controls', color: C.grayMid },
+  // Metric row
+  const mW = (CW - 0.6) / 5;
+  const mH = 1.2;
+  const mGap = 0.15;
+  const mY = topY + 1.08;
+  const metrics = [
+    { label: 'Current DSO',       value: '36d',   color: C.cyan,     sub: 'down from 58d' },
+    { label: 'Improvement',       value: '−22d',  color: C.green,    sub: 'since go-live' },
+    { label: 'Total AR',          value: '$892k', color: C.offWhite, sub: '22 open invoices' },
+    { label: 'Overdue',           value: '7',     color: C.amber,    sub: '$218k at risk' },
+    { label: 'Auto-Match Rate',   value: '89%',   color: C.green,    sub: 'cash applied' },
   ];
-
-  bullets.forEach((b, i) => {
-    slide.addText(`${b.icon}  ${b.text}`, {
-      x: M + 0.3, y: topY + 0.72 + i * 0.65, w: leftW - 0.6, h: 0.55,
-      fontSize: 11.5, color: b.color, fontFace: 'Calibri', valign: 'middle',
+  metrics.forEach((m, i) => {
+    const x = M + i * (mW + mGap);
+    slide.addShape('roundRect', { x, y: mY, w: mW, h: mH, rectRadius: 0.08, fill: { color: C.panel }, line: { color: '1E3A5F', width: 0.6 } });
+    slide.addText(m.label.toUpperCase(), {
+      x: x + 0.18, y: mY + 0.14, w: mW - 0.36, h: 0.22,
+      fontSize: 7.5, bold: true, color: C.gray, fontFace: 'Calibri', charSpacing: 1.2,
+    });
+    slide.addText(m.value, {
+      x: x + 0.18, y: mY + 0.38, w: mW - 0.36, h: 0.55,
+      fontSize: 28, bold: true, color: m.color, fontFace: 'Calibri',
+    });
+    if (m.sub) slide.addText(m.sub, {
+      x: x + 0.18, y: mY + 0.92, w: mW - 0.36, h: 0.2,
+      fontSize: 8.5, color: C.gray, fontFace: 'Calibri',
     });
   });
 
-  // Right — next steps
-  const rx = M + leftW + 0.35;
-  const rw = CW - leftW - 0.35;
+  // Feature callouts
+  const fY = mY + mH + 0.28;
+  const fH = H - fY - 0.28 - 0.28;
+  const features = [
+    { title: 'DSO Trend',        desc: '90-day rolling chart. Go-live annotation shows the inflection point — the line bends down. Most compelling retention visual in the demo.', color: C.cyan },
+    { title: 'AR Aging Drill',   desc: 'Click any aging bucket → source invoices with ASC 310 ADA reserve rates. Exportable to Excel. Full GAAP disclosure support.', color: C.blue },
+    { title: 'Cash Application', desc: '90%+ auto-match. Confidence distribution chart. Audit trail of every decision — confidence score, rule used, who reviewed.', color: C.amber },
+    { title: 'AI Status Report', desc: 'Data-driven narrative at the top of every tab. GAAP flags surfaced automatically. Regenerates on demand.', color: C.green },
+  ];
+  const fw = (CW - 0.45) / 4;
+  features.forEach((f, i) => {
+    const x = M + i * (fw + 0.15);
+    slide.addShape('roundRect', { x, y: fY, w: fw, h: fH, rectRadius: 0.08, fill: { color: C.panelAlt }, line: { color: f.color, width: 0.5 } });
+    slide.addShape('rect', { x, y: fY, w: fw, h: 0.04, fill: { color: f.color } });
+    slide.addText(f.title, {
+      x: x + 0.18, y: fY + 0.14, w: fw - 0.36, h: 0.3,
+      fontSize: 11, bold: true, color: f.color, fontFace: 'Calibri',
+    });
+    slide.addText(f.desc, {
+      x: x + 0.18, y: fY + 0.5, w: fw - 0.36, h: fH - 0.65,
+      fontSize: 9.5, color: C.grayMid, fontFace: 'Calibri',
+    });
+  });
+}
+
+// ── Slide 7: Next Steps ────────────────────────────────────────────────────────
+function slide7(pptx) {
+  const slide = pptx.addSlide();
+  bg(slide);
+  topBar(slide, 7, TOTAL);
+  footer(slide);
+
+  const topY = HEADER_H + 0.38;
+
+  slide.addText('Next Steps', {
+    x: M, y: topY, w: CW, h: 0.52,
+    fontSize: 30, bold: true, color: C.white, fontFace: 'Calibri',
+  });
+  slide.addText('From this conversation to your first client deployment', {
+    x: M, y: topY + 0.52, w: CW, h: 0.3,
+    fontSize: 13, color: C.gray, fontFace: 'Calibri',
+  });
+  slide.addShape('rect', { x: M, y: topY + 0.9, w: CW, h: 0.02, fill: { color: C.blue } });
 
   const steps = [
-    { num: '01', title: 'Identify a Pilot Practice Group', desc: 'Select one office or team to run a 30-day parallel test. No changes to your ERP or existing workflows.', color: C.cyan },
-    { num: '02', title: 'Read-Only ERP Connection', desc: 'We connect via API in read-only mode. A 2-week parallel run verifies accuracy before anything posts.', color: C.blue },
-    { num: '03', title: 'Live in 30 Days — Measure Results', desc: 'AR automation goes live. We track DSO weekly and deliver a monthly impact report.', color: C.green },
+    {
+      num: '1',
+      title: 'Identify a Pilot Client',
+      desc: 'Select one client where AR pain is highest — professional services, 8–20 staff, ERP already in place. We run a 30-day parallel test. No changes to their ERP or accounting workflows.',
+      color: C.cyan,
+    },
+    {
+      num: '2',
+      title: 'Read-Only Connection + Baseline',
+      desc: 'We connect via read-only API. A 2-week shadow run measures DSO, aging, and cash application speed before automation begins. Baseline established for ROI measurement.',
+      color: C.blue,
+    },
+    {
+      num: '3',
+      title: 'Go Live — Measure in 30 Days',
+      desc: 'Automation goes live. We track DSO weekly, post AR summaries to Slack daily, and deliver a monthly impact report. You see the line bending down within the first month.',
+      color: C.green,
+    },
   ];
 
-  const stepH = (fullH - 0.4) / 3;
+  const stepH = (H - topY - 1.12 - 0.28 - 0.45) / 3;
   steps.forEach((s, i) => {
-    const y = topY + i * (stepH + 0.2);
-    slide.addShape('roundRect', { x: rx, y, w: rw, h: stepH, rectRadius: 0.1, fill: { color: C.panel }, line: { color: s.color, width: 0.6 } });
-    slide.addShape('rect', { x: rx, y, w: 0.05, h: stepH, fill: { color: s.color } });
+    const y = topY + 1.08 + i * (stepH + 0.2);
+    slide.addShape('roundRect', { x: M, y, w: CW, h: stepH, rectRadius: 0.1, fill: { color: C.panel }, line: { color: s.color, width: 0.6 } });
+    slide.addShape('rect', { x: M, y, w: 0.05, h: stepH, fill: { color: s.color } });
     slide.addText(s.num, {
-      x: rx + 0.22, y: y + (stepH - 0.8) / 2, w: 0.7, h: 0.8,
-      fontSize: 38, bold: true, color: s.color, transparency: 75, fontFace: 'Calibri',
+      x: M + 0.22, y: y + (stepH - 0.9) / 2, w: 0.8, h: 0.9,
+      fontSize: 44, bold: true, color: s.color, fontFace: 'Calibri',
     });
     slide.addText(s.title, {
-      x: rx + 1.0, y: y + 0.15, w: rw - 1.2, h: 0.35,
-      fontSize: 13, bold: true, color: s.color, fontFace: 'Calibri',
+      x: M + 1.15, y: y + 0.15, w: CW - 1.35, h: 0.35,
+      fontSize: 14, bold: true, color: s.color, fontFace: 'Calibri',
     });
     slide.addText(s.desc, {
-      x: rx + 1.0, y: y + 0.52, w: rw - 1.2, h: stepH - 0.65,
-      fontSize: 10, color: C.grayMid, fontFace: 'Calibri',
+      x: M + 1.15, y: y + 0.52, w: CW - 1.35, h: stepH - 0.65,
+      fontSize: 10.5, color: C.grayMid, fontFace: 'Calibri',
     });
   });
 
-  // Contact
   slide.addText('"We earn your business every month through results."  —  Jonathan Rodriguez  ·  jrodriguez@lunarlogic.ai', {
-    x: M, y: H - 0.32 - 0.38, w: CW, h: 0.3,
-    fontSize: 10, italic: true, color: C.gray, fontFace: 'Calibri', align: 'center',
+    x: M, y: H - 0.28 - 0.35, w: CW, h: 0.28,
+    fontSize: 9.5, italic: true, color: C.gray, fontFace: 'Calibri', align: 'center',
   });
 }
 
@@ -483,7 +531,6 @@ const pptx = new PptxGenJS();
 pptx.layout = 'LAYOUT_WIDE';
 pptx.title = 'LunarLogic AR Automation — Forvis Mazars Exploratory Call';
 pptx.author = 'LunarLogic LLC';
-pptx.company = 'LunarLogic LLC';
 
 slide1(pptx);
 slide2(pptx);
@@ -491,7 +538,8 @@ slide3(pptx);
 slide4(pptx);
 slide5(pptx);
 slide6(pptx);
+slide7(pptx);
 
 const buf = await pptx.write({ outputType: 'nodebuffer' });
 writeFileSync('/home/user/lunarlogic-dashboard/LunarLogic_ForvisMazars_Deck.pptx', buf);
-console.log('Done — LunarLogic_ForvisMazars_Deck.pptx written.');
+console.log('Done.');
