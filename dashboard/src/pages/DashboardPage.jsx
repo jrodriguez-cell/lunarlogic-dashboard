@@ -14,6 +14,7 @@ import ARReminderTracker from '../components/ARReminderTracker';
 import DrillDrawer from '../components/DrillDrawer';
 import AIStatusReport from '../components/AIStatusReport';
 import { fetchDashboardData } from '../lib/quickbooks';
+import { exportXLSX } from '../lib/excel';
 
 function fmtM(v) {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
@@ -584,12 +585,28 @@ function PaymentActivityFeed({ payments }) {
 }
 
 function AuditTrailPanel({ payments }) {
+  const [rangeDays, setRangeDays] = useState(null);
+
+  const RANGES = [
+    { label: '7d',  days: 7 },
+    { label: '14d', days: 14 },
+    { label: 'All', days: null },
+  ];
+
   function fmtDate(iso) {
     const [y, m, d] = iso.split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
-  const entries = payments.map(p => ({
+  const filtered = rangeDays
+    ? payments.filter(p => {
+        const cutoff = new Date('2026-06-10');
+        cutoff.setDate(cutoff.getDate() - rangeDays);
+        return new Date(p.received + 'T00:00:00') >= cutoff;
+      })
+    : payments;
+
+  const entries = filtered.map(p => ({
     txId:       p.txId,
     amount:     p.amount,
     customer:   p.matchedCustomer,
@@ -602,11 +619,53 @@ function AuditTrailPanel({ payments }) {
 
   const STATUS_COLOR = { Auto: 'var(--green)', Manual: 'var(--teal)', Held: 'var(--yellow)' };
 
+  const AUDIT_COLS = [
+    { key: 'txId',       label: 'Txn ID' },
+    { key: 'amount',     label: 'Amount',     render: v => `$${v.toLocaleString()}` },
+    { key: 'customer',   label: 'Customer' },
+    { key: 'invoice',    label: 'Invoice' },
+    { key: 'confidence', label: 'Confidence', render: v => `${v}%` },
+    { key: 'decision',   label: 'Decision' },
+    { key: 'by',         label: 'Applied By' },
+    { key: 'date',       label: 'Date' },
+  ];
+
+  function handleExport() {
+    exportXLSX(
+      `audit_trail_${rangeDays ? rangeDays + 'd' : 'all'}`,
+      'Audit Trail',
+      AUDIT_COLS,
+      entries,
+      { Report: 'Cash Application Audit Trail', Period: rangeDays ? `Last ${rangeDays} days` : 'All time' }
+    );
+  }
+
   return (
     <div className="card">
       <div className="card-header">
         <h2>Audit Trail</h2>
-        <span style={{ fontSize: 10, color: 'var(--muted)' }}>every application decision logged</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 2 }}>
+            {RANGES.map(r => (
+              <button
+                key={r.label}
+                onClick={() => setRangeDays(r.days)}
+                style={{
+                  padding: '3px 8px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
+                  border: `1px solid ${rangeDays === r.days ? 'var(--teal)' : 'var(--border)'}`,
+                  background: rangeDays === r.days ? 'rgba(0,212,232,0.1)' : 'none',
+                  color: rangeDays === r.days ? 'var(--teal)' : 'var(--muted)',
+                }}
+              >{r.label}</button>
+            ))}
+          </div>
+          <button className="card-export-btn" onClick={handleExport}>
+            <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5.5 1v7M2.5 5.5l3 3 3-3"/><path d="M1 9.5h9"/>
+            </svg>
+            Export
+          </button>
+        </div>
       </div>
       <div style={{ overflowY: 'auto', maxHeight: 260 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
@@ -636,7 +695,7 @@ function AuditTrailPanel({ payments }) {
         </table>
       </div>
       <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 10, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-        Full audit trail — all decisions logged for SOC 2 / internal controls compliance.
+        {entries.length} decision{entries.length !== 1 ? 's' : ''} logged — full audit trail for SOC 2 / internal controls compliance.
       </div>
     </div>
   );
