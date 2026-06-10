@@ -1,5 +1,6 @@
-export default function DSOMeter({ current, delta, preLive, efficiency }) {
+export default function DSOMeter({ current, delta, preLive, efficiency, onClick }) {
   return (
+    <button className="dso-meter-btn" onClick={onClick}>
     <div className="dso-meter">
       <div className="dso-label">Days Sales Outstanding</div>
       <div className="dso-value">{current}</div>
@@ -12,5 +13,6 @@ export default function DSOMeter({ current, delta, preLive, efficiency }) {
       </div>
       <div className="dso-pre">was {preLive}d before LunarLogic</div>
     </div>
+    </button>
   );
 }

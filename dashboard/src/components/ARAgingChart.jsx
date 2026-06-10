@@ -5,6 +5,17 @@ import {
 const COLORS = ['#00d4e8', '#22c55e', '#f59e0b', '#f97316', '#ef4444'];
 const TOTAL_AR_CAP = 100000;
 
+const INV_COLS = [
+  { key: 'id',          label: 'Invoice' },
+  { key: 'customer',    label: 'Customer' },
+  { key: 'amount',      label: 'Amount',       render: v => `$${v.toLocaleString()}`, csvVal: r => `$${r.amount.toLocaleString()}` },
+  { key: 'issued',      label: 'Issue Date' },
+  { key: 'due',         label: 'Due Date' },
+  { key: 'daysOut',     label: 'Days Out',      render: (v, r) => r.status === 'Paid' ? '—' : `${v}d` },
+  { key: 'daysOverdue', label: 'Days Overdue',  render: v => v > 0 ? `${v}d` : '—' },
+  { key: 'status',      label: 'Status' },
+];
+
 function fmtK(v) {
   return v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`;
 }
@@ -23,7 +34,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ARAgingChart({ data, selectedBucket, onSelectBucket }) {
+export default function ARAgingChart({ data, invoices, selectedBucket, onSelectBucket, onDrill }) {
   const totalAR = data.reduce((s, d) => s + d.amount, 0);
 
   return (
@@ -42,8 +53,27 @@ export default function ARAgingChart({ data, selectedBucket, onSelectBucket }) {
           margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
           onClick={({ activePayload }) => {
             if (!activePayload?.length) return;
-            const key = activePayload[0].payload.key;
+            const bucket = activePayload[0].payload;
+            const key = bucket.key;
             onSelectBucket(selectedBucket === key ? null : key);
+            if (invoices) {
+              const filteredInvs = invoices.filter(inv => {
+                const days = inv.daysOverdue;
+                if (key === 'current') return days <= 0;
+                if (key === '1-30')    return days > 0  && days <= 30;
+                if (key === '31-60')   return days > 30 && days <= 60;
+                if (key === '61-90')   return days > 60 && days <= 90;
+                return days > 90;
+              });
+              onDrill?.({
+                title: `AR Aging — ${bucket.bucket} Bucket`,
+                subtitle: `$${bucket.amount.toLocaleString()} · ${bucket.count} invoices`,
+                source: `Invoices bucketed by days past due. Current = not yet due. Amounts reflect outstanding balance.`,
+                filename: `aging_${bucket.key}.csv`,
+                columns: INV_COLS,
+                rows: filteredInvs,
+              });
+            }
           }}
           style={{ cursor: 'pointer' }}
         >
@@ -67,7 +97,28 @@ export default function ARAgingChart({ data, selectedBucket, onSelectBucket }) {
             key={d.bucket}
             className={`aging-chip${selectedBucket === d.key ? ' selected' : ''}`}
             style={{ '--c': COLORS[i] }}
-            onClick={() => onSelectBucket(selectedBucket === d.key ? null : d.key)}
+            onClick={() => {
+              onSelectBucket(selectedBucket === d.key ? null : d.key);
+              if (invoices) {
+                const key = d.key;
+                const filteredInvs = invoices.filter(inv => {
+                  const days = inv.daysOverdue;
+                  if (key === 'current') return days <= 0;
+                  if (key === '1-30')    return days > 0  && days <= 30;
+                  if (key === '31-60')   return days > 30 && days <= 60;
+                  if (key === '61-90')   return days > 60 && days <= 90;
+                  return days > 90;
+                });
+                onDrill?.({
+                  title: `AR Aging — ${d.bucket} Bucket`,
+                  subtitle: `$${d.amount.toLocaleString()} · ${d.count} invoices`,
+                  source: `Invoices bucketed by days past due. Current = not yet due. Amounts reflect outstanding balance.`,
+                  filename: `aging_${d.key}.csv`,
+                  columns: INV_COLS,
+                  rows: filteredInvs,
+                });
+              }
+            }}
           >
             <span className="chip-bucket">{d.bucket}</span>
             <span className="chip-amount">{fmtK(d.amount)}</span>

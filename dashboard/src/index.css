@@ -1589,3 +1589,165 @@ body {
   .payments-hero-stats { gap: 0; }
   .ph-value { font-size: 72px; }
 }
+
+/* ── Drill Drawer ─────────────────────────────────── */
+
+.drill-drawer {
+  width: 660px;
+}
+
+.drill-source {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(0, 212, 232, 0.06);
+  border: 1px solid rgba(0, 212, 232, 0.18);
+  border-radius: 8px;
+  margin: 0 24px 16px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.55;
+  flex-shrink: 0;
+}
+
+.drill-source-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--teal);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.drill-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.drill-export-btn:hover { background: rgba(34, 197, 94, 0.18); }
+
+.drill-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 16px;
+}
+
+.drill-table-wrap {
+  overflow: auto;
+  flex: 1;
+  padding: 0 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.drill-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.drill-table th {
+  text-align: left;
+  padding: 8px 12px 8px 0;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: #0a1525;
+}
+
+.drill-table td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.drill-table tr:last-child td { border-bottom: none; }
+
+/* ── Clickable stats ──────────────────────────────── */
+
+.stat-btn {
+  flex: 1;
+  text-align: center;
+  padding: 0 24px;
+  border-right: 1px solid var(--border);
+  background: none;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+.stat-btn:last-child { border-right: none; }
+.stat-btn:hover { background: rgba(255,255,255,0.025); }
+.stat-btn::after {
+  content: '↗';
+  position: absolute;
+  top: -2px;
+  right: 6px;
+  font-size: 9px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.stat-btn:hover::after { opacity: 0.6; }
+
+/* also make DSOMeter clickable */
+.dso-meter-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  position: relative;
+}
+.dso-meter-btn::after {
+  content: '↗ view source';
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  font-size: 9px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.dso-meter-btn:hover::after { opacity: 1; }
+
+/* card-action export btn (used in card headers) */
+.card-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.card-export-btn:hover { color: var(--green); border-color: rgba(34,197,94,0.4); }

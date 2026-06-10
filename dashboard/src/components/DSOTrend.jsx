@@ -21,16 +21,38 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function DSOTrend({ data, goLiveDate, preLiveDSO, currentDSO }) {
+export default function DSOTrend({ data, goLiveDate, preLiveDSO, currentDSO, onDrill }) {
   const improvement = preLiveDSO - currentDSO;
 
   return (
     <div className="card">
       <div className="card-header">
         <h2>DSO Trend — 90 Days</h2>
-        <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
-          ▼ {improvement}d improvement
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
+            ▼ {improvement}d improvement
+          </span>
+          <button
+            className="card-export-btn"
+            onClick={() => onDrill?.({
+              title: 'DSO Trend — 90 Days',
+              subtitle: 'Daily rolling DSO',
+              source: 'DSO = (Total AR outstanding / Invoice revenue over trailing 90 days) × 90. Calculated daily from ERP data. Go-live annotation marks LunarLogic activation date.',
+              filename: 'dso_trend_90d.csv',
+              columns: [
+                { key: 'date', label: 'Date' },
+                { key: 'dso',  label: 'DSO (days)' },
+              ],
+              rows: data,
+            })}
+          >
+            <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5.5 1v7M2.5 5.5l3 3 3-3"/>
+              <path d="M1 9.5h9"/>
+            </svg>
+            Export
+          </button>
+        </div>
       </div>
       <ResponsiveContainer width="100%" height={190}>
         <AreaChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>

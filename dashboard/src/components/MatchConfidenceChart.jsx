@@ -44,7 +44,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function MatchConfidenceChart({ payments }) {
+export default function MatchConfidenceChart({ payments, onDrill }) {
   const data     = buildBuckets(payments);
   const autoCount = payments.filter(p => p.confidence >= 90).length;
   const autoRate  = Math.round((autoCount / payments.length) * 100);
