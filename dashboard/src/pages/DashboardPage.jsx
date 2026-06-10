@@ -60,6 +60,7 @@ export default function DashboardPage({ session, onLogout }) {
   const [openPayment, setOpenPayment]   = useState(null);
   const [drill, setDrill] = useState(null);
   const openDrill = config => setDrill(config);
+  const [cashCustomer, setCashCustomer] = useState('All');
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -92,11 +93,37 @@ export default function DashboardPage({ session, onLogout }) {
   const overdue     = invoices.filter(i => i.status === 'Overdue');
   const overdueAmt  = overdue.reduce((s, i) => s + i.amount, 0);
 
+  const writeOffRisk    = arAging.find(b => b.key === '90+')?.amount || 0;
+  const writeOffCount   = arAging.find(b => b.key === '90+')?.count || 0;
+  const today           = new Date('2026-05-19');
+  const in30Days        = new Date(today); in30Days.setDate(in30Days.getDate() + 30);
+  const expectedCashIn  = invoices
+    .filter(i => i.status !== 'Paid' && i.status !== 'Overdue')
+    .filter(i => { const d = new Date(i.due + 'T00:00:00'); return d >= today && d <= in30Days; })
+    .reduce((s, i) => s + i.amount, 0);
+
   const pendingPayments  = payments ? payments.filter(p => p.status === 'Pending Review').length : 0;
   const autoApplied      = payments ? payments.filter(p => p.status === 'Auto-Applied') : [];
   const autoMatchRate    = payments ? Math.round((autoApplied.length / payments.length) * 100) : 0;
   const totalAppliedAmt  = autoApplied.reduce((s, p) => s + p.amount, 0);
   const avgApplyMinutes  = 8;
+
+  const cashCustomers = payments
+    ? ['All', ...Array.from(new Set(payments.map(p => p.matchedCustomer).filter(Boolean))).sort()]
+    : ['All'];
+
+  const filteredPayments = (payments && cashCustomer !== 'All')
+    ? payments.filter(p => p.matchedCustomer === cashCustomer)
+    : payments;
+
+  const unappliedPayments   = filteredPayments ? filteredPayments.filter(p => p.status === 'Pending Review') : [];
+  const unappliedAmt        = unappliedPayments.reduce((s, p) => s + p.amount, 0);
+  const filteredAutoApplied = filteredPayments ? filteredPayments.filter(p => p.status === 'Auto-Applied') : [];
+  const filteredAutoMatchRate = filteredPayments && filteredPayments.length > 0
+    ? Math.round((filteredAutoApplied.length / filteredPayments.length) * 100)
+    : 0;
+  const filteredTotalApplied = filteredAutoApplied.reduce((s, p) => s + p.amount, 0);
+  const filteredPending      = filteredPayments ? filteredPayments.filter(p => p.status === 'Pending Review').length : 0;
 
   const { title, sub } = VIEW_TITLES[activeView];
 
@@ -144,20 +171,38 @@ export default function DashboardPage({ session, onLogout }) {
         <main className="main-content">
           {activeView === 'payments' ? (
             <>
+              <div className="cash-filter-bar">
+                <span className="cash-filter-label">Filter by customer</span>
+                <select
+                  className="cash-filter-select"
+                  value={cashCustomer}
+                  onChange={e => setCashCustomer(e.target.value)}
+                >
+                  {cashCustomers.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                {cashCustomer !== 'All' && (
+                  <button className="cash-filter-clear" onClick={() => setCashCustomer('All')}>
+                    Clear ×
+                  </button>
+                )}
+              </div>
+
               <section className="payments-hero">
                 <button
                   className="payments-hero-metric"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
                   onClick={() => openDrill({
-                    title: `Auto-Match Rate — ${autoMatchRate}%`,
+                    title: `Auto-Match Rate — ${filteredAutoMatchRate}%`,
                     source: 'Percentage of transactions matched at ≥90% confidence and posted automatically. Remaining transactions land in the Pending Review queue for manual routing.',
-                    filename: 'auto_matched.csv',
+                    filename: 'auto_matched',
                     columns: PMT_COLS,
-                    rows: autoApplied,
+                    rows: filteredAutoApplied,
                   })}
                 >
                   <div className="ph-label">Auto-Match Rate</div>
-                  <div className="ph-value" style={{ color: 'var(--teal)' }}>{autoMatchRate}%</div>
+                  <div className="ph-value" style={{ color: 'var(--teal)' }}>{filteredAutoMatchRate}%</div>
                   <div className="ph-sub">of transactions applied automatically</div>
                 </button>
                 <div className="payments-hero-divider" />
@@ -165,51 +210,64 @@ export default function DashboardPage({ session, onLogout }) {
                   <button className="stat-btn" onClick={() => openDrill({
                     title: 'All Transactions — Last 10 Days',
                     source: 'Bank feed transactions received via Plaid integration. Includes auto-applied, pending review, and manually confirmed payments.',
-                    filename: 'transactions_all.csv',
+                    filename: 'transactions_all',
                     columns: PMT_COLS,
-                    rows: payments,
+                    rows: filteredPayments,
                   })}>
-                    <div className="stat-value stat-good">{payments.length}</div>
+                    <div className="stat-value stat-good">{filteredPayments ? filteredPayments.length : 0}</div>
                     <div className="stat-label">Transactions Received</div>
                     <div className="stat-sub">last 10 days</div>
                   </button>
                   <button className="stat-btn" onClick={() => openDrill({
                     title: 'Cash Applied — Auto-Matched',
                     source: 'Transactions matched at ≥90% confidence and posted to the ledger automatically without staff intervention.',
-                    filename: 'cash_applied.csv',
+                    filename: 'cash_applied',
                     columns: PMT_COLS,
-                    rows: autoApplied,
+                    rows: filteredAutoApplied,
                   })}>
-                    <div className="stat-value">${(totalAppliedAmt / 1000).toFixed(0)}k</div>
+                    <div className="stat-value">${(filteredTotalApplied / 1000).toFixed(0)}k</div>
                     <div className="stat-label">Cash Applied</div>
                     <div className="stat-sub">auto-matched</div>
                   </button>
                   <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Unapplied Cash',
+                    source: 'Payments received in the bank but not yet matched and posted to open invoices. Under ASC 606-10-55, unresolved unapplied cash should be classified as a contract liability (deferred revenue) or customer deposit on the balance sheet until applied. Standard practice is FIFO application to the oldest outstanding invoice. Amounts aging >30 days should be reviewed for proper GL classification and disclosure.',
+                    filename: 'unapplied_cash',
+                    columns: PMT_COLS,
+                    rows: unappliedPayments,
+                  })}>
+                    <div className={`stat-value${unappliedAmt > 0 ? ' stat-warn' : ' stat-good'}`}>
+                      ${(unappliedAmt / 1000).toFixed(0)}k
+                    </div>
+                    <div className="stat-label">Unapplied Cash</div>
+                    <div className="stat-sub">ASC 606 — contract liability</div>
+                  </button>
+                  <button className="stat-btn" onClick={() => openDrill({
                     title: 'Pending Review Transactions',
                     source: 'Transactions held below the 90% confidence threshold, or bulk/partial payments requiring manual routing decision.',
-                    filename: 'pending_review.csv',
+                    filename: 'pending_review',
                     columns: PMT_COLS,
-                    rows: payments.filter(p => p.status === 'Pending Review'),
+                    rows: unappliedPayments,
                   })}>
-                    <div className={`stat-value${pendingPayments > 0 ? ' stat-warn' : ' stat-good'}`}>
-                      {pendingPayments}
+                    <div className={`stat-value${filteredPending > 0 ? ' stat-warn' : ' stat-good'}`}>
+                      {filteredPending}
                     </div>
                     <div className="stat-label">Pending Review</div>
                     <div className="stat-sub">need manual routing</div>
                   </button>
                   <button className="stat-btn" onClick={() => openDrill({
-                    title: 'Avg Apply Time — How It Is Calculated',
+                    title: 'Avg Apply Time — Methodology',
                     subtitle: 'methodology',
-                    source: 'Time from payment receipt (Plaid webhook) to ledger posting. Auto-applied transactions average 8 minutes end-to-end (webhook → match → post). Manual review adds ~15 minutes for staff decision. Traditional manual process averages 3–5 business days per close cycle.',
-                    filename: 'apply_time_log.csv',
+                    source: 'Time from payment receipt (Plaid webhook) to ledger posting. Auto-applied transactions average 8 minutes end-to-end. Manual review adds ~15 minutes for staff decision. Traditional manual process averages 3–5 business days per close cycle. Under ASC 310, timely cash application ensures the AR ledger reflects true outstanding balances.',
+                    filename: 'apply_time_log',
                     columns: [
-                      { key: 'txId',       label: 'Txn ID' },
-                      { key: 'received',   label: 'Received' },
-                      { key: 'appliedAt',  label: 'Applied At', render: v => v || 'Pending' },
-                      { key: 'status',     label: 'Status' },
+                      { key: 'txId',      label: 'Txn ID' },
+                      { key: 'received',  label: 'Received' },
+                      { key: 'appliedAt', label: 'Applied At', render: v => v || 'Pending' },
+                      { key: 'status',    label: 'Status' },
                       { key: 'confidence', label: 'Confidence', render: v => `${v}%` },
                     ],
-                    rows: payments.filter(p => p.status !== 'Pending Review'),
+                    rows: filteredPayments ? filteredPayments.filter(p => p.status !== 'Pending Review') : [],
                   })}>
                     <div className="stat-value stat-good">{avgApplyMinutes}m</div>
                     <div className="stat-label">Avg Apply Time</div>
@@ -218,13 +276,11 @@ export default function DashboardPage({ session, onLogout }) {
                 </div>
               </section>
 
-              <PaymentQueue payments={payments} onOpenPayment={p => { setOpenPayment(p); }} />
-
-              <CommonQuestions />
+              <PaymentQueue payments={filteredPayments || []} onOpenPayment={p => { setOpenPayment(p); }} />
 
               <div className="grid">
-                <MatchConfidenceChart payments={payments} onDrill={openDrill} />
-                <PaymentActivityFeed payments={payments} />
+                <MatchConfidenceChart payments={filteredPayments || []} onDrill={openDrill} />
+                <PaymentActivityFeed payments={filteredPayments || []} />
               </div>
             </>
           ) : activeView === 'reminders' ? (
@@ -255,8 +311,8 @@ export default function DashboardPage({ session, onLogout }) {
                   efficiency={collectionEfficiency}
                   onClick={() => openDrill({
                     title: 'DSO — Days Sales Outstanding',
-                    source: 'DSO = (Total AR / Invoice revenue over trailing 90 days) × 90. Lower is better. The go-live date marks when LunarLogic automation was activated.',
-                    filename: 'dso_calculation.csv',
+                    source: 'DSO = (Total AR / Invoice revenue over trailing 90 days) × 90. Lower is better. Under ASC 310-10, DSO trends are a key indicator of collection effectiveness and AR quality.',
+                    filename: 'dso_calculation',
                     columns: [
                       { key: 'date', label: 'Date' },
                       { key: 'dso',  label: 'DSO (days)' },
@@ -268,8 +324,8 @@ export default function DashboardPage({ session, onLogout }) {
                 <div className="hero-stats">
                   <button className="stat-btn" onClick={() => openDrill({
                     title: 'Total AR Outstanding',
-                    source: 'All invoices with outstanding balance (Status ≠ Paid). Refreshed every 15 minutes from your accounting system.',
-                    filename: 'ar_outstanding.csv',
+                    source: 'All invoices with outstanding balance (Status ≠ Paid). Under ASC 310-10, AR must be reported net of the Allowance for Doubtful Accounts (ADA). The aging schedule is the primary input for the percentage-of-receivables ADA estimation method.',
+                    filename: 'ar_outstanding',
                     columns: INV_COLS,
                     rows: invoices.filter(i => i.status !== 'Paid'),
                   })}>
@@ -278,8 +334,8 @@ export default function DashboardPage({ session, onLogout }) {
                   </button>
                   <button className="stat-btn" onClick={() => openDrill({
                     title: 'Overdue Invoices',
-                    source: 'Invoices past their due date with outstanding balance. Sorted by days overdue descending.',
-                    filename: 'overdue_invoices.csv',
+                    source: 'Invoices past their contractual due date with outstanding balance. Under ASC 310-10-35, management must assess collectability of overdue balances and adjust the Allowance for Doubtful Accounts accordingly. Invoices >60 days past due typically trigger enhanced collection procedures.',
+                    filename: 'overdue_invoices',
                     columns: INV_COLS,
                     rows: overdue,
                   })}>
@@ -288,9 +344,9 @@ export default function DashboardPage({ session, onLogout }) {
                     <div className="stat-sub">${(overdueAmt / 1000).toFixed(0)}k outstanding</div>
                   </button>
                   <button className="stat-btn" onClick={() => openDrill({
-                    title: 'Collection Efficiency — All Invoices',
-                    source: 'Ratio of invoices paid within agreed terms vs all invoices issued. Calculated over rolling 90-day window.',
-                    filename: 'collection_efficiency.csv',
+                    title: 'Collection Efficiency',
+                    source: 'Ratio of invoices paid within agreed terms vs all invoices issued over the trailing 90-day window. A key operational metric for AR quality under ASC 310.',
+                    filename: 'collection_efficiency',
                     columns: INV_COLS,
                     rows: invoices,
                   })}>
@@ -299,6 +355,41 @@ export default function DashboardPage({ session, onLogout }) {
                     </div>
                     <div className="stat-label">Collection Efficiency</div>
                     <div className="stat-sub">paid within terms</div>
+                  </button>
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Write-off Risk Exposure',
+                    source: 'Invoices in the 90+ day aging bucket. Under ASC 310-10-35-7, balances deemed uncollectable must be written off against the Allowance for Doubtful Accounts. Industry standard ADA reserve rate for 90+ day AR is 50–100%. These balances are the primary write-off risk in the portfolio and should be reviewed each period for impairment.',
+                    filename: 'writeoff_risk',
+                    columns: INV_COLS,
+                    rows: invoices.filter(i => {
+                      const days = i.daysOverdue;
+                      return days > 90;
+                    }).concat(invoices.filter(i => i.daysOverdue > 60 && i.daysOverdue <= 90)),
+                  })}>
+                    <div className="stat-value" style={{ color: writeOffRisk > 0 ? 'var(--red)' : 'var(--green)' }}>
+                      ${(writeOffRisk / 1000).toFixed(0)}k
+                    </div>
+                    <div className="stat-label">Write-off Risk</div>
+                    <div className="stat-sub">{writeOffCount} inv · 90+ days</div>
+                  </button>
+                  <button className="stat-btn" onClick={() => openDrill({
+                    title: 'Expected Cash Inflow — Next 30 Days',
+                    source: 'Sum of current (non-overdue) invoice balances due within the next 30 days. Represents expected near-term cash receipts based on contractual due dates. Actual collections may vary based on customer payment history.',
+                    filename: 'expected_cash_30d',
+                    columns: INV_COLS,
+                    rows: invoices.filter(i => {
+                      if (i.status === 'Paid' || i.status === 'Overdue') return false;
+                      const d = new Date(i.due + 'T00:00:00');
+                      const t = new Date('2026-05-19');
+                      const t30 = new Date('2026-06-18');
+                      return d >= t && d <= t30;
+                    }),
+                  })}>
+                    <div className="stat-value stat-good">
+                      ${(expectedCashIn / 1000).toFixed(0)}k
+                    </div>
+                    <div className="stat-label">Expected Cash In</div>
+                    <div className="stat-sub">due in next 30 days</div>
                   </button>
                 </div>
               </section>
@@ -416,115 +507,6 @@ function MobileBottomNav({ activeView, onNav, pendingPayments }) {
         );
       })}
     </nav>
-  );
-}
-
-const FAQ_ITEMS = [
-  {
-    tag: 'Manual Labor',
-    tagColor: 'var(--teal)',
-    tagBg: 'rgba(34,211,238,.08)',
-    q: 'How much staff time does this actually save?',
-    a: 'Traditional cash application averages 3–5 days of AR staff time per close cycle — mostly spent cross-referencing bank statements against open invoices by hand. Our system auto-matches >90% of transactions in under 10 minutes, with full audit trail. The remaining edge cases (bulk payments, partial remittances) are surfaced here for one-click resolution instead of manual research.',
-    metric: '~8 min avg apply time vs. 3–5 days manually',
-    metricColor: 'var(--green)',
-  },
-  {
-    tag: 'Misapplication Risk',
-    tagColor: '#f87171',
-    tagBg: 'rgba(248,113,113,.08)',
-    q: 'How do you prevent payments from being applied to the wrong invoice?',
-    a: 'Every match is scored on a confidence algorithm combining payment amount, bank description fuzzy match, payment history, and client name normalization. Matches below 90% confidence are never auto-applied — they are held in the Pending Review queue so your team confirms before anything posts to the ledger. Every decision, auto or manual, is logged with a timestamp and confidence score for audit purposes.',
-    metric: '90% confidence threshold before auto-post',
-    metricColor: '#f87171',
-  },
-  {
-    tag: 'Month-End Close',
-    tagColor: 'var(--yellow)',
-    tagBg: 'rgba(245,158,11,.08)',
-    q: 'How does this help us close faster?',
-    a: 'Unapplied cash is one of the top causes of delayed closes — your team can\'t finalize AR until every bank transaction is reconciled. Because payments are matched and posted within minutes of receipt (not at end-of-day or week), your ledger stays current in real time. Month-end becomes a review, not a catch-up sprint. Firms running this process report 1–3 day reductions in close cycle time.',
-    metric: '1–3 day close cycle reduction reported',
-    metricColor: 'var(--yellow)',
-  },
-  {
-    tag: 'Multi-Office Consistency',
-    tagColor: '#a78bfa',
-    tagBg: 'rgba(167,139,250,.08)',
-    q: 'Our offices each handle this differently. How does that work at scale?',
-    a: 'Each office or practice group gets its own queue with configurable match rules, bank feed connectors, and approval routing — but all activity rolls up to a single firm-wide dashboard for leadership visibility. Standardized confidence thresholds and audit logs mean every office is applying cash the same way, which matters significantly at audit time. The POC we\'re running here is one office; adding additional offices is a configuration exercise, not a rebuild.',
-    metric: 'Per-office queues · firm-wide roll-up view',
-    metricColor: '#a78bfa',
-  },
-];
-
-function CommonQuestions() {
-  const [open, setOpen] = useState(null);
-
-  return (
-    <div className="card" style={{ marginBottom: 0 }}>
-      <div className="card-header" style={{ marginBottom: 4 }}>
-        <h2>Common Questions</h2>
-        <span style={{ fontSize: 11, color: 'var(--muted)' }}>Click any question to expand</span>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {FAQ_ITEMS.map((item, i) => {
-          const isOpen = open === i;
-          return (
-            <div key={i} style={{
-              borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
-              paddingTop: i === 0 ? 8 : 0,
-            }}>
-              <button
-                onClick={() => setOpen(isOpen ? null : i)}
-                style={{
-                  width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '14px 0', textAlign: 'left',
-                }}
-              >
-                <span style={{
-                  fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-                  padding: '3px 8px', borderRadius: 4,
-                  background: item.tagBg, color: item.tagColor,
-                  flexShrink: 0, whiteSpace: 'nowrap',
-                }}>
-                  {item.tag}
-                </span>
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
-                  {item.q}
-                </span>
-                <svg
-                  width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--muted)"
-                  strokeWidth="1.5" strokeLinecap="round"
-                  style={{ flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-                >
-                  <path d="M2 4l4 4 4-4"/>
-                </svg>
-              </button>
-              {isOpen && (
-                <div style={{ paddingBottom: 16, paddingLeft: 0 }}>
-                  <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65, margin: '0 0 12px' }}>
-                    {item.a}
-                  </p>
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    fontSize: 11, fontWeight: 600, color: item.metricColor,
-                    background: item.tagBg, padding: '5px 10px', borderRadius: 6,
-                  }}>
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ flexShrink: 0 }}>
-                      <circle cx="5" cy="5" r="4.5" fill="none" stroke="currentColor" strokeWidth="1"/>
-                      <path d="M3 5l1.5 1.5L7 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
-                    </svg>
-                    {item.metric}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 

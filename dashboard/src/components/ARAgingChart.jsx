@@ -68,7 +68,7 @@ export default function ARAgingChart({ data, invoices, selectedBucket, onSelectB
               onDrill?.({
                 title: `AR Aging — ${bucket.bucket} Bucket`,
                 subtitle: `$${bucket.amount.toLocaleString()} · ${bucket.count} invoices`,
-                source: `Invoices bucketed by days past due. Current = not yet due. Amounts reflect outstanding balance.`,
+                source: `AR aging schedule required under ASC 310 as the primary input for the Allowance for Doubtful Accounts (ADA) estimate. Standard reserve rates by bucket: Current 1%, 1-30 days 5%, 31-60 days 15%, 61-90 days 30%, 90+ days 75%. Invoices in this bucket should be reviewed for collectability each reporting period.`,
                 filename: `aging_${bucket.key}.csv`,
                 columns: INV_COLS,
                 rows: filteredInvs,
@@ -112,7 +112,7 @@ export default function ARAgingChart({ data, invoices, selectedBucket, onSelectB
                 onDrill?.({
                   title: `AR Aging — ${d.bucket} Bucket`,
                   subtitle: `$${d.amount.toLocaleString()} · ${d.count} invoices`,
-                  source: `Invoices bucketed by days past due. Current = not yet due. Amounts reflect outstanding balance.`,
+                  source: `AR aging schedule required under ASC 310 as the primary input for the Allowance for Doubtful Accounts (ADA) estimate. Standard reserve rates by bucket: Current 1%, 1-30 days 5%, 31-60 days 15%, 61-90 days 30%, 90+ days 75%. Invoices in this bucket should be reviewed for collectability each reporting period.`,
                   filename: `aging_${d.key}.csv`,
                   columns: INV_COLS,
                   rows: filteredInvs,
