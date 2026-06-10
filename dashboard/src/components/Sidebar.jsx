@@ -113,6 +113,11 @@ export default function Sidebar({ activeView, onNav, session, onLogout, pendingP
           <div className="client-badge">
             <div className="client-badge-label">Signed in as</div>
             <div className="client-badge-name">{session.name}</div>
+            {session.clientId === 'forvismazars' && (
+              <div style={{ fontSize: 9, color: 'var(--teal)', marginTop: 3, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                Chicago Office · POC
+              </div>
+            )}
           </div>
         )}
         <button className="logout-btn" onClick={handleLogout}>

@@ -152,6 +152,8 @@ export default function DashboardPage({ session, onLogout }) {
 
               <PaymentQueue payments={payments} onOpenPayment={p => { setOpenPayment(p); }} />
 
+              <CommonQuestions />
+
               <div className="grid">
                 <MatchConfidenceChart payments={payments} />
                 <PaymentActivityFeed payments={payments} />
@@ -306,6 +308,115 @@ function MobileBottomNav({ activeView, onNav, pendingPayments }) {
         );
       })}
     </nav>
+  );
+}
+
+const FAQ_ITEMS = [
+  {
+    tag: 'Manual Labor',
+    tagColor: 'var(--teal)',
+    tagBg: 'rgba(34,211,238,.08)',
+    q: 'How much staff time does this actually save?',
+    a: 'Traditional cash application averages 3–5 days of AR staff time per close cycle — mostly spent cross-referencing bank statements against open invoices by hand. Our system auto-matches >90% of transactions in under 10 minutes, with full audit trail. The remaining edge cases (bulk payments, partial remittances) are surfaced here for one-click resolution instead of manual research.',
+    metric: '~8 min avg apply time vs. 3–5 days manually',
+    metricColor: 'var(--green)',
+  },
+  {
+    tag: 'Misapplication Risk',
+    tagColor: '#f87171',
+    tagBg: 'rgba(248,113,113,.08)',
+    q: 'How do you prevent payments from being applied to the wrong invoice?',
+    a: 'Every match is scored on a confidence algorithm combining payment amount, bank description fuzzy match, payment history, and client name normalization. Matches below 90% confidence are never auto-applied — they are held in the Pending Review queue so your team confirms before anything posts to the ledger. Every decision, auto or manual, is logged with a timestamp and confidence score for audit purposes.',
+    metric: '90% confidence threshold before auto-post',
+    metricColor: '#f87171',
+  },
+  {
+    tag: 'Month-End Close',
+    tagColor: 'var(--yellow)',
+    tagBg: 'rgba(245,158,11,.08)',
+    q: 'How does this help us close faster?',
+    a: 'Unapplied cash is one of the top causes of delayed closes — your team can\'t finalize AR until every bank transaction is reconciled. Because payments are matched and posted within minutes of receipt (not at end-of-day or week), your ledger stays current in real time. Month-end becomes a review, not a catch-up sprint. Firms running this process report 1–3 day reductions in close cycle time.',
+    metric: '1–3 day close cycle reduction reported',
+    metricColor: 'var(--yellow)',
+  },
+  {
+    tag: 'Multi-Office Consistency',
+    tagColor: '#a78bfa',
+    tagBg: 'rgba(167,139,250,.08)',
+    q: 'Our offices each handle this differently. How does that work at scale?',
+    a: 'Each office or practice group gets its own queue with configurable match rules, bank feed connectors, and approval routing — but all activity rolls up to a single firm-wide dashboard for leadership visibility. Standardized confidence thresholds and audit logs mean every office is applying cash the same way, which matters significantly at audit time. The POC we\'re running here is one office; adding additional offices is a configuration exercise, not a rebuild.',
+    metric: 'Per-office queues · firm-wide roll-up view',
+    metricColor: '#a78bfa',
+  },
+];
+
+function CommonQuestions() {
+  const [open, setOpen] = useState(null);
+
+  return (
+    <div className="card" style={{ marginBottom: 0 }}>
+      <div className="card-header" style={{ marginBottom: 4 }}>
+        <h2>Common Questions</h2>
+        <span style={{ fontSize: 11, color: 'var(--muted)' }}>Click any question to expand</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {FAQ_ITEMS.map((item, i) => {
+          const isOpen = open === i;
+          return (
+            <div key={i} style={{
+              borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
+              paddingTop: i === 0 ? 8 : 0,
+            }}>
+              <button
+                onClick={() => setOpen(isOpen ? null : i)}
+                style={{
+                  width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '14px 0', textAlign: 'left',
+                }}
+              >
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                  padding: '3px 8px', borderRadius: 4,
+                  background: item.tagBg, color: item.tagColor,
+                  flexShrink: 0, whiteSpace: 'nowrap',
+                }}>
+                  {item.tag}
+                </span>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
+                  {item.q}
+                </span>
+                <svg
+                  width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--muted)"
+                  strokeWidth="1.5" strokeLinecap="round"
+                  style={{ flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                >
+                  <path d="M2 4l4 4 4-4"/>
+                </svg>
+              </button>
+              {isOpen && (
+                <div style={{ paddingBottom: 16, paddingLeft: 0 }}>
+                  <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65, margin: '0 0 12px' }}>
+                    {item.a}
+                  </p>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontSize: 11, fontWeight: 600, color: item.metricColor,
+                    background: item.tagBg, padding: '5px 10px', borderRadius: 6,
+                  }}>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ flexShrink: 0 }}>
+                      <circle cx="5" cy="5" r="4.5" fill="none" stroke="currentColor" strokeWidth="1"/>
+                      <path d="M3 5l1.5 1.5L7 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+                    </svg>
+                    {item.metric}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
