@@ -297,10 +297,14 @@ export default function DashboardPage({ session, onLogout }) {
 
               <PaymentQueue payments={filteredPayments || []} onOpenPayment={p => { setOpenPayment(p); }} />
 
+              <MatchConfidenceChart payments={filteredPayments || []} onDrill={openDrill} />
+
               <div className="grid">
-                <MatchConfidenceChart payments={filteredPayments || []} onDrill={openDrill} />
-                <PaymentActivityFeed payments={filteredPayments || []} />
+                <AuditTrailPanel payments={filteredPayments || []} />
+                <MatchRulesPanel />
               </div>
+
+              <PaymentActivityFeed payments={filteredPayments || []} />
             </>
           ) : activeView === 'reminders' ? (
             <ARReminderTracker />
@@ -576,6 +580,112 @@ function PaymentActivityFeed({ payments }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function AuditTrailPanel({ payments }) {
+  function fmtDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  const entries = payments.map(p => ({
+    txId:       p.txId,
+    amount:     p.amount,
+    customer:   p.matchedCustomer,
+    invoice:    p.matchedInvoice || '—',
+    confidence: p.confidence,
+    decision:   p.status === 'Auto-Applied' ? 'Auto' : p.status === 'Manual' ? 'Manual' : 'Held',
+    by:         p.status === 'Auto-Applied' ? 'System' : 'Staff',
+    date:       p.received,
+  }));
+
+  const STATUS_COLOR = { Auto: 'var(--green)', Manual: 'var(--teal)', Held: 'var(--yellow)' };
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2>Audit Trail</h2>
+        <span style={{ fontSize: 10, color: 'var(--muted)' }}>every application decision logged</span>
+      </div>
+      <div style={{ overflowY: 'auto', maxHeight: 260 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              {['Txn', 'Amount', 'Customer', 'Invoice', 'Conf.', 'Decision', 'By', 'Date'].map(h => (
+                <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((e, i) => (
+              <tr key={e.txId} style={{ borderBottom: i < entries.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                <td style={{ padding: '7px 8px', color: 'var(--muted)', fontFamily: 'monospace', fontSize: 10 }}>{e.txId}</td>
+                <td style={{ padding: '7px 8px', fontWeight: 600 }}>${e.amount.toLocaleString()}</td>
+                <td style={{ padding: '7px 8px', color: 'var(--text)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.customer}</td>
+                <td style={{ padding: '7px 8px', color: 'var(--muted)', fontFamily: 'monospace', fontSize: 10 }}>{e.invoice}</td>
+                <td style={{ padding: '7px 8px', color: e.confidence >= 90 ? 'var(--green)' : e.confidence >= 70 ? 'var(--yellow)' : 'var(--red)', fontWeight: 600 }}>{e.confidence}%</td>
+                <td style={{ padding: '7px 8px' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: STATUS_COLOR[e.decision], background: STATUS_COLOR[e.decision] + '18', padding: '2px 7px', borderRadius: 4 }}>{e.decision}</span>
+                </td>
+                <td style={{ padding: '7px 8px', color: 'var(--muted)' }}>{e.by}</td>
+                <td style={{ padding: '7px 8px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{fmtDate(e.date)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 10, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+        Full audit trail — all decisions logged for SOC 2 / internal controls compliance.
+      </div>
+    </div>
+  );
+}
+
+function MatchRulesPanel() {
+  const rules = [
+    { id: 'R-01', name: 'Exact Invoice Match',     trigger: 'Payment amount = invoice amount +/- $0.01',                         threshold: '100%',    action: 'Auto-apply',                           priority: 1 },
+    { id: 'R-02', name: 'Memo / Reference Match',  trigger: 'Bank memo contains invoice number pattern (INV-XXXXX)',              threshold: '98%',     action: 'Auto-apply (highest confidence path)', priority: 2 },
+    { id: 'R-03', name: 'Fuzzy Customer Name',     trigger: 'Bank description contains customer name (Levenshtein distance < 3)', threshold: '90-99%',  action: 'Auto-apply',                           priority: 3 },
+    { id: 'R-04', name: 'FIFO Application',        trigger: 'Customer matched, multiple open invoices',                          threshold: '90%+',    action: 'Apply to oldest open invoice first',   priority: 4 },
+    { id: 'R-05', name: 'Partial Payment Split',   trigger: 'Payment amount does not match any single invoice',                  threshold: 'Any',     action: 'Route to manual review',               priority: 5 },
+    { id: 'R-06', name: 'Low Confidence Hold',     trigger: 'Confidence score < 90% after all rule passes',                      threshold: '< 90%',   action: 'Hold for staff review — Slack alert',  priority: 6 },
+  ];
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2>Match Rules</h2>
+        <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600 }}>{rules.length} active</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {rules.map((r, i) => (
+          <div key={r.id} style={{
+            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0',
+            borderBottom: i < rules.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+          }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, fontWeight: 700, background: 'rgba(0,212,232,0.1)',
+              color: 'var(--teal)', border: '1px solid rgba(0,212,232,0.2)', marginTop: 1,
+            }}>{r.priority}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{r.name}</span>
+                <span style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'monospace' }}>{r.id}</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>{r.trigger}</div>
+              <div style={{ fontSize: 10, color: 'var(--teal)' }}>{r.action}</div>
+            </div>
+            <div style={{ flexShrink: 0, textAlign: 'right' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--green)' }}>{r.threshold}</div>
+              <div style={{ fontSize: 9, color: 'var(--green)', marginTop: 2 }}>● Active</div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
