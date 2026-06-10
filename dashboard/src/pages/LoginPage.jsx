@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { login } from '../lib/auth';
 
 const DEMO = [
+  { label: 'Forvis Mazars',     email: 'forvismazars@demo.com', pw: 'demo2024' },
   { label: 'Kaptain Clean LLC', email: 'kaptainclean@demo.com', pw: 'demo2024' },
   { label: 'Gualapack',         email: 'gualapack@demo.com',    pw: 'demo2024' },
 ];
