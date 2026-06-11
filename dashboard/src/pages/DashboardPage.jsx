@@ -163,6 +163,12 @@ export default function DashboardPage({ session, onLogout }) {
             <div className="topbar-sub">{sub}</div>
           </div>
           <div className="topbar-right">
+            <span className="as-of-badge">
+              <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+                <circle cx="5" cy="5" r="4"/><path d="M5 3v2.5l1.5 1"/>
+              </svg>
+              As of May 19, 2026
+            </span>
             {lastUpdated && (
               <span className="last-updated">
                 Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
