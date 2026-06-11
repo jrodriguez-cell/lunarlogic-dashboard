@@ -81,24 +81,29 @@ function getConfidenceSignals(payment) {
 
 /* ── Header tooltip ─────────────────────────────────────────────────────────── */
 function Th({ tip, children, style }) {
-  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState(null);
   return (
     <th
       style={{ position: 'relative', cursor: 'help', userSelect: 'none', ...style }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
+      onMouseEnter={e => {
+        const r = e.currentTarget.getBoundingClientRect();
+        setPos({ x: r.left + r.width / 2, y: r.top });
+      }}
+      onMouseLeave={() => setPos(null)}
     >
       <span style={{ borderBottom: '1px dashed rgba(90,122,158,0.5)', paddingBottom: 1 }}>
         {children}
       </span>
-      {show && (
+      {pos && (
         <div style={{
-          position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+          position: 'fixed',
+          left: pos.x, top: pos.y - 8,
+          transform: 'translate(-50%, -100%)',
           background: '#0f1c30', border: '1px solid rgba(0,212,232,0.2)',
           borderRadius: 6, padding: '8px 12px', fontSize: 11, color: 'var(--text)',
-          width: 230, zIndex: 200, lineHeight: 1.55, fontWeight: 400,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.5)', whiteSpace: 'normal', textTransform: 'none',
-          letterSpacing: 'normal',
+          width: 230, zIndex: 9999, lineHeight: 1.55, fontWeight: 400,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.6)', whiteSpace: 'normal',
+          textTransform: 'none', letterSpacing: 'normal', pointerEvents: 'none',
         }}>
           {tip}
           <div style={{ position: 'absolute', bottom: -5, left: '50%', transform: 'translateX(-50%)', width: 8, height: 8, background: '#0f1c30', border: '1px solid rgba(0,212,232,0.2)', borderTop: 'none', borderLeft: 'none', rotate: '45deg' }} />
@@ -110,16 +115,19 @@ function Th({ tip, children, style }) {
 
 /* ── Confidence cell with signal breakdown ──────────────────────────────────── */
 function ConfidenceCell({ payment }) {
-  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState(null);
   const conf    = payment.confidence;
   const cColor  = confidenceColor(conf);
   const signals = getConfidenceSignals(payment);
 
   return (
     <td
-      style={{ position: 'relative', cursor: 'help' }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
+      style={{ cursor: 'help' }}
+      onMouseEnter={e => {
+        const r = e.currentTarget.getBoundingClientRect();
+        setPos({ x: r.left, y: r.top });
+      }}
+      onMouseLeave={() => setPos(null)}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ color: cColor, fontWeight: 700, fontSize: 12, minWidth: 34 }}>{conf}%</span>
@@ -128,12 +136,15 @@ function ConfidenceCell({ payment }) {
         </div>
       </div>
 
-      {show && (
+      {pos && (
         <div style={{
-          position: 'absolute', bottom: 'calc(100% + 8px)', left: 0,
+          position: 'fixed',
+          left: pos.x, top: pos.y - 8,
+          transform: 'translateY(-100%)',
           background: '#0f1c30', border: '1px solid rgba(0,212,232,0.2)',
-          borderRadius: 7, padding: '10px 13px', zIndex: 300,
-          width: 255, boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
+          borderRadius: 7, padding: '10px 13px',
+          zIndex: 9999, width: 255,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.6)', pointerEvents: 'none',
         }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
             Confidence signals — {conf}%
@@ -155,7 +166,6 @@ function ConfidenceCell({ payment }) {
           <div style={{ marginTop: 8, paddingTop: 7, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 10, color: 'var(--muted)' }}>
             ≥90% = auto-applied · &lt;90% = manual review
           </div>
-          <div style={{ position: 'absolute', bottom: -5, left: 24, width: 8, height: 8, background: '#0f1c30', border: '1px solid rgba(0,212,232,0.2)', borderTop: 'none', borderLeft: 'none', rotate: '45deg' }} />
         </div>
       )}
     </td>
