@@ -1274,127 +1274,154 @@ body {
 /* ── Mobile ──────────────────────────────────────── */
 
 @media (max-width: 1024px) {
+  /* ── Base layout ── */
   .sidebar { display: none; }
   .dashboard-main { margin-left: 0; }
-  .grid { grid-template-columns: 1fr; }
-  .main-content { padding: 16px 16px 88px; gap: 16px; }
+  .main-content { padding: 14px 14px 88px; gap: 14px; }
+  .grid { grid-template-columns: 1fr; gap: 14px; }
+  .grid > * { height: auto; }         /* don't force equal heights on mobile */
 
-  /* Topbar */
-  .topbar { padding: 14px 16px; }
+  /* ── Topbar ── */
+  .topbar { padding: 12px 14px; }
   .topbar-title { font-size: 14px; }
   .topbar-sub { font-size: 11px; }
-  .topbar-right { gap: 10px; }
+  .topbar-right { gap: 8px; }
 
-  /* Cards */
-  .card { padding: 18px 16px; border-radius: 12px; }
-  .card-header { margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  /* ── Cards ── */
+  .card { padding: 16px 14px; border-radius: 12px; }
+  .card-header { margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
   .card-header h2 { font-size: 13px; }
   .card-export-btn { font-size: 10px; padding: 4px 10px; }
 
-  /* AI report */
-  .ai-report-card { padding: 16px; }
+  /* ── AI Status Report ── */
+  .ai-report-card { padding: 14px; }
   .ai-report-header { flex-wrap: wrap; gap: 8px; }
   .ai-report-body { font-size: 12px; line-height: 1.65; }
 
-  /* DSO hero — stack vertically */
-  .hero {
-    grid-template-columns: 1fr;
-    padding: 20px 20px;
-    gap: 20px;
-  }
+  /* ── DSO hero ribbon ── */
+  .hero { grid-template-columns: 1fr; padding: 18px 14px; gap: 18px; }
   .hero-divider { display: none; }
-  .hero-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-  }
+  .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
   .stat {
-    padding: 14px 12px;
+    padding: 12px 10px; text-align: center;
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
-    text-align: center;
   }
   .stat:nth-child(even) { border-right: none; }
   .stat:nth-last-child(-n+2) { border-bottom: none; }
-  .dso-value { font-size: 64px; }
-  .stat-value { font-size: 20px; }
+  .dso-value { font-size: 56px; }
+  .stat-value { font-size: 18px; }
   .stat-label { font-size: 9px; }
   .stat-sub { font-size: 10px; }
 
-  /* Payments hero */
-  .payments-hero {
-    grid-template-columns: 1fr;
-    padding: 20px 20px;
-    gap: 20px;
+  /* ── DSO Trend card — collapse side-by-side to stacked ── */
+  .dso-trend-inner {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
   }
+  .dso-stat-strip {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0 !important;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+    margin-bottom: 4px;
+  }
+  .dso-stat-strip > div {
+    border-bottom: none !important;
+    border-right: 1px solid var(--border);
+    padding: 8px 10px !important;
+  }
+  .dso-stat-strip > div:last-child,
+  .dso-stat-strip > div:nth-child(3) { border-right: none; }
+  .dso-stat-strip > div:nth-child(4),
+  .dso-stat-strip > div:nth-child(5) { border-top: 1px solid var(--border); }
+
+  /* ── AR Aging card — collapse side-by-side to stacked ── */
+  .ar-aging-inner {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .ar-aging-chart-col { width: 100% !important; }
+  .ar-aging-chart-col > div:first-child { height: 160px !important; }
+  .ar-aging-chips { flex-direction: row !important; flex-wrap: wrap !important; gap: 6px !important; }
+  .ar-aging-chip { min-width: calc(50% - 3px) !important; }
+
+  /* ── Payments hero ── */
+  .payments-hero { grid-template-columns: 1fr; padding: 18px 14px; gap: 18px; }
   .payments-hero-divider { display: none; }
-  .payments-hero-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    flex-wrap: wrap;
-    width: 100%;
-  }
+  .payments-hero-stats { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
   .stat-btn {
-    padding: 14px 8px;
+    padding: 12px 8px;
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
   }
   .stat-btn:nth-child(even) { border-right: none; }
   .stat-btn:nth-last-child(-n+2) { border-bottom: none; }
-  .ph-value { font-size: 64px; }
+  .ph-value { font-size: 56px; }
 
-  /* Payment match queue table — hide less critical columns */
+  /* ── Payment Queue table ── */
   .pq-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .pq-table { font-size: 11px; min-width: 600px; }
-  .pq-desc { max-width: 130px; font-size: 11px !important; }
+  .pq-table { font-size: 11px; min-width: 580px; }
+  .pq-desc { max-width: 120px; font-size: 11px !important; }
   .conf-bar-track { display: none; }
-
-  /* Status tabs */
   .status-tabs { flex-wrap: wrap; gap: 4px; }
   .status-tab { font-size: 10px; padding: 5px 10px; }
 
-  /* Drawer full-width on mobile */
-  .drawer-panel { width: 100%; border-radius: 0; }
-  .drill-drawer { width: 100%; }
-  .drawer-overlay { align-items: flex-end; }
-
-  /* Charts — fix BarChart ResizeObserver */
-  .recharts-wrapper { overflow: visible !important; }
-
-  /* Confidence Distribution: fixed height so ResizeObserver gets real dimensions */
-  .cash-confidence-card {
-    height: 320px;
-    min-height: 320px;
-    box-sizing: border-box;
-  }
-  .cash-confidence-card .card-header { margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
-
-  /* Audit trail: auto height, table scrolls horizontally */
+  /* ── Confidence Distribution (cash tab) ── */
+  .cash-confidence-card { height: 300px; min-height: 300px; box-sizing: border-box; }
+  .cash-confidence-card .card-header { margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
   .cash-audit-card { height: auto; min-height: unset; }
+  .cash-panel-grid { display: flex !important; flex-direction: column !important; gap: 14px !important; }
 
-  /* Ensure both cash grid cards fill full width — never 2-col on mobile */
-  .cash-panel-grid { display: flex !important; flex-direction: column !important; gap: 16px !important; }
-
-  /* Customer table */
+  /* ── Customer / Invoice tables ── */
   .cust-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .cust-table { min-width: 480px; }
-
-  /* Invoice board */
   .inv-board { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .inv-card { padding: 14px 12px; }
+  .inv-card { padding: 12px 10px; }
 
-  /* RMT hero */
-  .rmt-hero { padding: 20px; flex-direction: column; gap: 16px; }
+  /* ── AR Reminders ── */
+  .rmt-hero { padding: 18px 14px; flex-direction: column; gap: 14px; }
   .rmt-hero-divider { width: 100%; height: 1px; }
   .rmt-metric { padding: 0; text-align: left; display: flex; align-items: baseline; gap: 12px; }
-  .rmt-metric-label { margin-bottom: 0; min-width: 120px; font-size: 9px; }
-  .rmt-metric-value { font-size: 22px; }
+  .rmt-metric-label { margin-bottom: 0; min-width: 110px; font-size: 9px; }
+  .rmt-metric-value { font-size: 20px; }
 
-  /* Drawer — bottom sheet feel, full width */
-  .drawer-panel { width: 100% !important; max-width: 100% !important; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; }
-  .drill-drawer { width: 100% !important; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; }
+  /* ── Drawers — bottom sheet ── */
+  .drawer-panel {
+    width: 100% !important; max-width: 100% !important;
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .drill-drawer {
+    width: 100% !important;
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh; overflow-y: auto;
+  }
   .drawer-overlay { align-items: flex-end !important; }
   .drawer-body { padding-bottom: 24px; }
+  .recharts-wrapper { overflow: visible !important; }
+}
+
+/* ── Small phones (<480px) ── */
+@media (max-width: 480px) {
+  .hero-stats { grid-template-columns: 1fr; }
+  .stat { border-right: none !important; }
+
+  .payments-hero-stats { grid-template-columns: 1fr; }
+  .stat-btn { border-right: none !important; }
+  .stat-btn:last-child { border-bottom: none; }
+
+  .dso-stat-strip { grid-template-columns: 1fr 1fr !important; }
+  .dso-stat-strip > div:nth-child(2n) { border-right: none !important; }
+
+  .ar-aging-chips { flex-direction: column !important; }
+  .ar-aging-chip { min-width: 100% !important; }
+
+  .dso-value { font-size: 48px; }
+  .ph-value { font-size: 48px; }
+  .topbar-sub { display: none; }
+  .inv-board { grid-template-columns: 1fr; }
 }
 
 /* ── AR Reminder Tracker ─────────────────────────── */

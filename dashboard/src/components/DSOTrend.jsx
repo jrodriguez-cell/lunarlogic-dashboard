@@ -81,10 +81,10 @@ export default function DSOTrend({ data, goLiveDate, preLiveDSO, currentDSO, onD
       </div>
 
       {/* Stat strip + chart side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 24, alignItems: 'center' }}>
+      <div className="dso-trend-inner" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 24, alignItems: 'center' }}>
 
         {/* Left: key stats */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        <div className="dso-stat-strip" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {stats.map((s, i) => (
             <div key={s.label} style={{
               display: 'flex', flexDirection: 'column',

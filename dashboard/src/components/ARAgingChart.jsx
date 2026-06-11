@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
 // Aging bucket definitions — single source of truth for labels, keys, and colors.
@@ -50,6 +50,19 @@ function CustomTooltip({ active, payload }) {
 export default function ARAgingChart({ invoices = [], paymentBehavior = [], selectedBucket, onSelectBucket, onDrill }) {
   const [sortCol, setSortCol] = useState('balance');
   const [sortDir, setSortDir] = useState(-1);
+  const chartRef  = useRef(null);
+  const [chartW, setChartW] = useState(260);
+  const [chartH, setChartH] = useState(170);
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const ro = new ResizeObserver(e => {
+      const { width, height } = e[0].contentRect;
+      if (width  > 0) setChartW(width);
+      if (height > 0) setChartH(height);
+    });
+    ro.observe(chartRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   // Derive all numbers from invoices — single source of truth.
   const open = invoices.filter(i => i.status !== 'Paid');
@@ -141,13 +154,13 @@ export default function ARAgingChart({ invoices = [], paymentBehavior = [], sele
       </div>
 
       {/* ── Side-by-side: waterfall chart + customer table ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
+      <div className="ar-aging-inner" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
 
         {/* Left: bar chart + bucket summary */}
-        <div>
-          <div style={{ height: 170 }}>
+        <div className="ar-aging-chart-col">
+          <div ref={chartRef} style={{ width: '100%', minHeight: 170, height: 170 }}>
             <BarChart
-              width={260} height={170}
+              width={chartW} height={chartH}
               data={chartData}
               margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
               onClick={({ activePayload }) => {
@@ -171,10 +184,11 @@ export default function ARAgingChart({ invoices = [], paymentBehavior = [], sele
           </div>
 
           {/* Bucket chips below chart */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+          <div className="ar-aging-chips" style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
             {bucketData.map(b => (
               <div
                 key={b.key}
+                className="ar-aging-chip"
                 onClick={() => { onSelectBucket(selectedBucket === b.key ? null : b.key); drillBucket(b); }}
                 style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
