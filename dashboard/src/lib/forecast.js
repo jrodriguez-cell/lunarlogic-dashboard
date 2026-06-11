@@ -33,7 +33,8 @@ function idJitter(id, range) {
   return sum % range;
 }
 
-export function enrichInvoices(invoices, paymentBehavior = []) {
+export function enrichInvoices(invoices, paymentBehavior = [], todayIso = null) {
+  const TODAY = todayIso ? new Date(todayIso + 'T00:00:00') : FORECAST_TODAY;
   const open = invoices.filter(i => i.status !== 'Paid');
   return open.map(inv => {
     const beh      = paymentBehavior.find(b => b.customer === inv.customer);
@@ -46,13 +47,13 @@ export function enrichInvoices(invoices, paymentBehavior = []) {
     if (!isOverdue) {
       expectedDate = dueDate;
     } else if (inv.daysOverdue <= 30) {
-      expectedDate = addDays(FORECAST_TODAY, idJitter(inv.id, 30));
+      expectedDate = addDays(TODAY, idJitter(inv.id, 30));
     } else if (inv.daysOverdue <= 60) {
-      expectedDate = addDays(FORECAST_TODAY, 30 + idJitter(inv.id, 30));
+      expectedDate = addDays(TODAY, 30 + idJitter(inv.id, 30));
     } else if (inv.daysOverdue <= 90) {
-      expectedDate = addDays(FORECAST_TODAY, 60 + idJitter(inv.id, 30));
+      expectedDate = addDays(TODAY, 60 + idJitter(inv.id, 30));
     } else {
-      expectedDate = addDays(FORECAST_TODAY, 90 + idJitter(inv.id, 30));
+      expectedDate = addDays(TODAY, 90 + idJitter(inv.id, 30));
     }
 
     return {

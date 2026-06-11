@@ -60,7 +60,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function CashFlowForecast({ invoices = [], paymentBehavior = [], onDrill }) {
+export default function CashFlowForecast({ invoices = [], paymentBehavior = [], onDrill, asOfDate = null }) {
   const [horizon, setHorizon] = useState(90);
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
@@ -75,15 +75,16 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
     return () => ro.disconnect();
   }, []);
 
+  const CHART_TODAY = asOfDate ? new Date(asOfDate + 'T00:00:00') : TODAY;
   // Build expected receipt date per open invoice
-  const enriched = enrichInvoices(invoices, paymentBehavior);
+  const enriched = enrichInvoices(invoices, paymentBehavior, asOfDate);
 
   // Helper: build weekly buckets for a given number of days and bucket enriched invoices into them
   function buildWeeks(days) {
     const n = Math.ceil(days / 7);
     const ws = Array.from({ length: n }, (_, i) => {
-      const start = addDays(TODAY, i * 7);
-      const end   = addDays(TODAY, (i + 1) * 7 - 1);
+      const start = addDays(CHART_TODAY, i * 7);
+      const end   = addDays(CHART_TODAY, (i + 1) * 7 - 1);
       return { label: weekLabel(start), start, end, low: 0, medium: 0, high: 0, overdue: 0, total: 0, items: [] };
     });
     enriched.forEach(inv => {

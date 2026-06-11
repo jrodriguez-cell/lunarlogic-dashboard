@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import DSOMeter from '../components/DSOMeter';
 import ARAgingChart from '../components/ARAgingChart';
@@ -49,6 +49,48 @@ const PMT_COLS = [
 ];
 
 const REFRESH_MS = 15 * 60 * 1000;
+const DATA_LATEST_DATE = '2026-05-19';
+
+function daysBetween(isoA, isoB) {
+  return Math.round((new Date(isoB + 'T00:00:00') - new Date(isoA + 'T00:00:00')) / 86400000);
+}
+
+function deriveInvoicesAsOf(rawInvoices, asOfDate) {
+  const asOf = new Date(asOfDate + 'T00:00:00');
+  return rawInvoices
+    .filter(inv => new Date(inv.issued + 'T00:00:00') <= asOf)
+    .map(inv => {
+      const daysOut     = Math.max(0, daysBetween(inv.issued, asOfDate));
+      const daysOverdue = Math.max(0, daysBetween(inv.due, asOfDate));
+      let status = inv.status;
+      if (status !== 'Paid') {
+        status = daysOverdue > 0 ? 'Overdue'
+               : inv.status === 'Overdue' ? 'Sent'  // not yet overdue at asOfDate
+               : inv.status;
+      }
+      return { ...inv, daysOut, daysOverdue, status };
+    });
+}
+
+function computeARAgingFromInvoices(adjInvoices) {
+  const open = adjInvoices.filter(i => i.status !== 'Paid');
+  return [
+    { bucket: 'Current', key: 'current', min: 0,   max: 0          },
+    { bucket: '1–30',    key: '1-30',    min: 1,   max: 30         },
+    { bucket: '31–60',   key: '31-60',   min: 31,  max: 60         },
+    { bucket: '61–90',   key: '61-90',   min: 61,  max: 90         },
+    { bucket: '90+',     key: '90+',     min: 91,  max: Infinity   },
+  ].map(b => ({
+    bucket: b.bucket, key: b.key,
+    amount: open.filter(i => i.daysOverdue >= b.min && i.daysOverdue <= b.max).reduce((s,i) => s+i.amount, 0),
+    count:  open.filter(i => i.daysOverdue >= b.min && i.daysOverdue <= b.max).length,
+  }));
+}
+
+function fmtAsOf(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 const VIEW_TITLES = {
   overview:   { title: 'Overview',            sub: 'Full AR health at a glance'              },
@@ -72,6 +114,10 @@ export default function DashboardPage({ session, onLogout }) {
   const [showComposer, setShowComposer] = useState(false);
   const openDrill = config => setDrill(config);
   const [cashCustomer, setCashCustomer] = useState('All');
+  const [asOfDate, setAsOfDate] = useState(DATA_LATEST_DATE);
+  const [showAsOfPicker, setShowAsOfPicker] = useState(false);
+  const asOfRef = useRef(null);
+  const isLatest = asOfDate === DATA_LATEST_DATE;
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -87,6 +133,15 @@ export default function DashboardPage({ session, onLogout }) {
     return () => clearInterval(timer);
   }, [load]);
 
+  useEffect(() => {
+    if (!showAsOfPicker) return;
+    function handleClick(e) {
+      if (asOfRef.current && !asOfRef.current.contains(e.target)) setShowAsOfPicker(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showAsOfPicker]);
+
   if (!data) {
     return (
       <div className="loading">
@@ -97,8 +152,15 @@ export default function DashboardPage({ session, onLogout }) {
     );
   }
 
-  const { dsoTrend, arAging, invoices, paymentBehavior, goLiveDate, preLiveDSO, collectionEfficiency, payments } = data;
-  const currentDSO  = Math.round(dsoTrend[dsoTrend.length - 1].dso);
+  const { dsoTrend: rawDSOTrend, arAging: rawARaging, invoices: rawInvoices, paymentBehavior, goLiveDate, preLiveDSO, collectionEfficiency, payments } = data;
+
+  // Derive all data relative to the selected as-of date
+  const invoices  = deriveInvoicesAsOf(rawInvoices, asOfDate);
+  const arAging   = computeARAgingFromInvoices(invoices);
+  const dsoTrend  = rawDSOTrend.filter(p => p.date <= asOfDate);
+
+  const dsoEntry    = dsoTrend.length > 0 ? dsoTrend[dsoTrend.length - 1] : rawDSOTrend[rawDSOTrend.length - 1];
+  const currentDSO  = Math.round(dsoEntry.dso);
   const delta       = preLiveDSO - currentDSO;
   const totalAR     = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
   const overdue     = invoices.filter(i => i.status === 'Overdue');
@@ -107,8 +169,8 @@ export default function DashboardPage({ session, onLogout }) {
   const writeOffInvs    = invoices.filter(i => i.daysOverdue > 90);
   const writeOffRisk    = writeOffInvs.reduce((s, i) => s + i.amount, 0);
   const writeOffCount   = writeOffInvs.length;
-  const enrichedInvoices = enrichInvoices(invoices, paymentBehavior);
-  const forecast30Rows   = forecastWithin(enrichedInvoices, 30); // Current bucket (daysOverdue ≤ 0)
+  const enrichedInvoices = enrichInvoices(invoices, paymentBehavior, asOfDate);
+  const forecast30Rows   = forecastWithin(enrichedInvoices, 30);
   const expectedCashIn   = forecast30Rows.reduce((s, i) => s + i.amount, 0);
 
   const pendingPayments  = payments ? payments.filter(p => p.status === 'Pending Review').length : 0;
@@ -163,12 +225,44 @@ export default function DashboardPage({ session, onLogout }) {
             <div className="topbar-sub">{sub}</div>
           </div>
           <div className="topbar-right">
-            <span className="as-of-badge">
-              <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-                <circle cx="5" cy="5" r="4"/><path d="M5 3v2.5l1.5 1"/>
-              </svg>
-              As of May 19, 2026
-            </span>
+            <div className="as-of-wrap" ref={asOfRef}>
+              <button
+                className={`as-of-badge as-of-btn${!isLatest ? ' as-of-modified' : ''}`}
+                onClick={() => setShowAsOfPicker(v => !v)}
+                title="Click to change the data snapshot date"
+              >
+                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+                  <circle cx="5" cy="5" r="4"/><path d="M5 3v2.5l1.5 1"/>
+                </svg>
+                As of {fmtAsOf(asOfDate)}
+                <svg width="7" height="7" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2 }}>
+                  <path d="M1.5 3L4 5.5 6.5 3"/>
+                </svg>
+              </button>
+              {showAsOfPicker && (
+                <div className="as-of-popover">
+                  <div className="as-of-popover-label">Data snapshot date</div>
+                  <input
+                    type="date"
+                    className="as-of-date-input"
+                    value={asOfDate}
+                    max={DATA_LATEST_DATE}
+                    onChange={e => { if (e.target.value) setAsOfDate(e.target.value); }}
+                  />
+                  {!isLatest && (
+                    <button
+                      className="as-of-reset"
+                      onClick={() => { setAsOfDate(DATA_LATEST_DATE); setShowAsOfPicker(false); }}
+                    >
+                      Reset to latest
+                    </button>
+                  )}
+                  <div className="as-of-popover-hint">
+                    Data available through May 19, 2026
+                  </div>
+                </div>
+              )}
+            </div>
             {lastUpdated && (
               <span className="last-updated">
                 Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -308,6 +402,7 @@ export default function DashboardPage({ session, onLogout }) {
                 invoices={invoices || []}
                 paymentBehavior={paymentBehavior || []}
                 onDrill={openDrill}
+                asOfDate={asOfDate}
               />
 
               <AuditTrailPanel payments={filteredPayments || []} />
