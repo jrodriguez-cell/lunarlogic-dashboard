@@ -75,12 +75,15 @@ function CustomTooltip({ active, payload, label }) {
 export default function MatchConfidenceChart({ payments, onDrill }) {
   const [rangeDays, setRangeDays] = useState(null);
   const containerRef = useRef(null);
-  const [chartWidth, setChartWidth] = useState(0);
+  const [chartWidth,  setChartWidth]  = useState(0);
+  const [chartHeight, setChartHeight] = useState(0);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver(entries => {
-      setChartWidth(entries[0].contentRect.width);
+      const { width, height } = entries[0].contentRect;
+      setChartWidth(width);
+      setChartHeight(height);
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
@@ -145,10 +148,10 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
       </div>
 
       <div ref={containerRef} style={{ width: '100%', minWidth: 0, flex: 1 }}>
-        {chartWidth > 0 && (
+        {chartWidth > 0 && chartHeight > 0 && (
           <BarChart
             width={chartWidth}
-            height={200}
+            height={chartHeight}
             data={data}
             barCategoryGap="20%"
             margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
