@@ -7,8 +7,9 @@
   --bg-row:     rgba(255,255,255,0.03);
   --border:     #1a2c42;
   --border-mid: #243d5c;
-  --text:       #e8f2ff;
-  --muted:      #5a7a9e;
+  --text:       #ddeeff;   /* slightly softer white — less eye strain */
+  --text-dim:   #8aaac8;   /* mid-level labels, secondary values */
+  --muted:      #4e6a88;   /* de-emphasised chrome only — not data */
   --teal:       #00d4e8;
   --teal-dim:   rgba(0,212,232,0.10);
   --teal-glow:  rgba(0,212,232,0.20);
@@ -201,7 +202,7 @@ body {
 
 .topbar-sub {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text-dim);
   margin-top: 1px;
 }
 
@@ -330,7 +331,7 @@ body {
 
 .stat-label {
   font-size: 10px;
-  color: var(--muted);
+  color: var(--text-dim);
   margin-top: 6px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -338,7 +339,7 @@ body {
 
 .stat-sub {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--text-dim);
   margin-top: 3px;
 }
 
@@ -738,7 +739,7 @@ body {
 }
 
 .drawer-title   { font-size: 16px; font-weight: 700; color: var(--text); }
-.drawer-sub     { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.drawer-sub     { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 
 .drawer-close {
   background: none;
@@ -801,7 +802,7 @@ body {
 
 .detail-item-label {
   font-size: 10px;
-  color: var(--muted);
+  color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 3px;
@@ -1075,7 +1076,7 @@ body {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1.4px;
-  color: var(--muted);
+  color: var(--text-dim);
   margin-bottom: 6px;
   text-align: center;
 }
@@ -1091,7 +1092,7 @@ body {
 
 .ph-sub {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--text-dim);
   margin-top: 6px;
   text-align: center;
 }
