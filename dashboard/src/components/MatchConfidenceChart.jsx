@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine,
-  ResponsiveContainer,
 } from 'recharts';
 import { exportXLSX } from '../lib/excel';
 
@@ -75,6 +74,17 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function MatchConfidenceChart({ payments, onDrill }) {
   const [rangeDays, setRangeDays] = useState(null);
+  const containerRef = useRef(null);
+  const [chartWidth, setChartWidth] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(entries => {
+      setChartWidth(entries[0].contentRect.width);
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   const filtered   = filterByRange(payments, rangeDays);
   const data       = buildBuckets(filtered);
@@ -134,12 +144,14 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
         </div>
       </div>
 
-      <div style={{ width: '100%', minWidth: 0, overflow: 'hidden' }}>
-        <ResponsiveContainer width="99%" height={200}>
+      <div ref={containerRef} style={{ width: '100%', minWidth: 0 }}>
+        {chartWidth > 0 && (
           <BarChart
+            width={chartWidth}
+            height={200}
             data={data}
             barCategoryGap="20%"
-            margin={{ top: 4, right: 16, left: -16, bottom: 0 }}
+            margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
             onClick={handleBarClick}
             style={{ cursor: 'pointer' }}
           >
@@ -153,7 +165,7 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
               ))}
             </Bar>
           </BarChart>
-        </ResponsiveContainer>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
