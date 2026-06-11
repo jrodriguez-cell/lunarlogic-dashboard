@@ -13,6 +13,7 @@ import MatchConfidenceChart from '../components/MatchConfidenceChart';
 import ARReminderTracker from '../components/ARReminderTracker';
 import DrillDrawer from '../components/DrillDrawer';
 import { fetchDashboardData } from '../lib/quickbooks';
+import { enrichInvoices, forecastWithin } from '../lib/forecast';
 
 const INV_COLS = [
   { key: 'id',          label: 'Invoice' },
@@ -92,6 +93,12 @@ export default function DashboardPage({ session, onLogout }) {
   const overdue     = invoices.filter(i => i.status === 'Overdue');
   const overdueAmt  = overdue.reduce((s, i) => s + i.amount, 0);
 
+  const writeOffInvs    = invoices.filter(i => i.daysOverdue > 90);
+  const writeOffRisk    = writeOffInvs.reduce((s, i) => s + i.amount, 0);
+  const writeOffCount   = writeOffInvs.length;
+  const enrichedInvoices = enrichInvoices(invoices, paymentBehavior);
+  const forecast30Rows   = forecastWithin(enrichedInvoices, 30); // Current bucket (daysOverdue ≤ 0)
+  const expectedCashIn   = forecast30Rows.reduce((s, i) => s + i.amount, 0);
   const pendingPayments  = payments ? payments.filter(p => p.status === 'Pending Review').length : 0;
   const autoApplied      = payments ? payments.filter(p => p.status === 'Auto-Applied') : [];
   const autoMatchRate    = payments ? Math.round((autoApplied.length / payments.length) * 100) : 0;
