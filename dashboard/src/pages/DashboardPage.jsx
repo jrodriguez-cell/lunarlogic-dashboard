@@ -643,7 +643,7 @@ function AuditTrailPanel({ payments }) {
   }
 
   return (
-    <div className="card">
+    <div className="card cash-audit-card">
       <div className="card-header">
         <h2>Audit Trail</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -669,11 +669,11 @@ function AuditTrailPanel({ payments }) {
           </button>
         </div>
       </div>
-      <div style={{ overflowY: 'auto', maxHeight: 260 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+      <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 260, WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', minWidth: 520, borderCollapse: 'collapse', fontSize: 11 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              {['Txn', 'Amount', 'Customer', 'Invoice', 'Conf.', 'Decision', 'By', 'Date'].map(h => (
+              {['Date', 'Customer', 'Amount', 'Conf.', 'Decision'].map(h => (
                 <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -681,16 +681,13 @@ function AuditTrailPanel({ payments }) {
           <tbody>
             {entries.map((e, i) => (
               <tr key={e.txId} style={{ borderBottom: i < entries.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
-                <td style={{ padding: '7px 8px', color: 'var(--muted)', fontFamily: 'monospace', fontSize: 10 }}>{e.txId}</td>
-                <td style={{ padding: '7px 8px', fontWeight: 600 }}>${e.amount.toLocaleString()}</td>
-                <td style={{ padding: '7px 8px', color: 'var(--text)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.customer}</td>
-                <td style={{ padding: '7px 8px', color: 'var(--muted)', fontFamily: 'monospace', fontSize: 10 }}>{e.invoice}</td>
-                <td style={{ padding: '7px 8px', color: e.confidence >= 90 ? 'var(--green)' : e.confidence >= 70 ? 'var(--yellow)' : 'var(--red)', fontWeight: 600 }}>{e.confidence}%</td>
+                <td style={{ padding: '7px 8px', color: 'var(--muted)', whiteSpace: 'nowrap', fontSize: 10 }}>{fmtDate(e.date)}</td>
+                <td style={{ padding: '7px 8px', color: 'var(--text)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.customer}</td>
+                <td style={{ padding: '7px 8px', fontWeight: 600, whiteSpace: 'nowrap' }}>${e.amount.toLocaleString()}</td>
+                <td style={{ padding: '7px 8px', color: e.confidence >= 90 ? 'var(--green)' : e.confidence >= 70 ? 'var(--yellow)' : 'var(--red)', fontWeight: 600, whiteSpace: 'nowrap' }}>{e.confidence}%</td>
                 <td style={{ padding: '7px 8px' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: STATUS_COLOR[e.decision], background: STATUS_COLOR[e.decision] + '18', padding: '2px 7px', borderRadius: 4 }}>{e.decision}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: STATUS_COLOR[e.decision], background: STATUS_COLOR[e.decision] + '18', padding: '2px 7px', borderRadius: 4, whiteSpace: 'nowrap' }}>{e.decision}</span>
                 </td>
-                <td style={{ padding: '7px 8px', color: 'var(--muted)' }}>{e.by}</td>
-                <td style={{ padding: '7px 8px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{fmtDate(e.date)}</td>
               </tr>
             ))}
           </tbody>

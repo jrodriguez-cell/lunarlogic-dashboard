@@ -119,7 +119,7 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
   }
 
   return (
-    <div className="card">
+    <div className="card cash-confidence-card">
       <div className="card-header">
         <h2>Confidence Distribution</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -147,7 +147,7 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
         </div>
       </div>
 
-      <div ref={containerRef} style={{ width: '100%', minWidth: 0, flex: 1 }}>
+      <div ref={containerRef} style={{ width: '100%', minWidth: 0, flex: 1, minHeight: 200 }}>
         {chartWidth > 0 && chartHeight > 0 && (
           <BarChart
             width={chartWidth}

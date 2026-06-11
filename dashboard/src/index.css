@@ -1360,6 +1360,20 @@ body {
   /* Charts — let them scroll if needed */
   .recharts-wrapper { overflow: visible !important; }
 
+  /* Confidence Distribution card: give it a fixed height so ResizeObserver
+     gets real dimensions and the bar chart fills the space */
+  .cash-confidence-card {
+    height: 340px;
+    min-height: 340px;
+  }
+  .cash-confidence-card .card-header { margin-bottom: 12px; }
+
+  /* Audit trail card: readable height, horizontal scroll for table */
+  .cash-audit-card {
+    height: auto;
+    min-height: unset;
+  }
+
   /* Customer table */
   .cust-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .cust-table { min-width: 480px; }
