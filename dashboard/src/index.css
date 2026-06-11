@@ -1101,7 +1101,10 @@ body {
 .payments-hero-stats {
   display: flex;
   gap: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  width: 100%;
+  align-items: stretch;
+  justify-content: space-between;
 }
 
 /* ── Payment Queue Table ─────────────────────────── */
@@ -1594,7 +1597,7 @@ body {
     gap: 24px;
   }
   .payments-hero-divider { display: none; }
-  .payments-hero-stats { gap: 0; }
+  .payments-hero-stats { gap: 0; flex-wrap: wrap; }
   .ph-value { font-size: 72px; }
 }
 
