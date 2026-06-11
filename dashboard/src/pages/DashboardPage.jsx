@@ -304,9 +304,7 @@ export default function DashboardPage({ session, onLogout }) {
                 onDrill={openDrill}
               />
 
-              <div className="grid cash-panel-grid">
-                <AuditTrailPanel payments={filteredPayments || []} />
-              </div>
+              <AuditTrailPanel payments={filteredPayments || []} />
 
               <PaymentActivityFeed payments={filteredPayments || []} />
             </>
