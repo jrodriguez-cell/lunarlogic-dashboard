@@ -97,7 +97,7 @@ export default function DashboardPage({ session, onLogout }) {
   const { dsoTrend, arAging, invoices, paymentBehavior, goLiveDate, preLiveDSO, collectionEfficiency, payments } = data;
   const currentDSO  = Math.round(dsoTrend[dsoTrend.length - 1].dso);
   const delta       = preLiveDSO - currentDSO;
-  const totalAR     = arAging.reduce((s, b) => s + b.amount, 0);
+  const totalAR     = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
   const overdue     = invoices.filter(i => i.status === 'Overdue');
   const overdueAmt  = overdue.reduce((s, i) => s + i.amount, 0);
 
@@ -413,6 +413,14 @@ export default function DashboardPage({ session, onLogout }) {
                 </div>
               </section>
 
+              <DSOTrend
+                data={dsoTrend}
+                goLiveDate={goLiveDate}
+                preLiveDSO={preLiveDSO}
+                currentDSO={currentDSO}
+                onDrill={openDrill}
+              />
+
               <ARAgingChart
                 invoices={invoices}
                 paymentBehavior={paymentBehavior}
@@ -422,13 +430,6 @@ export default function DashboardPage({ session, onLogout }) {
               />
 
               <div className="grid">
-                <DSOTrend
-                  data={dsoTrend}
-                  goLiveDate={goLiveDate}
-                  preLiveDSO={preLiveDSO}
-                  currentDSO={currentDSO}
-                  onDrill={openDrill}
-                />
                 <InvoiceBoard
                   invoices={invoices}
                   filterBucket={selectedBucket}
