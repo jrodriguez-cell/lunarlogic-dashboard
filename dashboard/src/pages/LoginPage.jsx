@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { login } from '../lib/auth';
 
 const DEMO = [
-  { label: 'Forvis Mazars',     email: 'forvismazars@demo.com', pw: 'demo2024' },
-  { label: 'Kaptain Clean LLC', email: 'kaptainclean@demo.com', pw: 'demo2024' },
-  { label: 'Gualapack',         email: 'gualapack@demo.com',    pw: 'demo2024' },
+  { label: 'Demo Account (Meridian Advisory Group)', email: 'demo@lunarlogic.ai',  pw: 'Demo2026!'   },
+  { label: 'Forvis Mazars',                          email: 'forvis@lunarlogic.ai', pw: 'Forvis2026!' },
 ];
 
 export default function LoginPage({ onLogin }) {
@@ -78,12 +77,12 @@ export default function LoginPage({ onLogin }) {
           {DEMO.map(c => (
             <div key={c.email} className="demo-cred-row" onClick={() => fillDemo(c)}>
               <span>{c.label}</span>
-              <code>{c.email}</code>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                <code>{c.email}</code>
+                <code style={{ color: 'var(--teal)', fontSize: 9 }}>{c.pw}</code>
+              </div>
             </div>
           ))}
-          <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 6, paddingLeft: 6 }}>
-            Password: <code style={{ color: 'var(--teal)', fontFamily: 'ui-monospace, monospace', fontSize: 10 }}>demo2024</code>
-          </div>
         </div>
       </div>
     </div>

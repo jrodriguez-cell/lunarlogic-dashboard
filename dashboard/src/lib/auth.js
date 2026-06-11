@@ -1,7 +1,9 @@
 const CREDENTIALS = {
-  'kaptainclean@demo.com': { password: 'demo2024', name: 'Kaptain Clean LLC', clientId: 'kaptain'      },
-  'gualapack@demo.com':    { password: 'demo2024', name: 'Gualapack',          clientId: 'gualapack'    },
-  'forvismazars@demo.com': { password: 'demo2024', name: 'Forvis Mazars',      clientId: 'forvismazars' },
+  'kaptainclean@demo.com': { password: 'demo2024',   name: 'Kaptain Clean LLC',      clientId: 'kaptain'      },
+  'gualapack@demo.com':    { password: 'demo2024',   name: 'Gualapack',               clientId: 'gualapack'    },
+  'forvismazars@demo.com': { password: 'demo2024',   name: 'Forvis Mazars',           clientId: 'forvismazars' },
+  'demo@lunarlogic.ai':    { password: 'Demo2026!',  name: 'Meridian Advisory Group', clientId: 'meridian'     },
+  'forvis@lunarlogic.ai':  { password: 'Forvis2026!',name: 'Forvis Mazars',           clientId: 'forvismazars' },
 };
 
 export function login(email, password) {
