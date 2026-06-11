@@ -2,6 +2,29 @@ import { useState } from 'react';
 
 const TABS = ['All', 'Auto-Applied', 'Pending Review', 'Manual'];
 
+const DATE_RANGES = [
+  { label: '7d',  days: 7 },
+  { label: '14d', days: 14 },
+  { label: 'All', days: null },
+];
+
+function filterByRange(payments, days) {
+  if (!days) return payments;
+  const dates = payments.map(p => new Date(p.received + 'T00:00:00')).filter(d => !isNaN(d));
+  if (!dates.length) return payments;
+  const latest = new Date(Math.max(...dates));
+  const cutoff = new Date(latest);
+  cutoff.setDate(cutoff.getDate() - days);
+  return payments.filter(p => new Date(p.received + 'T00:00:00') >= cutoff);
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+}
+
 const STATUS_META = {
   'Auto-Applied':   { color: 'var(--green)',  bg: 'rgba(34,197,94,.12)',   border: 'rgba(34,197,94,.2)'   },
   'Pending Review': { color: 'var(--yellow)', bg: 'rgba(245,158,11,.12)',  border: 'rgba(245,158,11,.2)'  },
@@ -9,6 +32,7 @@ const STATUS_META = {
 };
 
 const COL_TIPS = {
+  date:     'Date the payment was received from the bank feed (Plaid). Used to sequence transactions and match against open invoice due dates.',
   txnId:    'Unique transaction identifier assigned by the bank feed (Plaid). Used to trace any payment end-to-end through the matching and posting workflow.',
   bankDesc: 'Raw payment description transmitted by the bank exactly as received via Plaid. This string is parsed by the matching engine to extract customer name and reference signals.',
   customer: 'Customer name resolved by the matching engine using fuzzy string comparison (Levenshtein distance) against your active customer list. A score ≥ 0.90 qualifies as a name match.',
@@ -173,11 +197,13 @@ function ConfidenceCell({ payment }) {
 }
 
 export default function PaymentQueue({ payments, onOpenPayment }) {
-  const [tab, setTab] = useState('All');
+  const [tab, setTab]           = useState('All');
+  const [rangeDays, setRangeDays] = useState(null);
 
-  const displayed = tab === 'All' ? payments : payments.filter(p => p.status === tab);
-  const counts    = TABS.reduce((acc, t) => {
-    acc[t] = t === 'All' ? payments.length : payments.filter(p => p.status === t).length;
+  const dateFiltered = filterByRange(payments, rangeDays);
+  const displayed    = tab === 'All' ? dateFiltered : dateFiltered.filter(p => p.status === tab);
+  const counts       = TABS.reduce((acc, t) => {
+    acc[t] = t === 'All' ? dateFiltered.length : dateFiltered.filter(p => p.status === t).length;
     return acc;
   }, {});
 
@@ -185,7 +211,23 @@ export default function PaymentQueue({ payments, onOpenPayment }) {
     <div className="card" style={{ gridColumn: '1 / -1' }}>
       <div className="card-header">
         <h2>Payment Match Queue</h2>
-        <span style={{ fontSize: 11, color: 'var(--muted)' }}>Powered by Plaid · Click row to review</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: 'var(--muted)' }}>Powered by Plaid · Click row to review</span>
+          <div style={{ display: 'flex', gap: 2 }}>
+            {DATE_RANGES.map(r => (
+              <button
+                key={r.label}
+                onClick={() => setRangeDays(r.days)}
+                style={{
+                  padding: '3px 8px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
+                  border: `1px solid ${rangeDays === r.days ? 'var(--teal)' : 'var(--border)'}`,
+                  background: rangeDays === r.days ? 'rgba(0,212,232,0.1)' : 'none',
+                  color: rangeDays === r.days ? 'var(--teal)' : 'var(--muted)',
+                }}
+              >{r.label}</button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="status-tabs" style={{ marginBottom: 0 }}>
@@ -201,6 +243,7 @@ export default function PaymentQueue({ payments, onOpenPayment }) {
         <table className="pq-table">
           <thead>
             <tr>
+              <Th tip={COL_TIPS.date}>Date</Th>
               <Th tip={COL_TIPS.txnId}>Txn ID</Th>
               <Th tip={COL_TIPS.bankDesc}>Bank Description</Th>
               <Th tip={COL_TIPS.customer}>Matched Customer</Th>
@@ -218,6 +261,7 @@ export default function PaymentQueue({ payments, onOpenPayment }) {
               const meta = STATUS_META[p.status];
               return (
                 <tr key={p.txId} className="pq-row" onClick={() => onOpenPayment(p)}>
+                  <td style={{ whiteSpace: 'nowrap', color: 'var(--muted)', fontSize: 11 }}>{fmtDate(p.received)}</td>
                   <td>
                     <span className="invoice-id">{p.txId}</span>
                   </td>
