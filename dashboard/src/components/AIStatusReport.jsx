@@ -61,13 +61,37 @@ function getSummaries(view, m = {}) {
       `${paymentBehavior.length} customers analyzed this period. ${improvingCt} account${improvingCt !== 1 ? 's are' : ' is'} improving payment cadence — a positive signal from the automated reminder sequences. ${slowest ? `Priority collection focus: ${slowest.customer} (${fmtM(slowest.openAmount)} outstanding, ${slowest.avgDays}d average, trending ${slowest.trend > 0 ? '+' + slowest.trend + 'd slower' : Math.abs(slowest.trend) + 'd faster'} this period).` : ''}`,
     ],
 
-    payments: [
-      `Auto-match rate of ${autoMatchRate}% reflects ${autoApplied.length} transaction${autoApplied.length !== 1 ? 's' : ''} applied in under 8 minutes. ${pendingCount} transaction${pendingCount !== 1 ? 's' : ''} totaling ${fmtM(unappliedAmt)} remain unmatched — under ASC 606, these should be classified as contract liabilities until applied. FIFO application to the oldest open invoices is recommended.`,
+    payments: (() => {
+      const pending = unappliedPayments;
+      const bulkItems    = pending.filter(p => p.rule && p.rule.toLowerCase().includes('bulk'));
+      const partialItems = pending.filter(p => p.rule && p.rule.toLowerCase().includes('partial'));
+      const lowConfItems = pending.filter(p => !p.rule?.toLowerCase().includes('bulk') && !p.rule?.toLowerCase().includes('partial'));
 
-      `${payments.length} transactions received in the last 10 days totaling ${fmtM(totalReceived)}. ${pendingCount} item${pendingCount !== 1 ? 's require' : ' requires'} manual review${unappliedPayments.length > 0 ? ': ' + [...new Set(unappliedPayments.map(p => p.matchedCustomer).filter(Boolean))].join(', ') : ''}. Clearing the pending queue would bring the AR ledger current and reduce unapplied cash exposure to $0.`,
+      const pendingDetail = pending.map(p => {
+        const customer = p.matchedCustomer || 'Unknown';
+        const amt = fmtM(p.amount);
+        if (p.rule?.toLowerCase().includes('bulk')) return `${customer} (${amt} — bulk payment spanning multiple invoices, routing decision required)`;
+        if (p.rule?.toLowerCase().includes('partial')) {
+          const vs = p.rule.match(/\$[\d,]+ vs \$[\d,]+/)?.[0] || '';
+          return `${customer} (${amt}${vs ? ` — partial: ${vs}` : ''}, open balance exceeds payment)`;
+        }
+        return `${customer} (${amt} — confidence ${p.confidence}%, below 90% auto-apply threshold)`;
+      });
 
-      `Cash application efficiency is strong at ${autoMatchRate}% auto-applied, vs a manual process averaging 3–5 business days per close cycle. The ${pendingCount} pending review item${pendingCount !== 1 ? 's represent' : ' represents'} bulk or partial payments requiring routing decisions. The 90% confidence threshold is protecting against misapplication — all low-confidence matches are held for human review before posting to the ledger.`,
-    ],
+      const reasonSummary = [
+        bulkItems.length    > 0 ? `${bulkItems.length} bulk payment${bulkItems.length > 1 ? 's' : ''} spanning multiple open invoices` : '',
+        partialItems.length > 0 ? `${partialItems.length} partial payment${partialItems.length > 1 ? 's' : ''} where the deposit is less than the open invoice balance` : '',
+        lowConfItems.length > 0 ? `${lowConfItems.length} low-confidence match${lowConfItems.length > 1 ? 'es' : ''} held below the 90% auto-apply threshold` : '',
+      ].filter(Boolean).join('; ');
+
+      return [
+        `${pendingCount} transaction${pendingCount !== 1 ? 's' : ''} totaling ${fmtM(unappliedAmt)} are in Pending Review. ${reasonSummary || 'Each requires a manual routing decision before posting.'}${pendingDetail.length > 0 ? ' Details: ' + pendingDetail.slice(0, 3).join(' · ') + (pendingDetail.length > 3 ? ` · and ${pendingDetail.length - 3} more.` : '.') : ''} Under ASC 606-10-55, these amounts must be held as contract liabilities until applied.`,
+
+        `Auto-match rate: ${autoMatchRate}% — ${autoApplied.length} transaction${autoApplied.length !== 1 ? 's' : ''} posted automatically in under 8 minutes. The ${pendingCount} item${pendingCount !== 1 ? 's' : ''} pending review ${pendingCount > 0 ? 'break down as follows: ' + reasonSummary + '.' : 'have been cleared.'} ${bulkItems.length > 0 ? `Bulk payments require FIFO routing — apply to the oldest open invoice first per the configured match rule.` : ''} ${partialItems.length > 0 ? `Partial payments should be applied to the specific invoice cited in the bank description; any shortfall should be flagged for follow-up.` : ''}`.trim(),
+
+        `Cash application queue: ${payments.length} transactions received, ${autoApplied.length} auto-applied, ${pendingCount} pending. ${pendingCount > 0 ? `The pending items are blocked because: ${reasonSummary}. Each requires a staff routing decision — once cleared, unapplied cash exposure drops from ${fmtM(unappliedAmt)} to $0 and the AR ledger reflects true outstanding balances per ASC 310.` : `All transactions have been applied — AR ledger is current.`}`,
+      ];
+    })(),
 
     reminders: [
       `Automated reminder sequences are active for ${overdue.length} overdue invoice${overdue.length !== 1 ? 's' : ''}. The WF2 workflow delivers escalating outreach via Outlook at 7, 14, and 30 days past due. ${viewedCount > 0 ? `${viewedCount} invoice${viewedCount !== 1 ? 's were' : ' was'} opened within 24 hours of the last reminder — strong email deliverability and recipient engagement.` : 'Reminder emails are queued and pending delivery.'}`,
