@@ -417,6 +417,7 @@ export default function DashboardPage({ session, onLogout }) {
                 <ARAgingChart
                   data={arAging}
                   invoices={invoices}
+                  paymentBehavior={paymentBehavior}
                   selectedBucket={selectedBucket}
                   onSelectBucket={setSelectedBucket}
                   onDrill={openDrill}
