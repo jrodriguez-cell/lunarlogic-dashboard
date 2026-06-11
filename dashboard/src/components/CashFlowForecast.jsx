@@ -30,13 +30,14 @@ function riskColor(riskLevel) {
 }
 
 const EXPORT_COLS = [
-  { key: 'id',           label: 'Invoice' },
-  { key: 'customer',     label: 'Customer' },
-  { key: 'amount',       label: 'Amount',        render: v => `$${v.toLocaleString()}` },
-  { key: 'due',          label: 'Due Date' },
-  { key: 'expectedDate', label: 'Expected Receipt' },
-  { key: 'riskLevel',    label: 'Risk' },
-  { key: 'status',       label: 'Status' },
+  { key: 'id',              label: 'Invoice' },
+  { key: 'customer',        label: 'Customer' },
+  { key: 'amount',          label: 'Amount',           render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+  { key: 'due',             label: 'Due Date' },
+  { key: 'expectedDateStr', label: 'Expected Receipt' },
+  { key: 'riskLevel',       label: 'Risk' },
+  { key: 'status',          label: 'Status' },
+  { key: 'daysOverdue',     label: 'Days Overdue',     render: v => v > 0 ? `${v}d` : '—', csvVal: row => row.daysOverdue > 0 ? row.daysOverdue : '' },
 ];
 
 function CustomTooltip({ active, payload, label }) {
