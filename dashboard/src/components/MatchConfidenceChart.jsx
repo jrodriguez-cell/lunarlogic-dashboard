@@ -144,7 +144,7 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
         </div>
       </div>
 
-      <div ref={containerRef} style={{ width: '100%', minWidth: 0 }}>
+      <div ref={containerRef} style={{ width: '100%', minWidth: 0, flex: 1 }}>
         {chartWidth > 0 && (
           <BarChart
             width={chartWidth}
