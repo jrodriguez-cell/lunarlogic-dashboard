@@ -15,6 +15,7 @@ import DrillDrawer from '../components/DrillDrawer';
 import AIStatusReport from '../components/AIStatusReport';
 import { fetchDashboardData } from '../lib/quickbooks';
 import { exportXLSX } from '../lib/excel';
+import { enrichInvoices, forecastWithin } from '../lib/forecast';
 
 function fmtM(v) {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
@@ -104,12 +105,10 @@ export default function DashboardPage({ session, onLogout }) {
   const writeOffInvs    = invoices.filter(i => i.daysOverdue > 90);
   const writeOffRisk    = writeOffInvs.reduce((s, i) => s + i.amount, 0);
   const writeOffCount   = writeOffInvs.length;
-  const today           = new Date('2026-05-19');
-  const in30Days        = new Date(today); in30Days.setDate(in30Days.getDate() + 30);
-  const expectedCashIn  = invoices
-    .filter(i => i.status !== 'Paid' && i.status !== 'Overdue')
-    .filter(i => { const d = new Date(i.due + 'T00:00:00'); return d >= today && d <= in30Days; })
-    .reduce((s, i) => s + i.amount, 0);
+  // Behavior-adjusted forecast — same enrichment used by CashFlowForecast tiles
+  const enrichedInvoices = enrichInvoices(invoices, paymentBehavior);
+  const forecast30Rows   = forecastWithin(enrichedInvoices, 30);
+  const expectedCashIn   = forecast30Rows.reduce((s, i) => s + i.amount, 0);
 
   const pendingPayments  = payments ? payments.filter(p => p.status === 'Pending Review').length : 0;
   const autoApplied      = payments ? payments.filter(p => p.status === 'Auto-Applied') : [];
@@ -396,16 +395,10 @@ export default function DashboardPage({ session, onLogout }) {
                   </button>
                   <button className="stat-btn" onClick={() => openDrill({
                     title: 'Expected Cash Inflow — Next 30 Days',
-                    source: 'Sum of current (non-overdue) invoice balances due within the next 30 days. Represents expected near-term cash receipts based on contractual due dates. Actual collections may vary based on customer payment history.',
+                    source: 'Expected receipt dates are adjusted for each customer\'s historical avg days-to-pay. This matches the Cash Flow Forecast tile exactly.',
                     filename: 'expected_cash_30d',
                     columns: INV_COLS,
-                    rows: invoices.filter(i => {
-                      if (i.status === 'Paid' || i.status === 'Overdue') return false;
-                      const d = new Date(i.due + 'T00:00:00');
-                      const t = new Date('2026-05-19');
-                      const t30 = new Date('2026-06-18');
-                      return d >= t && d <= t30;
-                    }),
+                    rows: forecast30Rows,
                   })}>
                     <div className="stat-value stat-good">
                       {fmtM(expectedCashIn)}

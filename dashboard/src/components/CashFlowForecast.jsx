@@ -3,14 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine, Legend,
 } from 'recharts';
 import { exportXLSX } from '../lib/excel';
-
-const TODAY = new Date('2026-05-19');
-
-function addDays(d, n) {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
+import { FORECAST_TODAY as TODAY, addDays, enrichInvoices, forecastWithin } from '../lib/forecast';
 
 function weekLabel(date) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -82,33 +75,8 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
     return () => ro.disconnect();
   }, []);
 
-  // Build expected receipt date per open invoice
-  const open = invoices.filter(i => i.status !== 'Paid');
-  const enriched = open.map(inv => {
-    const beh      = paymentBehavior.find(b => b.customer === inv.customer);
-    const avgDays  = beh?.avgDays ?? 30;
-    const riskLevel = beh?.riskLevel ?? 'low';
-    const dueDate  = new Date(inv.due + 'T00:00:00');
-    const isOverdue = inv.daysOverdue > 0;
-
-    // Expected receipt = due date + how many days late this customer typically pays.
-    // avgDays is days-to-pay from invoice issue; net-30 terms = late offset is avgDays - 30.
-    // Overdue invoices: estimate collection 7–21 days out, deterministic per invoice ID.
-    const lateOffset = Math.max(0, avgDays - 30);
-    const overdueJitter = (inv.id.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % 15) + 7;
-    const expectedDate = isOverdue
-      ? addDays(TODAY, overdueJitter)
-      : addDays(dueDate, lateOffset);
-
-    return {
-      ...inv,
-      riskLevel,
-      avgDays,
-      isOverdue,
-      expectedDate,
-      expectedDateStr: expectedDate.toISOString().split('T')[0],
-    };
-  });
+  // Build expected receipt date per open invoice (shared logic with DashboardPage)
+  const enriched = enrichInvoices(invoices, paymentBehavior);
 
   // Build weekly buckets from today to horizon
   const numWeeks  = Math.ceil(horizon / 7);
@@ -130,14 +98,15 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
 
   const visibleWeeks = weeks.filter(w => w.total > 0 || horizon <= 30);
 
-  // Summary stats
-  const cutoff30  = addDays(TODAY, 30);
-  const cutoff60  = addDays(TODAY, 60);
-  const total30   = enriched.filter(i => i.expectedDate <= cutoff30).reduce((s, i) => s + i.amount, 0);
-  const total60   = enriched.filter(i => i.expectedDate <= cutoff60).reduce((s, i) => s + i.amount, 0);
+  // Summary stats — use shared forecastWithin so tiles match DashboardPage stats exactly
+  const rows30    = forecastWithin(enriched, 30);
+  const rows60    = forecastWithin(enriched, 60);
+  const rowsAtRisk = enriched.filter(i => i.riskLevel === 'high' || i.isOverdue);
+  const total30   = rows30.reduce((s, i) => s + i.amount, 0);
+  const total60   = rows60.reduce((s, i) => s + i.amount, 0);
   const total90   = enriched.reduce((s, i) => s + i.amount, 0);
   const totalOverdue = enriched.filter(i => i.isOverdue).reduce((s, i) => s + i.amount, 0);
-  const atRisk    = enriched.filter(i => i.riskLevel === 'high' || i.isOverdue).reduce((s, i) => s + i.amount, 0);
+  const atRisk    = rowsAtRisk.reduce((s, i) => s + i.amount, 0);
 
   function handleBarClick(data) {
     if (!data?.activePayload?.length) return;
@@ -216,7 +185,7 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
             value: fmtM(total30),
             color: 'var(--green)',
             sub: 'expected receipts',
-            rows: enriched.filter(i => i.expectedDate <= cutoff30),
+            rows: rows30,
             total: total30,
           },
           {
@@ -224,7 +193,7 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
             value: fmtM(total60),
             color: 'var(--teal)',
             sub: 'cumulative',
-            rows: enriched.filter(i => i.expectedDate <= cutoff60),
+            rows: rows60,
             total: total60,
           },
           {
@@ -240,7 +209,7 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
             value: fmtM(atRisk),
             color: atRisk > 0 ? 'var(--red)' : 'var(--green)',
             sub: totalOverdue > 0 ? `${fmtM(totalOverdue)} overdue` : 'no overdue',
-            rows: enriched.filter(i => i.riskLevel === 'high' || i.isOverdue),
+            rows: rowsAtRisk,
             total: atRisk,
           },
         ].map((s, i) => (
