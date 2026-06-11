@@ -101,17 +101,15 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
   const weeks        = buildWeeks(horizon);
   const visibleWeeks = weeks.filter(w => w.total > 0 || horizon <= 30);
 
-  // Summary tiles always use 90-day buckets so they match what the bars would show.
-  // Invoices whose expectedDate falls outside the 90-day window are excluded from
-  // all tiles — same exclusion the chart applies.
-  const weeks90      = buildWeeks(90);
-  const cutoff30wk   = addDays(TODAY, 30);
-  const cutoff60wk   = addDays(TODAY, 60);
-
-  const rows30     = weeks90.filter(w => w.start <= cutoff30wk).flatMap(w => w.items);
-  const rows60     = weeks90.filter(w => w.start <= cutoff60wk).flatMap(w => w.items);
-  const rows90     = weeks90.flatMap(w => w.items);
-  const rowsAtRisk = rows90.filter(i => i.riskLevel === 'high' || i.isOverdue);
+  // Summary tiles use daysOverdue thresholds — mirrors AR Aging bucket definitions:
+  //   Next 30d  = Current bucket only        (daysOverdue ≤ 0)
+  //   Next 60d  = Current + 1-30d overdue    (daysOverdue ≤ 30)
+  //   Next 90d  = Current + 1-30d + 31-60d   (daysOverdue ≤ 60)
+  //   At-Risk   = 61-90d + 90+ overdue       (daysOverdue > 60)
+  const rows30     = forecastWithin(enriched, 30);
+  const rows60     = forecastWithin(enriched, 60);
+  const rows90     = forecastWithin(enriched, 90);
+  const rowsAtRisk = enriched.filter(i => i.daysOverdue > 60);
 
   const total30      = rows30.reduce((s, i) => s + i.amount, 0);
   const total60      = rows60.reduce((s, i) => s + i.amount, 0);
