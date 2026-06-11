@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#03080f"/>
+      <stop offset="60%" style="stop-color:#060f1e"/>
+      <stop offset="100%" style="stop-color:#08101f"/>
+    </linearGradient>
+
+    <radialGradient id="orbLeft" cx="15%" cy="55%" r="45%">
+      <stop offset="0%" style="stop-color:#1d4ed8;stop-opacity:0.22"/>
+      <stop offset="100%" style="stop-color:#03080f;stop-opacity:0"/>
+    </radialGradient>
+
+    <radialGradient id="orbRight" cx="88%" cy="40%" r="38%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:0.14"/>
+      <stop offset="100%" style="stop-color:#03080f;stop-opacity:0"/>
+    </radialGradient>
+
+    <radialGradient id="orbCenter" cx="50%" cy="85%" r="30%">
+      <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:0.08"/>
+      <stop offset="100%" style="stop-color:#03080f;stop-opacity:0"/>
+    </radialGradient>
+
+    <!-- Wordmark glow -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="16" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="moonGlow">
+      <feGaussianBlur stdDeviation="20" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Horizontal accent line gradient -->
+    <linearGradient id="accentLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1d4ed8;stop-opacity:0"/>
+      <stop offset="25%" style="stop-color:#3b82f6;stop-opacity:0.9"/>
+      <stop offset="55%" style="stop-color:#60efff;stop-opacity:1"/>
+      <stop offset="75%" style="stop-color:#4f46e5;stop-opacity:0.7"/>
+      <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:0"/>
+    </linearGradient>
+
+    <linearGradient id="accentLineFaint" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1d4ed8;stop-opacity:0"/>
+      <stop offset="30%" style="stop-color:#3b82f6;stop-opacity:0.25"/>
+      <stop offset="50%" style="stop-color:#60efff;stop-opacity:0.3"/>
+      <stop offset="70%" style="stop-color:#4f46e5;stop-opacity:0.2"/>
+      <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base -->
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <!-- Ambient color orbs -->
+  <rect width="1920" height="1080" fill="url(#orbLeft)"/>
+  <rect width="1920" height="1080" fill="url(#orbRight)"/>
+  <rect width="1920" height="1080" fill="url(#orbCenter)"/>
+
+  <!-- Very subtle noise texture via layered semi-transparent shapes -->
+  <g opacity="0.025">
+    <rect x="0" y="0" width="1920" height="1080" fill="none" stroke="#60efff" stroke-width="400" stroke-dasharray="1 3"/>
+  </g>
+
+  <!-- ── LARGE MOON — centered, dominant ── -->
+  <g transform="translate(960, 460)" filter="url(#moonGlow)">
+    <!-- Outer ring very faint -->
+    <circle cx="0" cy="0" r="260" fill="none" stroke="#1d4ed8" stroke-width="0.8" opacity="0.2"/>
+    <!-- Second ring -->
+    <circle cx="0" cy="0" r="220" fill="none" stroke="#3b82f6" stroke-width="0.6" opacity="0.15"/>
+
+    <!-- Moon body -->
+    <circle cx="0" cy="0" r="180" fill="#0b1a35" opacity="0.95"/>
+    <circle cx="0" cy="0" r="180" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.5"/>
+
+    <!-- Crescent: overlay a dark circle offset to the upper-right -->
+    <circle cx="62" cy="-52" r="148" fill="#03080f"/>
+
+    <!-- Subtle surface texture rings inside the visible crescent -->
+    <circle cx="0" cy="0" r="140" fill="none" stroke="#1d4ed8" stroke-width="0.5" opacity="0.2"/>
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#1d4ed8" stroke-width="0.4" opacity="0.12"/>
+
+    <!-- Star cluster near moon -->
+    <circle cx="230" cy="-140" r="2.5" fill="#60efff" opacity="0.9"/>
+    <circle cx="268" cy="-80" r="1.5" fill="#93c5fd" opacity="0.7"/>
+    <circle cx="210" cy="-60" r="1.2" fill="white" opacity="0.5"/>
+    <circle cx="-240" cy="-160" r="2" fill="white" opacity="0.5"/>
+    <circle cx="-200" cy="-100" r="1.2" fill="#93c5fd" opacity="0.4"/>
+    <circle cx="180" cy="180" r="1.5" fill="#60efff" opacity="0.4"/>
+    <circle cx="-220" cy="140" r="1.2" fill="white" opacity="0.35"/>
+  </g>
+
+  <!-- ── ACCENT LINES ── -->
+  <!-- Primary glowing line -->
+  <rect x="0" y="740" width="1920" height="1.5" fill="url(#accentLine)"/>
+  <!-- Bloom copy -->
+  <rect x="0" y="738" width="1920" height="5" fill="url(#accentLine)" opacity="0.25" filter="url(#softGlow)"/>
+
+  <!-- Secondary faint line above -->
+  <rect x="0" y="728" width="1920" height="0.8" fill="url(#accentLineFaint)"/>
+
+  <!-- ── WORDMARK — large, centered ── -->
+  <text x="960" y="870"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="72" font-weight="200" letter-spacing="28"
+    fill="#e2e8f0"
+    text-anchor="middle"
+    filter="url(#glow)"
+    opacity="0.95">LUNAR<tspan font-weight="700" fill="#60efff" letter-spacing="24">LOGIC</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="960" y="912"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="13" font-weight="400" letter-spacing="7"
+    fill="#3b82f6"
+    text-anchor="middle"
+    opacity="0.7">AR AUTOMATION  ·  ORDER-TO-CASH</text>
+
+  <!-- Website — small, bottom center -->
+  <text x="960" y="1040"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="13" letter-spacing="2"
+    fill="#1e3a6e"
+    text-anchor="middle"
+    opacity="0.6">lunarlogic.ai</text>
+
+  <!-- Star field — sparse -->
+  <g fill="white">
+    <circle cx="88"  cy="92"  r="1.2" opacity="0.45"/>
+    <circle cx="310" cy="48"  r="0.9" opacity="0.35"/>
+    <circle cx="540" cy="130" r="1"   opacity="0.3"/>
+    <circle cx="720" cy="65"  r="0.8" opacity="0.4"/>
+    <circle cx="1200" cy="58" r="1.2" opacity="0.4"/>
+    <circle cx="1430" cy="110" r="0.9" opacity="0.3"/>
+    <circle cx="1650" cy="50" r="1.4" opacity="0.45"/>
+    <circle cx="1820" cy="130" r="0.9" opacity="0.35"/>
+    <circle cx="160"  cy="700" r="0.9" opacity="0.2"/>
+    <circle cx="1760" cy="680" r="1"   opacity="0.2"/>
+    <circle cx="100"  cy="400" r="0.8" opacity="0.2"/>
+    <circle cx="1850" cy="360" r="1"   opacity="0.2"/>
+  </g>
+</svg>
