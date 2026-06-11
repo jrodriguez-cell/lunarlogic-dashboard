@@ -75,38 +75,49 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
     return () => ro.disconnect();
   }, []);
 
-  // Build expected receipt date per open invoice (shared logic with DashboardPage)
+  // Build expected receipt date per open invoice
   const enriched = enrichInvoices(invoices, paymentBehavior);
 
-  // Build weekly buckets from today to horizon
-  const numWeeks  = Math.ceil(horizon / 7);
-  const weeks     = Array.from({ length: numWeeks }, (_, i) => {
-    const start = addDays(TODAY, i * 7);
-    const end   = addDays(TODAY, (i + 1) * 7 - 1);
-    return { label: weekLabel(start), start, end, low: 0, medium: 0, high: 0, overdue: 0, total: 0, items: [] };
-  });
+  // Helper: build weekly buckets for a given number of days and bucket enriched invoices into them
+  function buildWeeks(days) {
+    const n = Math.ceil(days / 7);
+    const ws = Array.from({ length: n }, (_, i) => {
+      const start = addDays(TODAY, i * 7);
+      const end   = addDays(TODAY, (i + 1) * 7 - 1);
+      return { label: weekLabel(start), start, end, low: 0, medium: 0, high: 0, overdue: 0, total: 0, items: [] };
+    });
+    enriched.forEach(inv => {
+      const w = ws.find(w => inv.expectedDate >= w.start && inv.expectedDate <= w.end);
+      if (!w) return;
+      const key = inv.isOverdue ? 'overdue' : inv.riskLevel;
+      w[key]  += inv.amount;
+      w.total += inv.amount;
+      w.items.push(inv);
+    });
+    return ws;
+  }
 
-  // Also bucket for overdue (already past due, best-guess landing)
-  enriched.forEach(inv => {
-    const w = weeks.find(w => inv.expectedDate >= w.start && inv.expectedDate <= w.end);
-    if (!w) return;
-    const key = inv.isOverdue ? 'overdue' : inv.riskLevel;
-    w[key]  += inv.amount;
-    w.total += inv.amount;
-    w.items.push(inv);
-  });
-
+  // Chart uses the currently-selected horizon
+  const weeks        = buildWeeks(horizon);
   const visibleWeeks = weeks.filter(w => w.total > 0 || horizon <= 30);
 
-  // Summary stats — use shared forecastWithin so tiles match DashboardPage stats exactly
-  const rows30    = forecastWithin(enriched, 30);
-  const rows60    = forecastWithin(enriched, 60);
-  const rowsAtRisk = enriched.filter(i => i.riskLevel === 'high' || i.isOverdue);
-  const total30   = rows30.reduce((s, i) => s + i.amount, 0);
-  const total60   = rows60.reduce((s, i) => s + i.amount, 0);
-  const total90   = enriched.reduce((s, i) => s + i.amount, 0);
-  const totalOverdue = enriched.filter(i => i.isOverdue).reduce((s, i) => s + i.amount, 0);
-  const atRisk    = rowsAtRisk.reduce((s, i) => s + i.amount, 0);
+  // Summary tiles always use 90-day buckets so they match what the bars would show.
+  // Invoices whose expectedDate falls outside the 90-day window are excluded from
+  // all tiles — same exclusion the chart applies.
+  const weeks90      = buildWeeks(90);
+  const cutoff30wk   = addDays(TODAY, 30);
+  const cutoff60wk   = addDays(TODAY, 60);
+
+  const rows30     = weeks90.filter(w => w.start <= cutoff30wk).flatMap(w => w.items);
+  const rows60     = weeks90.filter(w => w.start <= cutoff60wk).flatMap(w => w.items);
+  const rows90     = weeks90.flatMap(w => w.items);
+  const rowsAtRisk = rows90.filter(i => i.riskLevel === 'high' || i.isOverdue);
+
+  const total30      = rows30.reduce((s, i) => s + i.amount, 0);
+  const total60      = rows60.reduce((s, i) => s + i.amount, 0);
+  const total90      = rows90.reduce((s, i) => s + i.amount, 0);
+  const totalOverdue = rows90.filter(i => i.isOverdue).reduce((s, i) => s + i.amount, 0);
+  const atRisk       = rowsAtRisk.reduce((s, i) => s + i.amount, 0);
 
   function handleBarClick(data) {
     if (!data?.activePayload?.length) return;
@@ -123,11 +134,12 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
   }
 
   function handleExport() {
+    const exportRows = weeks.flatMap(w => w.items);
     exportXLSX(
       `cash_flow_forecast_${horizon}d`,
       'Cash Flow Forecast',
       EXPORT_COLS,
-      enriched,
+      exportRows,
       { Report: 'Cash Flow Forecast', Horizon: `Next ${horizon} days`, AsOf: TODAY.toLocaleDateString() }
     );
   }

@@ -105,10 +105,24 @@ export default function DashboardPage({ session, onLogout }) {
   const writeOffInvs    = invoices.filter(i => i.daysOverdue > 90);
   const writeOffRisk    = writeOffInvs.reduce((s, i) => s + i.amount, 0);
   const writeOffCount   = writeOffInvs.length;
-  // Behavior-adjusted forecast — same enrichment used by CashFlowForecast tiles
+  // Behavior-adjusted forecast bucketed into weeks — matches CashFlowForecast tile logic exactly.
+  // Only invoices whose expectedDate lands in a weekly bucket within 30 days are counted.
   const enrichedInvoices = enrichInvoices(invoices, paymentBehavior);
-  const forecast30Rows   = forecastWithin(enrichedInvoices, 30);
-  const expectedCashIn   = forecast30Rows.reduce((s, i) => s + i.amount, 0);
+  const cutoff30         = addDays(new Date('2026-05-19'), 30);
+  const forecast30Rows   = (() => {
+    const nWeeks = Math.ceil(30 / 7);
+    const ws = Array.from({ length: nWeeks }, (_, i) => {
+      const start = addDays(new Date('2026-05-19'), i * 7);
+      const end   = addDays(new Date('2026-05-19'), (i + 1) * 7 - 1);
+      return { start, end, items: [] };
+    });
+    enrichedInvoices.forEach(inv => {
+      const w = ws.find(w => inv.expectedDate >= w.start && inv.expectedDate <= w.end);
+      if (w) w.items.push(inv);
+    });
+    return ws.flatMap(w => w.items);
+  })();
+  const expectedCashIn = forecast30Rows.reduce((s, i) => s + i.amount, 0);
 
   const pendingPayments  = payments ? payments.filter(p => p.status === 'Pending Review').length : 0;
   const autoApplied      = payments ? payments.filter(p => p.status === 'Auto-Applied') : [];
