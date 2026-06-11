@@ -298,7 +298,7 @@ export default function DashboardPage({ session, onLogout }) {
 
               <PaymentQueue payments={filteredPayments || []} onOpenPayment={p => { setOpenPayment(p); }} />
 
-              <div className="grid">
+              <div className="grid cash-panel-grid">
                 <MatchConfidenceChart payments={filteredPayments || []} onDrill={openDrill} />
                 <AuditTrailPanel payments={filteredPayments || []} />
               </div>
@@ -452,7 +452,7 @@ export default function DashboardPage({ session, onLogout }) {
         onOpenInvoice={handleOpenInvoice}
         onDrill={openDrill}
       />
-      <PaymentMatchDrawer payment={openPayment} onClose={() => setOpenPayment(null)} />
+      <PaymentMatchDrawer payment={openPayment} invoices={invoices || []} onClose={() => setOpenPayment(null)} />
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
     </div>
   );

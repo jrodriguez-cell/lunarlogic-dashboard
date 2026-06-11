@@ -1357,22 +1357,22 @@ body {
   .drill-drawer { width: 100%; }
   .drawer-overlay { align-items: flex-end; }
 
-  /* Charts — let them scroll if needed */
+  /* Charts — fix BarChart ResizeObserver */
   .recharts-wrapper { overflow: visible !important; }
 
-  /* Confidence Distribution card: give it a fixed height so ResizeObserver
-     gets real dimensions and the bar chart fills the space */
+  /* Confidence Distribution: fixed height so ResizeObserver gets real dimensions */
   .cash-confidence-card {
-    height: 340px;
-    min-height: 340px;
+    height: 320px;
+    min-height: 320px;
+    box-sizing: border-box;
   }
-  .cash-confidence-card .card-header { margin-bottom: 12px; }
+  .cash-confidence-card .card-header { margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
 
-  /* Audit trail card: readable height, horizontal scroll for table */
-  .cash-audit-card {
-    height: auto;
-    min-height: unset;
-  }
+  /* Audit trail: auto height, table scrolls horizontally */
+  .cash-audit-card { height: auto; min-height: unset; }
+
+  /* Ensure both cash grid cards fill full width — never 2-col on mobile */
+  .cash-panel-grid { display: flex !important; flex-direction: column !important; gap: 16px !important; }
 
   /* Customer table */
   .cust-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1388,6 +1388,12 @@ body {
   .rmt-metric { padding: 0; text-align: left; display: flex; align-items: baseline; gap: 12px; }
   .rmt-metric-label { margin-bottom: 0; min-width: 120px; font-size: 9px; }
   .rmt-metric-value { font-size: 22px; }
+
+  /* Drawer — bottom sheet feel, full width */
+  .drawer-panel { width: 100% !important; max-width: 100% !important; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; }
+  .drill-drawer { width: 100% !important; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; }
+  .drawer-overlay { align-items: flex-end !important; }
+  .drawer-body { padding-bottom: 24px; }
 }
 
 /* ── AR Reminder Tracker ─────────────────────────── */

@@ -21,12 +21,28 @@ function fmtDateTime(iso) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function PaymentMatchDrawer({ payment, onClose }) {
+function fmtM(v) {
+  if (!v && v !== 0) return '$0';
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
+  return `$${v}`;
+}
+
+export default function PaymentMatchDrawer({ payment, invoices = [], onClose }) {
   if (!payment) return null;
 
   const meta   = STATUS_META[payment.status];
   const cColor = confidenceColor(payment.confidence);
   const isPending = payment.status === 'Pending Review';
+
+  // Customer running balance derived from open invoices
+  const asOfDate = payment.received;
+  const custInvoices = invoices.filter(
+    inv => inv.customer === payment.matchedCustomer && inv.status !== 'Paid'
+  );
+  const currentBalance = custInvoices.reduce((s, inv) => s + inv.amount, 0);
+  const balanceAfter   = Math.max(0, currentBalance - payment.amount);
+  const hasBalance     = payment.matchedCustomer && custInvoices.length > 0;
 
   function handleAction(msg) {
     alert(msg + '\n\n(This triggers the WF3 cash application workflow in production.)');
@@ -79,6 +95,51 @@ export default function PaymentMatchDrawer({ payment, onClose }) {
               </div>
             </div>
           </div>
+
+          {hasBalance && (
+            <div className="drawer-section">
+              <div className="drawer-section-title">Customer Outstanding Balance</div>
+              <div style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                {/* As-of header */}
+                <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', fontSize: 10, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {payment.matchedCustomer} · as of {fmt(asOfDate)}
+                </div>
+                {/* Before / After row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center' }}>
+                  <div style={{ padding: '16px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Open Balance</div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: currentBalance > 0 ? 'var(--yellow)' : 'var(--green)', letterSpacing: -1 }}>{fmtM(currentBalance)}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>{custInvoices.length} open invoice{custInvoices.length !== 1 ? 's' : ''}</div>
+                  </div>
+                  <div style={{ padding: '0 8px', color: 'var(--muted)', fontSize: 18 }}>→</div>
+                  <div style={{ padding: '16px 14px', textAlign: 'center', borderLeft: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                      {isPending ? 'Est. After Application' : 'Balance After'}
+                    </div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: balanceAfter === 0 ? 'var(--green)' : 'var(--text)', letterSpacing: -1 }}>{fmtM(balanceAfter)}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>
+                      {isPending ? 'pending routing decision' : 'updated in QuickBooks'}
+                    </div>
+                  </div>
+                </div>
+                {/* Open invoice breakdown */}
+                {custInvoices.length > 0 && (
+                  <div style={{ borderTop: '1px solid var(--border)', padding: '10px 14px' }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Open Invoices</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      {custInvoices.map(inv => (
+                        <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11 }}>
+                          <span style={{ fontFamily: 'ui-monospace, monospace', color: 'var(--teal)' }}>{inv.id}</span>
+                          <span style={{ color: 'var(--muted)', fontSize: 10 }}>due {fmt(inv.due)}</span>
+                          <span style={{ fontWeight: 600, color: inv.status === 'Overdue' ? 'var(--yellow)' : 'var(--text)' }}>${inv.amount.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="drawer-section">
             <div className="drawer-section-title">AI Match Analysis</div>
