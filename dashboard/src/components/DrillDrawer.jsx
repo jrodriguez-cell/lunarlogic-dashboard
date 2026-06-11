@@ -1,4 +1,5 @@
 import { exportXLSX } from '../lib/excel';
+import { exportCSV } from '../lib/csv';
 
 export default function DrillDrawer({ drill, onClose }) {
   if (!drill) return null;
@@ -16,6 +17,16 @@ export default function DrillDrawer({ drill, onClose }) {
             <div className="drawer-sub">{subtitleText}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              className="drill-export-btn"
+              onClick={() => exportCSV(`${drill.filename}.csv`, drill.columns, drill.rows)}
+            >
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5.5 1v7M2.5 5.5l3 3 3-3"/>
+                <path d="M1 9.5h9"/>
+              </svg>
+              Export CSV
+            </button>
             <button
               className="drill-export-btn"
               onClick={() => exportXLSX(drill.filename, drill.title.slice(0, 31), drill.columns, drill.rows, { client: drill.client, source: drill.source })}

@@ -162,6 +162,17 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
     );
   }
 
+  function handleStatDrill(label, rows, total) {
+    onDrill?.({
+      title:    `Cash Flow — ${label}`,
+      subtitle: `${fmtM(total)} · ${rows.length} invoice${rows.length !== 1 ? 's' : ''}`,
+      source:   'Expected receipt date = invoice due date adjusted for each customer\'s historical avg days-to-pay. Overdue balances estimated 7–21 days from today.',
+      filename: `cashflow_${label.toLowerCase().replace(/\s+/g, '_')}`,
+      columns:  EXPORT_COLS,
+      rows,
+    });
+  }
+
   const HORIZON_OPTS = [
     { label: '30d', days: 30 },
     { label: '60d', days: 60 },
@@ -196,22 +207,61 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
         </div>
       </div>
 
-      {/* Summary stat strip */}
+      {/* Summary stat strip — each tile is clickable and drills to underlying invoices */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, marginBottom: 20, border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
         {[
-          { label: 'Next 30 Days',    value: fmtM(total30),       color: 'var(--green)',  sub: 'expected receipts' },
-          { label: 'Next 60 Days',    value: fmtM(total60),       color: 'var(--teal)',   sub: 'cumulative' },
-          { label: 'Next 90 Days',    value: fmtM(total90),       color: 'var(--text)',   sub: 'total pipeline' },
-          { label: 'At-Risk Balance', value: fmtM(atRisk),        color: atRisk > 0 ? 'var(--red)' : 'var(--green)', sub: `${totalOverdue > 0 ? fmtM(totalOverdue) + ' overdue' : 'no overdue'}` },
+          {
+            label: 'Next 30 Days',
+            value: fmtM(total30),
+            color: 'var(--green)',
+            sub: 'expected receipts',
+            rows: enriched.filter(i => i.expectedDate <= cutoff30),
+            total: total30,
+          },
+          {
+            label: 'Next 60 Days',
+            value: fmtM(total60),
+            color: 'var(--teal)',
+            sub: 'cumulative',
+            rows: enriched.filter(i => i.expectedDate <= cutoff60),
+            total: total60,
+          },
+          {
+            label: 'Next 90 Days',
+            value: fmtM(total90),
+            color: 'var(--text)',
+            sub: 'total pipeline',
+            rows: enriched,
+            total: total90,
+          },
+          {
+            label: 'At-Risk Balance',
+            value: fmtM(atRisk),
+            color: atRisk > 0 ? 'var(--red)' : 'var(--green)',
+            sub: totalOverdue > 0 ? `${fmtM(totalOverdue)} overdue` : 'no overdue',
+            rows: enriched.filter(i => i.riskLevel === 'high' || i.isOverdue),
+            total: atRisk,
+          },
         ].map((s, i) => (
-          <div key={s.label} style={{
-            padding: '14px 16px', textAlign: 'center',
-            borderRight: i < 3 ? '1px solid var(--border)' : 'none',
-            background: 'rgba(255,255,255,0.02)',
-          }}>
+          <div
+            key={s.label}
+            onClick={() => s.rows.length && handleStatDrill(s.label, s.rows, s.total)}
+            style={{
+              padding: '14px 16px', textAlign: 'center',
+              borderRight: i < 3 ? '1px solid var(--border)' : 'none',
+              background: 'rgba(255,255,255,0.02)',
+              cursor: s.rows.length ? 'pointer' : 'default',
+              transition: 'background 0.12s',
+            }}
+            onMouseEnter={e => { if (s.rows.length) e.currentTarget.style.background = 'var(--bg-hover)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+          >
             <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{s.label}</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: s.color, letterSpacing: -0.5, lineHeight: 1 }}>{s.value}</div>
             <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4 }}>{s.sub}</div>
+            {s.rows.length > 0 && (
+              <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 5 }}>{s.rows.length} invoice{s.rows.length !== 1 ? 's' : ''} · click to drill</div>
+            )}
           </div>
         ))}
       </div>
@@ -253,7 +303,7 @@ export default function CashFlowForecast({ invoices = [], paymentBehavior = [], 
       </div>
 
       <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-        Expected receipt dates are adjusted for each customer's historical avg days-to-pay. Click any bar to see underlying invoices.
+        Expected receipt dates are adjusted for each customer's historical avg days-to-pay. Click any summary tile or bar to drill into underlying invoices — CSV and Excel export available in the detail view.
       </div>
     </div>
   );
