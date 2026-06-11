@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#03080f"/>
+      <stop offset="100%" style="stop-color:#07101f"/>
+    </linearGradient>
+
+    <!-- Banner bar gradient -->
+    <linearGradient id="bannerBg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#0a1628"/>
+      <stop offset="60%"  style="stop-color:#081220"/>
+      <stop offset="100%" style="stop-color:#050d18"/>
+    </linearGradient>
+
+    <!-- Accent line under banner -->
+    <linearGradient id="accentLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#1d4ed8;stop-opacity:1"/>
+      <stop offset="45%"  style="stop-color:#60efff;stop-opacity:1"/>
+      <stop offset="75%"  style="stop-color:#4f46e5;stop-opacity:0.7"/>
+      <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:0"/>
+    </linearGradient>
+
+    <!-- Left ambient glow in main area -->
+    <radialGradient id="orbBL" cx="10%" cy="90%" r="40%">
+      <stop offset="0%" style="stop-color:#1d4ed8;stop-opacity:0.12"/>
+      <stop offset="100%" style="stop-color:#03080f;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="orbBR" cx="92%" cy="80%" r="35%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:0.09"/>
+      <stop offset="100%" style="stop-color:#03080f;stop-opacity:0"/>
+    </radialGradient>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="lineBloom">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="moonGlow">
+      <feGaussianBlur stdDeviation="18" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Base background -->
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#orbBL)"/>
+  <rect width="1920" height="1080" fill="url(#orbBR)"/>
+
+  <!-- ── TOP BANNER BAR ── -->
+  <rect x="0" y="0" width="1920" height="110" fill="url(#bannerBg)"/>
+
+  <!-- Banner bottom accent line -->
+  <rect x="0" y="108" width="1920" height="2" fill="url(#accentLine)" filter="url(#lineBloom)"/>
+  <rect x="0" y="108" width="1920" height="1" fill="url(#accentLine)" opacity="0.6"/>
+
+  <!-- ── MOON ICON — inside banner, left ── -->
+  <g transform="translate(52, 55)" filter="url(#glow)">
+    <!-- Moon body -->
+    <circle cx="0" cy="0" r="34" fill="#0d1e38" opacity="0.95"/>
+    <circle cx="0" cy="0" r="34" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.7"/>
+    <!-- Crescent cutout -->
+    <circle cx="14" cy="-11" r="27" fill="#03080f"/>
+    <!-- Outer orbit ring -->
+    <circle cx="0" cy="0" r="42" fill="none" stroke="#1d4ed8" stroke-width="0.8" opacity="0.3"/>
+    <!-- Stars -->
+    <circle cx="52"  cy="-22" r="2"   fill="#60efff" opacity="0.95"/>
+    <circle cx="60"  cy="-4"  r="1.2" fill="#93c5fd" opacity="0.7"/>
+    <circle cx="46"  cy="18"  r="1.2" fill="#93c5fd" opacity="0.5"/>
+  </g>
+
+  <!-- ── WORDMARK — banner, left of center ── -->
+  <text x="120" y="74"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="42" font-weight="200" letter-spacing="14"
+    fill="#e2e8f0"
+    filter="url(#glow)"
+    opacity="0.97">LUNAR<tspan font-weight="700" fill="#60efff" letter-spacing="12">LOGIC</tspan>
+  </text>
+
+  <!-- Tagline below wordmark -->
+  <text x="122" y="96"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="11" letter-spacing="4"
+    fill="#3b82f6" opacity="0.65">AR AUTOMATION  ·  ORDER-TO-CASH</text>
+
+  <!-- Divider between wordmark and right side -->
+  <line x1="680" y1="22" x2="680" y2="88" stroke="#1e3a6e" stroke-width="1" opacity="0.5"/>
+
+  <!-- Right side of banner — website -->
+  <text x="1860" y="62"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="15" letter-spacing="1.5"
+    fill="#4a7fd4" text-anchor="end" opacity="0.8">lunarlogic.ai</text>
+  <text x="1860" y="84"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="11" letter-spacing="0.5"
+    fill="#2d4a7a" text-anchor="end" opacity="0.6">jrodriguez@lunarlogic.ai</text>
+
+  <!-- ── MAIN AREA — clean, just subtle texture ── -->
+
+  <!-- Very large faint moon in lower-right for depth, won't clash with face -->
+  <g transform="translate(1680, 820)" filter="url(#moonGlow)" opacity="0.18">
+    <circle cx="0" cy="0" r="280" fill="#0d1e38"/>
+    <circle cx="0" cy="0" r="280" fill="none" stroke="#3b82f6" stroke-width="1.5"/>
+    <circle cx="100" cy="-80" r="230" fill="#03080f"/>
+    <circle cx="0" cy="0" r="330" fill="none" stroke="#1d4ed8" stroke-width="0.8"/>
+  </g>
+
+  <!-- Sparse star field in main area -->
+  <g fill="white">
+    <circle cx="200"  cy="260"  r="1.2" opacity="0.3"/>
+    <circle cx="480"  cy="380"  r="0.9" opacity="0.2"/>
+    <circle cx="820"  cy="200"  r="1"   opacity="0.25"/>
+    <circle cx="1100" cy="320"  r="0.9" opacity="0.2"/>
+    <circle cx="1350" cy="180"  r="1.3" opacity="0.3"/>
+    <circle cx="150"  cy="700"  r="1"   opacity="0.2"/>
+    <circle cx="420"  cy="850"  r="0.9" opacity="0.15"/>
+    <circle cx="700"  cy="960"  r="1.1" opacity="0.2"/>
+    <circle cx="1050" cy="880"  r="0.9" opacity="0.15"/>
+    <circle cx="300"  cy="500"  r="0.8" opacity="0.15"/>
+  </g>
+
+  <!-- Subtle horizontal grid lines in lower third only (very faint) -->
+  <g stroke="#1e3a6e" stroke-width="0.5" opacity="0.12">
+    <line x1="0" y1="800" x2="1920" y2="800"/>
+    <line x1="0" y1="880" x2="1920" y2="880"/>
+    <line x1="0" y1="960" x2="1920" y2="960"/>
+    <line x1="0" y1="1040" x2="1920" y2="1040"/>
+  </g>
+</svg>
