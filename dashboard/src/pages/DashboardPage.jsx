@@ -413,15 +413,15 @@ export default function DashboardPage({ session, onLogout }) {
                 </div>
               </section>
 
+              <ARAgingChart
+                invoices={invoices}
+                paymentBehavior={paymentBehavior}
+                selectedBucket={selectedBucket}
+                onSelectBucket={setSelectedBucket}
+                onDrill={openDrill}
+              />
+
               <div className="grid">
-                <ARAgingChart
-                  data={arAging}
-                  invoices={invoices}
-                  paymentBehavior={paymentBehavior}
-                  selectedBucket={selectedBucket}
-                  onSelectBucket={setSelectedBucket}
-                  onDrill={openDrill}
-                />
                 <DSOTrend
                   data={dsoTrend}
                   goLiveDate={goLiveDate}
