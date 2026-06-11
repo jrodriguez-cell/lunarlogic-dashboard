@@ -1,0 +1,257 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#020917"/>
+      <stop offset="100%" style="stop-color:#0c1a30"/>
+    </linearGradient>
+
+    <!-- Left accent sweep -->
+    <linearGradient id="sweep" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1d4ed8;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:0"/>
+    </linearGradient>
+
+    <!-- Right accent sweep -->
+    <linearGradient id="sweepR" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:0"/>
+    </linearGradient>
+
+    <!-- Radial glow behind hero number -->
+    <radialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#1d4ed8;stop-opacity:0.25"/>
+      <stop offset="100%" style="stop-color:#020917;stop-opacity:0"/>
+    </radialGradient>
+
+    <!-- Bottom fade for footer bar -->
+    <linearGradient id="footerBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628;stop-opacity:0"/>
+      <stop offset="40%" style="stop-color:#040d1e;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#020917;stop-opacity:1"/>
+    </linearGradient>
+
+    <!-- Horizontal glow line -->
+    <linearGradient id="lineGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1d4ed8;stop-opacity:0"/>
+      <stop offset="20%" style="stop-color:#3b82f6;stop-opacity:0.8"/>
+      <stop offset="50%" style="stop-color:#60efff;stop-opacity:1"/>
+      <stop offset="80%" style="stop-color:#7c3aed;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:0"/>
+    </linearGradient>
+
+    <filter id="blur8">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <filter id="blur20">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+    <filter id="glow4">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow12">
+      <feGaussianBlur stdDeviation="12" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Base -->
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <!-- Left edge accent band -->
+  <rect x="0" y="0" width="600" height="1080" fill="url(#sweep)" opacity="0.4"/>
+  <!-- Right edge accent band -->
+  <rect x="1320" y="0" width="600" height="1080" fill="url(#sweepR)" opacity="0.3"/>
+
+  <!-- Diagonal stripe lines (geometric texture) -->
+  <g opacity="0.06" stroke="#3b82f6" stroke-width="1">
+    <line x1="-100" y1="400" x2="500" y2="-200"/>
+    <line x1="0" y1="500" x2="600" y2="-100"/>
+    <line x1="100" y1="600" x2="700" y2="0"/>
+    <line x1="200" y1="700" x2="800" y2="100"/>
+    <line x1="300" y1="800" x2="900" y2="200"/>
+    <line x1="400" y1="900" x2="1000" y2="300"/>
+    <line x1="500" y1="1000" x2="1100" y2="400"/>
+    <line x1="600" y1="1100" x2="1200" y2="500"/>
+    <!-- Right side mirrored -->
+    <line x1="1320" y1="-200" x2="1920" y2="400"/>
+    <line x1="1420" y1="-100" x2="1920" y2="300"/>
+    <line x1="1520" y1="0" x2="1920" y2="200"/>
+    <line x1="1620" y1="100" x2="1920" y2="100"/>
+    <line x1="1120" y1="500" x2="1920" y2="700"/>
+    <line x1="1020" y1="600" x2="1920" y2="900"/>
+    <line x1="920" y1="700" x2="1920" y2="1100"/>
+  </g>
+
+  <!-- Dot matrix pattern (center region) -->
+  <g opacity="0.08" fill="#3b82f6">
+    <!-- Row pattern — dots every 40px from x=700 to x=1220, y=120 to y=720 -->
+    <rect x="720" y="140" width="2" height="2" rx="1"/>
+    <rect x="760" y="140" width="2" height="2" rx="1"/>
+    <rect x="800" y="140" width="2" height="2" rx="1"/>
+    <rect x="840" y="140" width="2" height="2" rx="1"/>
+    <rect x="880" y="140" width="2" height="2" rx="1"/>
+    <rect x="920" y="140" width="2" height="2" rx="1"/>
+    <rect x="960" y="140" width="2" height="2" rx="1"/>
+    <rect x="1000" y="140" width="2" height="2" rx="1"/>
+    <rect x="1040" y="140" width="2" height="2" rx="1"/>
+    <rect x="1080" y="140" width="2" height="2" rx="1"/>
+    <rect x="1120" y="140" width="2" height="2" rx="1"/>
+    <rect x="1160" y="140" width="2" height="2" rx="1"/>
+    <rect x="1200" y="140" width="2" height="2" rx="1"/>
+
+    <rect x="720" y="180" width="2" height="2" rx="1"/>
+    <rect x="760" y="180" width="2" height="2" rx="1"/>
+    <rect x="800" y="180" width="2" height="2" rx="1"/>
+    <rect x="840" y="180" width="2" height="2" rx="1"/>
+    <rect x="880" y="180" width="2" height="2" rx="1"/>
+    <rect x="920" y="180" width="2" height="2" rx="1"/>
+    <rect x="960" y="180" width="2" height="2" rx="1"/>
+    <rect x="1000" y="180" width="2" height="2" rx="1"/>
+    <rect x="1040" y="180" width="2" height="2" rx="1"/>
+    <rect x="1080" y="180" width="2" height="2" rx="1"/>
+    <rect x="1120" y="180" width="2" height="2" rx="1"/>
+    <rect x="1160" y="180" width="2" height="2" rx="1"/>
+    <rect x="1200" y="180" width="2" height="2" rx="1"/>
+
+    <rect x="720" y="220" width="2" height="2" rx="1"/>
+    <rect x="760" y="220" width="2" height="2" rx="1"/>
+    <rect x="800" y="220" width="2" height="2" rx="1"/>
+    <rect x="840" y="220" width="2" height="2" rx="1"/>
+    <rect x="880" y="220" width="2" height="2" rx="1"/>
+    <rect x="920" y="220" width="2" height="2" rx="1"/>
+    <rect x="960" y="220" width="2" height="2" rx="1"/>
+    <rect x="1000" y="220" width="2" height="2" rx="1"/>
+    <rect x="1040" y="220" width="2" height="2" rx="1"/>
+    <rect x="1080" y="220" width="2" height="2" rx="1"/>
+    <rect x="1120" y="220" width="2" height="2" rx="1"/>
+    <rect x="1160" y="220" width="2" height="2" rx="1"/>
+    <rect x="1200" y="220" width="2" height="2" rx="1"/>
+
+    <rect x="720" y="260" width="2" height="2" rx="1"/>
+    <rect x="760" y="260" width="2" height="2" rx="1"/>
+    <rect x="800" y="260" width="2" height="2" rx="1"/>
+    <rect x="840" y="260" width="2" height="2" rx="1"/>
+    <rect x="880" y="260" width="2" height="2" rx="1"/>
+    <rect x="920" y="260" width="2" height="2" rx="1"/>
+    <rect x="960" y="260" width="2" height="2" rx="1"/>
+    <rect x="1000" y="260" width="2" height="2" rx="1"/>
+    <rect x="1040" y="260" width="2" height="2" rx="1"/>
+    <rect x="1080" y="260" width="2" height="2" rx="1"/>
+    <rect x="1120" y="260" width="2" height="2" rx="1"/>
+    <rect x="1160" y="260" width="2" height="2" rx="1"/>
+    <rect x="1200" y="260" width="2" height="2" rx="1"/>
+  </g>
+
+  <!-- Hero glow blob behind DSO number -->
+  <ellipse cx="960" cy="480" rx="420" ry="260" fill="url(#heroGlow)" filter="url(#blur20)"/>
+
+  <!-- ── HERO DSO BLOCK ── centered -->
+  <g text-anchor="middle">
+    <!-- Eyebrow label -->
+    <text x="960" y="340"
+      font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+      font-size="13" font-weight="500" letter-spacing="5"
+      fill="#3b82f6" opacity="0.9">DAYS SALES OUTSTANDING</text>
+
+    <!-- Big number -->
+    <text x="960" y="490"
+      font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+      font-size="200" font-weight="700" letter-spacing="-8"
+      fill="#ffffff" opacity="0.97" filter="url(#glow12)">28</text>
+
+    <!-- Unit -->
+    <text x="960" y="540"
+      font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+      font-size="18" font-weight="300" letter-spacing="8"
+      fill="#93c5fd" opacity="0.8">DAYS AVERAGE</text>
+
+    <!-- Delta badge -->
+    <rect x="840" y="558" width="240" height="36" rx="18" fill="#052e16" stroke="#16a34a" stroke-width="1.2"/>
+    <text x="960" y="582"
+      font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+      font-size="14" font-weight="600" letter-spacing="1"
+      fill="#4ade80">▼ 19 days since LunarLogic go-live</text>
+  </g>
+
+  <!-- Horizontal glow rule -->
+  <rect x="0" y="624" width="1920" height="1.5" fill="url(#lineGlow)" opacity="0.8"/>
+  <!-- Glow copy for bloom -->
+  <rect x="0" y="624" width="1920" height="4" fill="url(#lineGlow)" opacity="0.3" filter="url(#blur8)"/>
+
+  <!-- ── STAT CARDS ROW ── -->
+  <g font-family="'Segoe UI', 'Inter', system-ui, sans-serif" text-anchor="middle">
+
+    <!-- Card 1: AR Collected -->
+    <rect x="200" y="660" width="300" height="100" rx="12" fill="#0d1f3c" stroke="#1e3a6e" stroke-width="1" opacity="0.85"/>
+    <text x="350" y="698" font-size="11" letter-spacing="3" fill="#4a7fd4">AR COLLECTED</text>
+    <text x="350" y="740" font-size="36" font-weight="700" fill="#34d399" filter="url(#glow4)">$96.4K</text>
+
+    <!-- Card 2: On-Time Rate -->
+    <rect x="560" y="660" width="300" height="100" rx="12" fill="#0d1f3c" stroke="#1e3a6e" stroke-width="1" opacity="0.85"/>
+    <text x="710" y="698" font-size="11" letter-spacing="3" fill="#4a7fd4">ON-TIME RATE</text>
+    <text x="710" y="740" font-size="36" font-weight="700" fill="#60efff" filter="url(#glow4)">87%</text>
+
+    <!-- Card 3: Open Invoices -->
+    <rect x="1060" y="660" width="300" height="100" rx="12" fill="#0d1f3c" stroke="#1e3a6e" stroke-width="1" opacity="0.85"/>
+    <text x="1210" y="698" font-size="11" letter-spacing="3" fill="#4a7fd4">OPEN INVOICES</text>
+    <text x="1210" y="740" font-size="36" font-weight="700" fill="#f59e0b" filter="url(#glow4)">14</text>
+
+    <!-- Card 4: Overdue -->
+    <rect x="1420" y="660" width="300" height="100" rx="12" fill="#0d1f3c" stroke="#1e3a6e" stroke-width="1" opacity="0.85"/>
+    <text x="1570" y="698" font-size="11" letter-spacing="3" fill="#4a7fd4">OVERDUE</text>
+    <text x="1570" y="740" font-size="36" font-weight="700" fill="#f87171" filter="url(#glow4)">$4.1K</text>
+  </g>
+
+  <!-- Footer gradient -->
+  <rect x="0" y="820" width="1920" height="260" fill="url(#footerBg)"/>
+
+  <!-- Footer divider line -->
+  <line x1="80" y1="948" x2="1840" y2="948" stroke="#1e3a6e" stroke-width="0.8" opacity="0.6"/>
+
+  <!-- ── LOGO ── bottom left -->
+  <!-- Moon crescent -->
+  <g transform="translate(80, 964)" filter="url(#glow4)">
+    <circle cx="24" cy="22" r="18" fill="#1d4ed8" opacity="0.2"/>
+    <circle cx="24" cy="22" r="17" fill="none" stroke="#3b82f6" stroke-width="1.8" opacity="0.7"/>
+    <circle cx="31" cy="15" r="13" fill="#020917"/>
+    <!-- Stars -->
+    <circle cx="50" cy="10" r="1.8" fill="#60efff" opacity="0.9"/>
+    <circle cx="57" cy="21" r="1.1" fill="#93c5fd" opacity="0.7"/>
+    <circle cx="46" cy="28" r="1.1" fill="#93c5fd" opacity="0.5"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="122" y="993"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="28" font-weight="300" letter-spacing="6"
+    fill="#e2e8f0" filter="url(#glow4)">LUNAR<tspan font-weight="700" fill="#60efff">LOGIC</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="124" y="1014"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="11" letter-spacing="3.5"
+    fill="#4a7fd4" opacity="0.75">AR AUTOMATION  ·  ORDER-TO-CASH</text>
+
+  <!-- Right side contact -->
+  <text x="1840" y="990"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="14" letter-spacing="1"
+    fill="#4a7fd4" text-anchor="end" opacity="0.75">lunarlogic.ai</text>
+  <text x="1840" y="1012"
+    font-family="'Segoe UI', 'Inter', system-ui, sans-serif"
+    font-size="11" letter-spacing="0.5"
+    fill="#2d4a7a" text-anchor="end" opacity="0.6">jrodriguez@lunarlogic.ai</text>
+
+  <!-- Subtle stars -->
+  <g opacity="0.5">
+    <circle cx="150" cy="100" r="1.2" fill="white" opacity="0.5"/>
+    <circle cx="420" cy="55" r="1" fill="white" opacity="0.4"/>
+    <circle cx="1500" cy="80" r="1.5" fill="white" opacity="0.4"/>
+    <circle cx="1760" cy="130" r="1" fill="#93c5fd" opacity="0.5"/>
+    <circle cx="1840" cy="55" r="1.2" fill="white" opacity="0.3"/>
+    <circle cx="300" cy="800" r="1" fill="#60efff" opacity="0.2"/>
+    <circle cx="1620" cy="820" r="1" fill="#93c5fd" opacity="0.2"/>
+  </g>
+</svg>
