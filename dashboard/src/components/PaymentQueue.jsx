@@ -2,21 +2,27 @@ import { useState } from 'react';
 
 const TABS = ['All', 'Auto-Applied', 'Pending Review', 'Manual'];
 
-const DATE_RANGES = [
-  { label: '7d',  days: 7 },
-  { label: '14d', days: 14 },
-  { label: 'All', days: null },
-];
-
-function filterByRange(payments, days) {
-  if (!days) return payments;
-  const dates = payments.map(p => new Date(p.received + 'T00:00:00')).filter(d => !isNaN(d));
-  if (!dates.length) return payments;
-  const latest = new Date(Math.max(...dates));
-  const cutoff = new Date(latest);
-  cutoff.setDate(cutoff.getDate() - days);
-  return payments.filter(p => new Date(p.received + 'T00:00:00') >= cutoff);
+function filterByDates(payments, from, to) {
+  if (!from && !to) return payments;
+  return payments.filter(p => {
+    const d = new Date(p.received + 'T00:00:00');
+    if (isNaN(d)) return true;
+    if (from && d < new Date(from + 'T00:00:00')) return false;
+    if (to   && d > new Date(to   + 'T00:00:00')) return false;
+    return true;
+  });
 }
+
+function getDateBounds(payments) {
+  const dates = payments.map(p => p.received).filter(Boolean).sort();
+  return { min: dates[0] || '', max: dates[dates.length - 1] || '' };
+}
+
+const dateInputStyle = {
+  padding: '3px 6px', fontSize: 10, fontWeight: 500, borderRadius: 4, cursor: 'pointer',
+  border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)',
+  color: 'var(--text)', colorScheme: 'dark', outline: 'none',
+};
 
 function fmtDate(dateStr) {
   if (!dateStr) return '—';
@@ -197,15 +203,21 @@ function ConfidenceCell({ payment }) {
 }
 
 export default function PaymentQueue({ payments, onOpenPayment }) {
-  const [tab, setTab]           = useState('All');
-  const [rangeDays, setRangeDays] = useState(null);
+  const [tab, setTab]     = useState('All');
+  const [fromDate, setFrom] = useState('');
+  const [toDate,   setTo]   = useState('');
 
-  const dateFiltered = filterByRange(payments, rangeDays);
+  const { min: minDate, max: maxDate } = getDateBounds(payments);
+
+  const dateFiltered = filterByDates(payments, fromDate, toDate);
   const displayed    = tab === 'All' ? dateFiltered : dateFiltered.filter(p => p.status === tab);
   const counts       = TABS.reduce((acc, t) => {
     acc[t] = t === 'All' ? dateFiltered.length : dateFiltered.filter(p => p.status === t).length;
     return acc;
   }, {});
+
+  const hasFilter = fromDate || toDate;
+  function clearDates() { setFrom(''); setTo(''); }
 
   return (
     <div className="card" style={{ gridColumn: '1 / -1' }}>
@@ -213,19 +225,30 @@ export default function PaymentQueue({ payments, onOpenPayment }) {
         <h2>Payment Match Queue</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 11, color: 'var(--muted)' }}>Powered by Plaid · Click row to review</span>
-          <div style={{ display: 'flex', gap: 2 }}>
-            {DATE_RANGES.map(r => (
-              <button
-                key={r.label}
-                onClick={() => setRangeDays(r.days)}
-                style={{
-                  padding: '3px 8px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
-                  border: `1px solid ${rangeDays === r.days ? 'var(--teal)' : 'var(--border)'}`,
-                  background: rangeDays === r.days ? 'rgba(0,212,232,0.1)' : 'none',
-                  color: rangeDays === r.days ? 'var(--teal)' : 'var(--muted)',
-                }}
-              >{r.label}</button>
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="date"
+              value={fromDate}
+              min={minDate}
+              max={toDate || maxDate}
+              onChange={e => setFrom(e.target.value)}
+              style={dateInputStyle}
+            />
+            <span style={{ fontSize: 10, color: 'var(--muted)' }}>–</span>
+            <input
+              type="date"
+              value={toDate}
+              min={fromDate || minDate}
+              max={maxDate}
+              onChange={e => setTo(e.target.value)}
+              style={dateInputStyle}
+            />
+            {hasFilter && (
+              <button onClick={clearDates} style={{
+                padding: '3px 7px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
+                border: '1px solid var(--border)', background: 'none', color: 'var(--muted)',
+              }}>✕</button>
+            )}
           </div>
         </div>
       </div>
