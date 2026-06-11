@@ -1276,7 +1276,104 @@ body {
   .sidebar { display: none; }
   .dashboard-main { margin-left: 0; }
   .grid { grid-template-columns: 1fr; }
-  .main-content { padding-bottom: 80px; }
+  .main-content { padding: 16px 16px 88px; gap: 16px; }
+
+  /* Topbar */
+  .topbar { padding: 14px 16px; }
+  .topbar-title { font-size: 14px; }
+  .topbar-sub { font-size: 11px; }
+  .topbar-right { gap: 10px; }
+
+  /* Cards */
+  .card { padding: 18px 16px; border-radius: 12px; }
+  .card-header { margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .card-header h2 { font-size: 13px; }
+  .card-export-btn { font-size: 10px; padding: 4px 10px; }
+
+  /* AI report */
+  .ai-report-card { padding: 16px; }
+  .ai-report-header { flex-wrap: wrap; gap: 8px; }
+  .ai-report-body { font-size: 12px; line-height: 1.65; }
+
+  /* DSO hero — stack vertically */
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 20px 20px;
+    gap: 20px;
+  }
+  .hero-divider { display: none; }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .stat {
+    padding: 14px 12px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .stat:nth-child(even) { border-right: none; }
+  .stat:nth-last-child(-n+2) { border-bottom: none; }
+  .dso-value { font-size: 64px; }
+  .stat-value { font-size: 20px; }
+  .stat-label { font-size: 9px; }
+  .stat-sub { font-size: 10px; }
+
+  /* Payments hero */
+  .payments-hero {
+    grid-template-columns: 1fr;
+    padding: 20px 20px;
+    gap: 20px;
+  }
+  .payments-hero-divider { display: none; }
+  .payments-hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .stat-btn {
+    padding: 14px 8px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-btn:nth-child(even) { border-right: none; }
+  .stat-btn:nth-last-child(-n+2) { border-bottom: none; }
+  .ph-value { font-size: 64px; }
+
+  /* Payment match queue table — hide less critical columns */
+  .pq-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .pq-table { font-size: 11px; min-width: 600px; }
+  .pq-desc { max-width: 130px; font-size: 11px !important; }
+  .conf-bar-track { display: none; }
+
+  /* Status tabs */
+  .status-tabs { flex-wrap: wrap; gap: 4px; }
+  .status-tab { font-size: 10px; padding: 5px 10px; }
+
+  /* Drawer full-width on mobile */
+  .drawer-panel { width: 100%; border-radius: 0; }
+  .drill-drawer { width: 100%; }
+  .drawer-overlay { align-items: flex-end; }
+
+  /* Charts — let them scroll if needed */
+  .recharts-wrapper { overflow: visible !important; }
+
+  /* Customer table */
+  .cust-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cust-table { min-width: 480px; }
+
+  /* Invoice board */
+  .inv-board { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .inv-card { padding: 14px 12px; }
+
+  /* RMT hero */
+  .rmt-hero { padding: 20px; flex-direction: column; gap: 16px; }
+  .rmt-hero-divider { width: 100%; height: 1px; }
+  .rmt-metric { padding: 0; text-align: left; display: flex; align-items: baseline; gap: 12px; }
+  .rmt-metric-label { margin-bottom: 0; min-width: 120px; font-size: 9px; }
+  .rmt-metric-value { font-size: 22px; }
 }
 
 /* ── AR Reminder Tracker ─────────────────────────── */
@@ -1578,27 +1675,22 @@ body {
   .rmt-stage-card { flex-direction: column; gap: 0; }
 }
 
-@media (max-width: 680px) {
-  .main-content { padding: 16px 16px 40px; }
-  .hero {
-    grid-template-columns: 1fr;
-    padding: 24px;
-    gap: 24px;
-  }
-  .hero-divider { display: none; }
-  .hero-stats { gap: 0; }
-  .stat { padding: 12px 0; border-right: none; border-bottom: 1px solid var(--border); }
+@media (max-width: 480px) {
+  /* Extra-small phones: single-column stat grids */
+  .hero-stats { grid-template-columns: 1fr; }
+  .stat { border-right: none !important; }
   .stat:last-child { border-bottom: none; }
-  .dso-value { font-size: 72px; }
-  .drawer-panel { width: 100%; }
-  .payments-hero {
-    grid-template-columns: 1fr;
-    padding: 24px;
-    gap: 24px;
-  }
-  .payments-hero-divider { display: none; }
-  .payments-hero-stats { gap: 0; flex-wrap: wrap; }
-  .ph-value { font-size: 72px; }
+
+  .payments-hero-stats { grid-template-columns: 1fr; }
+  .stat-btn { border-right: none !important; }
+  .stat-btn:last-child { border-bottom: none; }
+
+  .dso-value { font-size: 52px; }
+  .ph-value { font-size: 52px; }
+  .topbar-sub { display: none; }
+
+  /* Invoice board single column */
+  .inv-board { grid-template-columns: 1fr; }
 }
 
 /* ── Drill Drawer ─────────────────────────────────── */
