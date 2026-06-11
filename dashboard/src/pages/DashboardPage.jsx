@@ -9,7 +9,7 @@ import PaymentTable from '../components/PaymentTable';
 import CustomerDrawer from '../components/CustomerDrawer';
 import PaymentQueue from '../components/PaymentQueue';
 import PaymentMatchDrawer from '../components/PaymentMatchDrawer';
-import MatchConfidenceChart from '../components/MatchConfidenceChart';
+import CashFlowForecast from '../components/CashFlowForecast';
 import ARReminderTracker from '../components/ARReminderTracker';
 import DrillDrawer from '../components/DrillDrawer';
 import AIStatusReport from '../components/AIStatusReport';
@@ -298,8 +298,13 @@ export default function DashboardPage({ session, onLogout }) {
 
               <PaymentQueue payments={filteredPayments || []} onOpenPayment={p => { setOpenPayment(p); }} />
 
+              <CashFlowForecast
+                invoices={invoices || []}
+                paymentBehavior={paymentBehavior || []}
+                onDrill={openDrill}
+              />
+
               <div className="grid cash-panel-grid">
-                <MatchConfidenceChart payments={filteredPayments || []} onDrill={openDrill} />
                 <AuditTrailPanel payments={filteredPayments || []} />
               </div>
 
