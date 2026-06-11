@@ -14,7 +14,7 @@ const STAGES = [
   {
     id: 3, day: 30, name: 'Escalation', subject: 'Requires manual follow-up',
     tone: 'Urgent', toneColor: 'var(--yellow)', toneBg: 'rgba(245,158,11,0.10)',
-    cc: 'Jonathan + Geraldine', type: 'Manual',
+    cc: 'Jonathan', type: 'Manual',
   },
   {
     id: 4, day: 60, name: 'Firm Notice', subject: 'Immediate action required',
@@ -33,7 +33,7 @@ const STAGE_OPTIONS = [
   ...STAGES.map(s => ({ value: s.id, label: `Day ${s.day} — ${s.name}` })),
 ];
 
-const TERMS_OPTIONS = ['Net 7', 'Net 21', 'Net 30', 'Net 60'];
+const TERMS_OPTIONS = ['Net 7', 'Net 21', 'Net 30', 'Net 45', 'Net 60'];
 const STATUS_OPTIONS = ['On Track', 'Overdue', 'Escalated', 'Paid'];
 
 const STATUS_STYLES = {
@@ -43,13 +43,70 @@ const STATUS_STYLES = {
   'Paid':      { color: 'var(--muted)',  bg: 'rgba(90,122,158,.08)', border: 'rgba(90,122,158,.15)' },
 };
 
-const INITIAL_CUSTOMERS = [
-  { id: 1, name: 'Customer 1', terms: 'Net 30', amount: 128500, daysOut: 97,  stage: 5, lastContact: '2026-05-01', status: 'Escalated', nextAction: 'Legal review pending'              },
-  { id: 2, name: 'Customer 2', terms: 'Net 30', amount: 89200,  daysOut: 78,  stage: 4, lastContact: '2026-05-10', status: 'Escalated', nextAction: 'Await Day 60 notice response'      },
-  { id: 3, name: 'Customer 3', terms: 'Net 21', amount: 112800, daysOut: 63,  stage: 4, lastContact: '2026-05-12', status: 'Escalated', nextAction: 'Confirm receipt of firm notice'    },
-  { id: 4, name: 'Customer 4', terms: 'Net 60', amount: 95400,  daysOut: 45,  stage: 3, lastContact: '2026-05-18', status: 'Overdue',   nextAction: 'Manual call — Jonathan assigned'   },
-  { id: 5, name: 'Customer 5', terms: 'Net 30', amount: 94100,  daysOut: 22,  stage: 2, lastContact: '2026-05-20', status: 'On Track',  nextAction: 'Monitor for payment'               },
-];
+function stageFromDaysOverdue(daysOverdue) {
+  if (daysOverdue >= 90) return 5;
+  if (daysOverdue >= 60) return 4;
+  if (daysOverdue >= 30) return 3;
+  if (daysOverdue >= 15) return 2;
+  if (daysOverdue >= 7)  return 1;
+  return 0;
+}
+
+function statusFromDaysOverdue(daysOverdue) {
+  if (daysOverdue >= 60) return 'Escalated';
+  if (daysOverdue > 0)   return 'Overdue';
+  return 'On Track';
+}
+
+function nextActionFromStage(stage, customer) {
+  if (stage >= 5) return `Final notice sent — consider collections for ${customer}`;
+  if (stage === 4) return `Firm notice sent — await response from ${customer}`;
+  if (stage === 3) return `Manual follow-up required — Jonathan assigned`;
+  if (stage === 2) return `Follow-up email sent — monitor for response`;
+  if (stage === 1) return `Friendly reminder sent — monitor for payment`;
+  return 'Sequence not yet started';
+}
+
+function lastContactFromDaysOverdue(daysOverdue) {
+  const base = new Date('2026-05-19');
+  const contactDaysAgo = Math.max(1, Math.min(daysOverdue - 3, daysOverdue));
+  base.setDate(base.getDate() - Math.min(contactDaysAgo, 14));
+  return base.toISOString().split('T')[0];
+}
+
+function buildCustomersFromInvoices(invoices, paymentBehavior) {
+  if (!invoices) return [];
+  // Group open invoices by customer, only include overdue ones in the tracker
+  const overdueInvs = invoices.filter(i => i.status !== 'Paid' && i.daysOverdue > 0);
+  const byCustomer = {};
+  overdueInvs.forEach(inv => {
+    if (!byCustomer[inv.customer]) {
+      byCustomer[inv.customer] = { totalAmount: 0, maxDaysOverdue: 0, invoiceCount: 0 };
+    }
+    byCustomer[inv.customer].totalAmount   += inv.amount;
+    byCustomer[inv.customer].invoiceCount  += 1;
+    byCustomer[inv.customer].maxDaysOverdue = Math.max(byCustomer[inv.customer].maxDaysOverdue, inv.daysOverdue);
+  });
+
+  return Object.entries(byCustomer).map(([name, data], i) => {
+    const beh   = paymentBehavior?.find(b => b.customer === name);
+    const terms = beh?.avgDays <= 21 ? 'Net 21' : beh?.avgDays <= 30 ? 'Net 30' : beh?.avgDays <= 45 ? 'Net 45' : 'Net 60';
+    const stage  = stageFromDaysOverdue(data.maxDaysOverdue);
+    const status = statusFromDaysOverdue(data.maxDaysOverdue);
+    return {
+      id: i + 1,
+      name,
+      terms,
+      amount:      data.totalAmount,
+      daysOut:     data.maxDaysOverdue,
+      invoiceCount: data.invoiceCount,
+      stage,
+      lastContact: lastContactFromDaysOverdue(data.maxDaysOverdue),
+      status,
+      nextAction:  nextActionFromStage(stage, name),
+    };
+  }).sort((a, b) => b.daysOut - a.daysOut);
+}
 
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -57,22 +114,26 @@ function fmtDate(iso) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-const POC_START = new Date('2026-05-16');
-const TODAY     = new Date('2026-05-28');
-const POC_DAYS_ELAPSED = Math.round((TODAY - POC_START) / 86400000);
-const POC_DAYS_TOTAL   = 30;
+function fmtM(v) {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
+  return `$${v}`;
+}
 
-export default function ARReminderTracker() {
-  const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
+export default function ARReminderTracker({ invoices = [], paymentBehavior = [] }) {
+  const [customers, setCustomers] = useState(() => buildCustomersFromInvoices(invoices, paymentBehavior));
   const [editCell, setEditCell]   = useState(null);
   const [editValue, setEditValue] = useState('');
 
   const activeCustomers = customers.filter(c => c.status !== 'Paid');
   const totalAR       = activeCustomers.reduce((s, c) => s + c.amount, 0);
-  const bucket90      = activeCustomers.filter(c => c.daysOut >= 90);
-  const bucket90Amt   = bucket90.reduce((s, c) => s + c.amount, 0);
-  const pct90Plus     = totalAR > 0 ? Math.round((bucket90Amt / totalAR) * 100) : 0;
+  const escalated     = activeCustomers.filter(c => c.status === 'Escalated');
+  const escalatedAmt  = escalated.reduce((s, c) => s + c.amount, 0);
+  const escalationPct = activeCustomers.length > 0 ? Math.round((escalated.length / activeCustomers.length) * 100) : 0;
   const remindersSent = activeCustomers.reduce((s, c) => s + c.stage, 0);
+  const avgDaysOut    = activeCustomers.length > 0
+    ? Math.round(activeCustomers.reduce((s, c) => s + c.daysOut, 0) / activeCustomers.length)
+    : 0;
 
   function startEdit(rowId, field, currentValue) {
     setEditCell({ rowId, field });
@@ -99,11 +160,11 @@ export default function ARReminderTracker() {
   }
 
   function exportCSV() {
-    const headers = ['Customer Name','Payment Terms','Invoice Amount','Days Outstanding','Current Stage','Last Contact','Status','Next Action'];
+    const headers = ['Customer','Terms','Amount','Days Overdue','Invoices','Current Stage','Last Contact','Status','Next Action'];
     const rows = customers.map(c => {
       const st = c.stage > 0 ? STAGES[c.stage - 1] : null;
       return [
-        c.name, c.terms, c.amount, c.daysOut,
+        c.name, c.terms, c.amount, c.daysOut, c.invoiceCount,
         st ? `Day ${st.day} — ${st.name}` : 'Pre-sequence',
         c.lastContact, c.status, c.nextAction,
       ];
@@ -112,7 +173,7 @@ export default function ARReminderTracker() {
     const blob = new Blob([csv], { type: 'text/csv' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url; a.download = 'gualapack-poc-reminders.csv'; a.click();
+    a.href = url; a.download = 'ar-reminder-tracker.csv'; a.click();
     URL.revokeObjectURL(url);
   }
 
@@ -127,21 +188,19 @@ export default function ARReminderTracker() {
       const options = field === 'terms' ? TERMS_OPTIONS : field === 'status' ? STATUS_OPTIONS : STAGE_OPTIONS.map(o => o.label);
       if (isEditing) {
         return (
-          <select
-            autoFocus value={editValue}
+          <select autoFocus value={editValue}
             onChange={e => setEditValue(e.target.value)}
             onBlur={commitEdit}
             style={{ ...inputStyle, cursor: 'pointer' }}
           >
             {(field === 'stage' ? STAGE_OPTIONS : options).map((opt, i) => {
-              const val  = field === 'stage' ? opt.value : opt;
+              const val   = field === 'stage' ? opt.value : opt;
               const label = field === 'stage' ? opt.label : opt;
               return <option key={i} value={val}>{label}</option>;
             })}
           </select>
         );
       }
-
       if (field === 'status') {
         const s = STATUS_STYLES[customer.status] || STATUS_STYLES['On Track'];
         return (
@@ -152,7 +211,6 @@ export default function ARReminderTracker() {
           </span>
         );
       }
-
       if (field === 'stage') {
         const st = customer.stage > 0 ? STAGES[customer.stage - 1] : null;
         if (!st) return <span className="rmt-editable rmt-stage-none" onClick={() => startEdit(customer.id, 'stage', 0)}>Pre-sequence</span>;
@@ -164,8 +222,6 @@ export default function ARReminderTracker() {
           </span>
         );
       }
-
-      // terms
       return <span className="rmt-editable" onClick={() => startEdit(customer.id, 'terms', customer.terms)}>{customer.terms}</span>;
     }
 
@@ -182,7 +238,7 @@ export default function ARReminderTracker() {
     }
 
     if (isEditing) {
-      const w = field === 'amount' ? 90 : field === 'daysOut' ? 60 : field === 'name' ? 110 : 180;
+      const w = field === 'amount' ? 90 : field === 'daysOut' ? 60 : field === 'name' ? 140 : 200;
       return (
         <input autoFocus value={editValue}
           onChange={e => setEditValue(e.target.value)}
@@ -192,13 +248,11 @@ export default function ARReminderTracker() {
     }
 
     let display = customer[field];
-    if (field === 'amount')  display = `$${customer.amount.toLocaleString()}`;
+    if (field === 'amount')  display = fmtM(customer.amount);
     if (field === 'daysOut') display = `${customer.daysOut}d`;
 
     return <span className="rmt-editable" onClick={() => startEdit(customer.id, field, customer[field])}>{display}</span>;
   }
-
-  const pocPct = Math.min(100, Math.round((POC_DAYS_ELAPSED / POC_DAYS_TOTAL) * 100));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -206,15 +260,15 @@ export default function ARReminderTracker() {
       {/* ── Summary Metrics ─────────────────────────────── */}
       <section className="rmt-hero">
         <div className="rmt-metric">
-          <div className="rmt-metric-label">Total AR Outstanding</div>
-          <div className="rmt-metric-value">${(totalAR / 1000).toFixed(0)}k</div>
-          <div className="rmt-metric-sub">Gualapack POC</div>
+          <div className="rmt-metric-label">Overdue AR in Sequence</div>
+          <div className="rmt-metric-value">{fmtM(totalAR)}</div>
+          <div className="rmt-metric-sub">{activeCustomers.length} customers tracked</div>
         </div>
         <div className="rmt-hero-divider" />
         <div className="rmt-metric">
-          <div className="rmt-metric-label">In 90+ Day Bucket</div>
-          <div className="rmt-metric-value" style={{ color: 'var(--red)' }}>{pct90Plus}%</div>
-          <div className="rmt-metric-sub">${(bucket90Amt / 1000).toFixed(0)}k at risk</div>
+          <div className="rmt-metric-label">Escalated</div>
+          <div className="rmt-metric-value" style={{ color: 'var(--red)' }}>{escalationPct}%</div>
+          <div className="rmt-metric-sub">{fmtM(escalatedAmt)} · {escalated.length} accounts</div>
         </div>
         <div className="rmt-hero-divider" />
         <div className="rmt-metric">
@@ -224,22 +278,15 @@ export default function ARReminderTracker() {
         </div>
         <div className="rmt-hero-divider" />
         <div className="rmt-metric">
-          <div className="rmt-metric-label">Avg Days to Respond</div>
-          <div className="rmt-metric-value">3.2</div>
-          <div className="rmt-metric-sub">days after reminder</div>
+          <div className="rmt-metric-label">Avg Days Overdue</div>
+          <div className="rmt-metric-value">{avgDaysOut}</div>
+          <div className="rmt-metric-sub">across active accounts</div>
         </div>
         <div className="rmt-hero-divider" />
         <div className="rmt-metric">
-          <div className="rmt-metric-label">POC Progress</div>
-          <div className="rmt-metric-value" style={{ color: 'var(--green)' }}>
-            {POC_DAYS_ELAPSED}<span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}>/{POC_DAYS_TOTAL}</span>
-          </div>
-          <div className="rmt-metric-sub">
-            <div className="rmt-poc-bar">
-              <div className="rmt-poc-bar-fill" style={{ width: `${pocPct}%` }} />
-            </div>
-            days since go-live
-          </div>
+          <div className="rmt-metric-label">Avg Days to Respond</div>
+          <div className="rmt-metric-value">3.2</div>
+          <div className="rmt-metric-sub">days after reminder</div>
         </div>
       </section>
 
@@ -288,6 +335,16 @@ export default function ARReminderTracker() {
                     </span>
                   )}
                 </div>
+
+                {/* Show how many customers are at this stage */}
+                {(() => {
+                  const count = activeCustomers.filter(c => c.stage === stage.id).length;
+                  return count > 0 ? (
+                    <div style={{ marginTop: 8, fontSize: 10, fontWeight: 700, color: stage.toneColor }}>
+                      {count} account{count !== 1 ? 's' : ''} here
+                    </div>
+                  ) : null;
+                })()}
               </div>
 
               {i < STAGES.length - 1 && (
@@ -302,55 +359,64 @@ export default function ARReminderTracker() {
         </div>
       </div>
 
-      {/* ── POC Tracker Table ────────────────────────────── */}
+      {/* ── Account Tracker Table ────────────────────────────── */}
       <div className="card">
         <div className="card-header">
-          <h2>Gualapack POC — Account Tracker</h2>
-          <button className="card-action" onClick={exportCSV}>
-            Export CSV ↓
+          <h2>Overdue Account Tracker</h2>
+          <button className="card-export-btn" onClick={exportCSV}>
+            <svg width="10" height="10" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5.5 1v7M2.5 5.5l3 3 3-3"/><path d="M1 9.5h9"/>
+            </svg>
+            Export
           </button>
         </div>
 
-        <div className="rmt-table-wrap">
-          <table className="rmt-table">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Terms</th>
-                <th>Amount</th>
-                <th>Days Out</th>
-                <th>Current Stage</th>
-                <th>Last Contact</th>
-                <th>Status</th>
-                <th>Next Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map(customer => (
-                <tr key={customer.id} className={customer.status === 'Paid' ? 'rmt-row-paid' : ''}>
-                  <td>{renderCell(customer, 'name')}</td>
-                  <td>{renderCell(customer, 'terms')}</td>
-                  <td style={{ fontWeight: 600 }}>{renderCell(customer, 'amount')}</td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {renderCell(customer, 'daysOut')}
-                      <div className="rmt-days-bar">
-                        <div className="rmt-days-bar-fill" style={{
-                          width: `${Math.min(100, (customer.daysOut / 90) * 100)}%`,
-                          background: customer.daysOut >= 90 ? 'var(--red)' : customer.daysOut >= 60 ? 'var(--orange)' : customer.daysOut >= 30 ? 'var(--yellow)' : 'var(--teal)',
-                        }} />
-                      </div>
-                    </div>
-                  </td>
-                  <td>{renderCell(customer, 'stage')}</td>
-                  <td>{renderCell(customer, 'lastContact')}</td>
-                  <td>{renderCell(customer, 'status')}</td>
-                  <td className="rmt-td-action">{renderCell(customer, 'nextAction')}</td>
+        {customers.length === 0 ? (
+          <div className="empty-state" style={{ padding: '40px 0' }}>No overdue accounts — all invoices current</div>
+        ) : (
+          <div className="rmt-table-wrap">
+            <table className="rmt-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Terms</th>
+                  <th>Amount</th>
+                  <th>Days Overdue</th>
+                  <th>Inv.</th>
+                  <th>Current Stage</th>
+                  <th>Last Contact</th>
+                  <th>Status</th>
+                  <th>Next Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {customers.map(customer => (
+                  <tr key={customer.id} className={customer.status === 'Paid' ? 'rmt-row-paid' : ''}>
+                    <td>{renderCell(customer, 'name')}</td>
+                    <td>{renderCell(customer, 'terms')}</td>
+                    <td style={{ fontWeight: 600 }}>{renderCell(customer, 'amount')}</td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {renderCell(customer, 'daysOut')}
+                        <div className="rmt-days-bar">
+                          <div className="rmt-days-bar-fill" style={{
+                            width: `${Math.min(100, (customer.daysOut / 90) * 100)}%`,
+                            background: customer.daysOut >= 90 ? 'var(--red)' : customer.daysOut >= 60 ? 'var(--orange)' : customer.daysOut >= 30 ? 'var(--yellow)' : 'var(--teal)',
+                          }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--text-dim)', textAlign: 'center' }}>{customer.invoiceCount}</td>
+                    <td>{renderCell(customer, 'stage')}</td>
+                    <td>{renderCell(customer, 'lastContact')}</td>
+                    <td>{renderCell(customer, 'status')}</td>
+                    <td className="rmt-td-action">{renderCell(customer, 'nextAction')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div style={{ marginTop: 12, fontSize: 11, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">

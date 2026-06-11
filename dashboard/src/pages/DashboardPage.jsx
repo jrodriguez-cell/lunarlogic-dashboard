@@ -54,7 +54,7 @@ const VIEW_TITLES = {
   overview:   { title: 'Overview',            sub: 'Full AR health at a glance'              },
   invoices:   { title: 'Invoices',            sub: 'All open and recent invoices'            },
   customers:  { title: 'Customers',           sub: 'Payment behavior by customer'            },
-  reminders:  { title: 'Reminder Sequence',   sub: 'Escalation tracker · Gualapack POC'      },
+  reminders:  { title: 'Reminder Sequence',   sub: 'Automated escalation tracker · WF2'      },
   reports:    { title: 'Reports',             sub: 'Coming soon'                             },
   payments:   { title: 'Cash Application',    sub: 'Plaid-powered payment matching · WF3'   },
 };
@@ -309,7 +309,7 @@ export default function DashboardPage({ session, onLogout }) {
               <PaymentActivityFeed payments={filteredPayments || []} />
             </>
           ) : activeView === 'reminders' ? (
-            <ARReminderTracker />
+            <ARReminderTracker invoices={invoices} paymentBehavior={paymentBehavior} />
           ) : activeView === 'reports' ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, flexDirection: 'column', gap: 12, color: 'var(--muted)' }}>
               <div style={{ fontSize: 32 }}>📊</div>
