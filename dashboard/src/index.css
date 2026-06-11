@@ -2095,3 +2095,164 @@ body {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* ── Invoice Composer ─────────────────────────────── */
+
+/* Wider drawer for the composer form */
+.composer-panel {
+  width: 600px;
+  max-width: 600px;
+}
+
+@media (max-width: 640px) {
+  .composer-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Stacked label + control field */
+.composer-field {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+/* Small uppercase label — matches .drawer-section-title */
+.composer-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Dark styled input / textarea */
+.composer-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border-mid);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.composer-input:focus { border-color: var(--teal); }
+.composer-input::placeholder { color: var(--muted); opacity: 0.7; }
+
+/* Select uses the same style */
+.composer-select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border-mid);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.composer-select:focus { border-color: var(--teal); }
+
+/* Line items table */
+.line-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.line-items-table th {
+  text-align: left;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 0 4px 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.line-items-table td {
+  padding: 5px 4px 5px 0;
+  vertical-align: middle;
+}
+
+/* "+ Add line" ghost button */
+.add-line-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--teal);
+  background: var(--teal-dim);
+  border: 1px solid rgba(0,212,232,0.3);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.add-line-btn:hover {
+  background: rgba(0,212,232,0.18);
+  border-color: rgba(0,212,232,0.55);
+}
+
+/* Total display at bottom of form */
+.composer-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.composer-total-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.composer-total-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--teal);
+  text-shadow: 0 0 24px var(--teal-glow);
+}
+
+/* Quick action row (used in InvoiceDrawer and InvoiceComposer) */
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-action-btn {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.quick-action-btn:hover {
+  color: var(--teal);
+  border-color: rgba(0,212,232,0.4);
+  background: var(--teal-dim);
+}

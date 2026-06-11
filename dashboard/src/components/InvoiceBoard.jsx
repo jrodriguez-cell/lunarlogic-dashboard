@@ -15,7 +15,7 @@ function fmtDue(iso) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export default function InvoiceBoard({ invoices, filterBucket, onClearBucket, onOpenInvoice, onDrill }) {
+export default function InvoiceBoard({ invoices, filterBucket, onClearBucket, onOpenInvoice, onDrill, onNewInvoice }) {
   const [tab, setTab] = useState('All');
 
   const bucketFiltered = filterBucket
@@ -35,8 +35,21 @@ export default function InvoiceBoard({ invoices, filterBucket, onClearBucket, on
     <div className="card">
       <div className="card-header">
         <h2>Invoice Status</h2>
-        <button
-          className="card-export-btn"
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {onNewInvoice && (
+            <button
+              className="card-export-btn"
+              style={{ color: 'var(--teal)', borderColor: 'rgba(0,212,232,0.35)', background: 'var(--teal-dim)' }}
+              onClick={onNewInvoice}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M5 1v8M1 5h8"/>
+              </svg>
+              New Invoice
+            </button>
+          )}
+          <button
+            className="card-export-btn"
           onClick={() => onDrill?.({
             title: `Invoice Status${tab !== 'All' ? ' — ' + tab : ''}`,
             subtitle: `${displayed.length} invoices${filterBucket ? ` · ${filterBucket} aging bucket` : ''}`,
@@ -61,6 +74,7 @@ export default function InvoiceBoard({ invoices, filterBucket, onClearBucket, on
           </svg>
           Export
         </button>
+        </div>
       </div>
 
       <div className="status-tabs">

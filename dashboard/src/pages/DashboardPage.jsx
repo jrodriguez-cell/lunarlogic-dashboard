@@ -5,6 +5,7 @@ import ARAgingChart from '../components/ARAgingChart';
 import DSOTrend from '../components/DSOTrend';
 import InvoiceBoard from '../components/InvoiceBoard';
 import InvoiceDrawer from '../components/InvoiceDrawer';
+import InvoiceComposer from '../components/InvoiceComposer';
 import PaymentTable from '../components/PaymentTable';
 import CustomerDrawer from '../components/CustomerDrawer';
 import PaymentQueue from '../components/PaymentQueue';
@@ -68,6 +69,7 @@ export default function DashboardPage({ session, onLogout }) {
   const [openCustomer, setOpenCustomer] = useState(null);
   const [openPayment, setOpenPayment]   = useState(null);
   const [drill, setDrill] = useState(null);
+  const [showComposer, setShowComposer] = useState(false);
   const openDrill = config => setDrill(config);
   const [cashCustomer, setCashCustomer] = useState('All');
 
@@ -321,6 +323,7 @@ export default function DashboardPage({ session, onLogout }) {
               onClearBucket={() => setSelectedBucket(null)}
               onOpenInvoice={handleOpenInvoice}
               onDrill={openDrill}
+              onNewInvoice={() => setShowComposer(true)}
             />
           ) : activeView === 'customers' ? (
             <PaymentTable data={paymentBehavior} onOpenCustomer={handleOpenCustomer} onDrill={openDrill} />
@@ -431,6 +434,7 @@ export default function DashboardPage({ session, onLogout }) {
                   onClearBucket={() => setSelectedBucket(null)}
                   onOpenInvoice={handleOpenInvoice}
                   onDrill={openDrill}
+                  onNewInvoice={() => setShowComposer(true)}
                 />
                 <PaymentTable data={paymentBehavior} onOpenCustomer={handleOpenCustomer} onDrill={openDrill} />
               </div>
@@ -442,6 +446,13 @@ export default function DashboardPage({ session, onLogout }) {
       <MobileBottomNav activeView={activeView} onNav={setActiveView} pendingPayments={pendingPayments} />
 
       <InvoiceDrawer invoice={openInvoice} onClose={() => setOpenInvoice(null)} />
+      {showComposer && (
+        <InvoiceComposer
+          invoices={invoices}
+          paymentBehavior={paymentBehavior}
+          onClose={() => setShowComposer(false)}
+        />
+      )}
       <CustomerDrawer
         customer={openCustomer}
         invoices={invoices}
