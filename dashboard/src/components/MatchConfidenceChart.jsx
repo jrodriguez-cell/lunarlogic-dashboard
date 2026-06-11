@@ -41,7 +41,10 @@ function bucketColor(label) {
 
 function filterByRange(payments, days) {
   if (!days) return payments;
-  const cutoff = new Date('2026-06-10');
+  const dates = payments.map(p => new Date(p.received + 'T00:00:00')).filter(d => !isNaN(d));
+  if (!dates.length) return payments;
+  const latest = new Date(Math.max(...dates));
+  const cutoff  = new Date(latest);
   cutoff.setDate(cutoff.getDate() - days);
   return payments.filter(p => new Date(p.received + 'T00:00:00') >= cutoff);
 }
@@ -131,8 +134,8 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
         </div>
       </div>
 
-      <div style={{ width: '100%', minWidth: 0 }}>
-        <ResponsiveContainer width="100%" height={200}>
+      <div style={{ width: '100%', minWidth: 0, overflow: 'hidden' }}>
+        <ResponsiveContainer width="99%" height={200}>
           <BarChart
             data={data}
             margin={{ top: 4, right: 8, left: -20, bottom: 0 }}

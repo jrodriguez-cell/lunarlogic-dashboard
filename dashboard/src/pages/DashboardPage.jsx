@@ -598,9 +598,11 @@ function AuditTrailPanel({ payments }) {
     return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
+  const dates   = payments.map(p => new Date(p.received + 'T00:00:00')).filter(d => !isNaN(d));
+  const latest  = dates.length ? new Date(Math.max(...dates)) : new Date();
   const filtered = rangeDays
     ? payments.filter(p => {
-        const cutoff = new Date('2026-06-10');
+        const cutoff = new Date(latest);
         cutoff.setDate(cutoff.getDate() - rangeDays);
         return new Date(p.received + 'T00:00:00') >= cutoff;
       })
