@@ -20,7 +20,7 @@
  *   At-Risk       =  61–90d + 90+ overdue
  */
 
-export const FORECAST_TODAY = new Date('2026-05-19');
+export const FORECAST_TODAY = new Date('2026-06-11');
 
 export function addDays(d, n) {
   const r = new Date(d);

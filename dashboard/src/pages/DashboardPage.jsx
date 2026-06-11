@@ -49,7 +49,7 @@ const PMT_COLS = [
 ];
 
 const REFRESH_MS = 15 * 60 * 1000;
-const DATA_LATEST_DATE = '2026-05-19';
+const DATA_LATEST_DATE = '2026-06-11';
 
 function daysBetween(isoA, isoB) {
   return Math.round((new Date(isoB + 'T00:00:00') - new Date(isoA + 'T00:00:00')) / 86400000);
@@ -258,7 +258,7 @@ export default function DashboardPage({ session, onLogout }) {
                     </button>
                   )}
                   <div className="as-of-popover-hint">
-                    Data available through May 19, 2026
+                    Data available through June 11, 2026
                   </div>
                 </div>
               )}
