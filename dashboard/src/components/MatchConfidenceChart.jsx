@@ -138,7 +138,8 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
         <ResponsiveContainer width="99%" height={200}>
           <BarChart
             data={data}
-            margin={{ top: 4, right: 8, left: -20, bottom: 0 }}
+            barCategoryGap="20%"
+            margin={{ top: 4, right: 16, left: -16, bottom: 0 }}
             onClick={handleBarClick}
             style={{ cursor: 'pointer' }}
           >
@@ -146,7 +147,7 @@ export default function MatchConfidenceChart({ payments, onDrill }) {
             <YAxis tick={{ fill: '#5a7a9e', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
             <ReferenceLine x="90–94%" stroke="rgba(34,197,94,0.4)" strokeDasharray="4 3" strokeWidth={1.5} />
-            <Bar dataKey="count" radius={[5, 5, 0, 0]} maxBarSize={52}>
+            <Bar dataKey="count" radius={[5, 5, 0, 0]}>
               {data.map((d, i) => (
                 <Cell key={i} fill={bucketColor(d.label)} opacity={0.85} />
               ))}
