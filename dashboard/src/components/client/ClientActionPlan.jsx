@@ -41,7 +41,7 @@ const ACTION_COLS = [
   { key: 'impact',      label: 'DSO Impact',   render: v => v != null ? `~${v}d` : '—', csvVal: row => row.impact ?? '' },
 ];
 
-export default function ClientActionPlan({ invoices, paymentBehavior, payments, currentDSO, isMobile, onDrill }) {
+export default function ClientActionPlan({ invoices, paymentBehavior, payments, currentDSO, isMobile, onDrill, onAction }) {
   const [filter, setFilter] = useState('priority');
 
   const totalAR = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
@@ -127,7 +127,7 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
 
       {/* Action queue */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {needsAction.map(inv => <ActionRow key={inv.id} inv={inv} isMobile={isMobile} onClick={() => drillInvoice(inv)} />)}
+        {needsAction.map(inv => <ActionRow key={inv.id} inv={inv} isMobile={isMobile} onClick={() => drillInvoice(inv)} onAction={() => onAction(inv)} />)}
         {needsAction.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)', fontSize: 13 }}>No urgent items — you're in great shape.</div>
         )}
@@ -165,32 +165,49 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
   );
 }
 
-function ActionRow({ inv, isMobile, onClick }) {
+function ActionRow({ inv, isMobile, onClick, onAction }) {
   const color = URGENCY_COLOR[inv.urgency];
   return (
-    <div onClick={onClick}
-      style={{ padding: '12px 14px', background: 'var(--bg-card)', border: `1px solid ${['critical','high'].includes(inv.urgency) ? color+'44' : 'var(--border)'}`, borderLeft: `3px solid ${color}`, borderRadius: 8, cursor: 'pointer', transition: 'background 0.1s' }}
-      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
-            {!isMobile && <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)' }}>{inv.id}</span>}
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{inv.customer}</span>
-            <span style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.daysLabel}</span>
+    <div style={{ background: 'var(--bg-card)', border: `1px solid ${['critical','high'].includes(inv.urgency) ? color+'44' : 'var(--border)'}`, borderLeft: `3px solid ${color}`, borderRadius: 8, overflow: 'hidden' }}>
+      <div onClick={onClick} style={{ padding: '12px 14px', cursor: 'pointer', transition: 'background 0.1s' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
+              {!isMobile && <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)' }}>{inv.id}</span>}
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{inv.customer}</span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.daysLabel}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 11, color, fontWeight: 600 }}>{inv.action}</span>
+              {inv.impact != null && <span style={{ fontSize: 10, color: 'var(--green)', background: 'rgba(34,197,94,0.08)', borderRadius: 4, padding: '1px 6px' }}>saves ~{inv.impact}d DSO</span>}
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 11, color, fontWeight: 600 }}>{inv.action}</span>
-            {inv.impact != null && <span style={{ fontSize: 10, color: 'var(--green)', background: 'rgba(34,197,94,0.08)', borderRadius: 4, padding: '1px 6px' }}>saves ~{inv.impact}d DSO</span>}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+            <span style={{ fontSize: isMobile ? 15 : 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{URGENCY_LABEL[inv.urgency]}</span>
           </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-          <span style={{ fontSize: isMobile ? 15 : 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
-          <span style={{ fontSize: 9, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{URGENCY_LABEL[inv.urgency]} ↗</span>
         </div>
       </div>
+      {/* Quick action strip */}
+      <div style={{ borderTop: '1px solid var(--border)', padding: '6px 14px', display: 'flex', gap: 6, background: 'rgba(0,0,0,0.12)' }}>
+        <QuickBtn label="Take action" primary onClick={e => { e.stopPropagation(); onAction(); }} />
+        <QuickBtn label="View & export ↗" onClick={e => { e.stopPropagation(); onClick(); }} />
+      </div>
     </div>
+  );
+}
+
+function QuickBtn({ label, onClick, primary }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer',
+      background: primary ? 'rgba(0,212,232,0.12)' : 'none',
+      border: `1px solid ${primary ? 'var(--teal)' : 'var(--border)'}`,
+      color: primary ? 'var(--teal)' : 'var(--muted)',
+    }}>{label}</button>
   );
 }
 

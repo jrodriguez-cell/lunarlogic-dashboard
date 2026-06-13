@@ -26,7 +26,7 @@ const INV_COLS = [
   { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: row => row.daysOverdue > 0 ? row.daysOverdue : '' },
 ];
 
-export default function ClientInvoices({ invoices, paymentBehavior, isMobile, onDrill }) {
+export default function ClientInvoices({ invoices, paymentBehavior, isMobile, onDrill, onAction }) {
   const [filter, setFilter] = useState('All');
   const [sort, setSort]     = useState('urgency');
 
@@ -109,29 +109,36 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
           const cfg = STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.Sent;
           const pb  = pbMap[inv.customer];
           return (
-            <div key={inv.id} onClick={() => drillInvoice(inv)}
-              style={{ padding: isMobile ? '10px 12px' : '12px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: `3px solid ${cfg.color}`, borderRadius: 8, cursor: 'pointer', transition: 'background 0.1s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                    {!isMobile && <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)', flexShrink: 0 }}>{inv.id}</span>}
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
+            <div key={inv.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: `3px solid ${cfg.color}`, borderRadius: 8, overflow: 'hidden' }}>
+              <div onClick={() => drillInvoice(inv)} style={{ padding: isMobile ? '10px 12px' : '12px 16px', cursor: 'pointer', transition: 'background 0.1s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                      {!isMobile && <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)', flexShrink: 0 }}>{inv.id}</span>}
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: isMobile ? 8 : 12, fontSize: 11, color: 'var(--muted)', flexWrap: 'wrap' }}>
+                      {!isMobile && <span>Issued {inv.issued}</span>}
+                      <span>Due {inv.due}</span>
+                      {inv.daysOverdue > 0 && <span style={{ color: cfg.color, fontWeight: 600 }}>{inv.daysOverdue}d overdue</span>}
+                      {pb && !isMobile && <span>Avg pay: {pb.avgDays}d</span>}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: isMobile ? 8 : 12, fontSize: 11, color: 'var(--muted)', flexWrap: 'wrap' }}>
-                    {!isMobile && <span>Issued {inv.issued}</span>}
-                    <span>Due {inv.due}</span>
-                    {inv.daysOverdue > 0 && <span style={{ color: cfg.color, fontWeight: 600 }}>{inv.daysOverdue}d overdue</span>}
-                    {pb && !isMobile && <span>Avg pay: {pb.avgDays}d</span>}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+                    <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: cfg.color, background: cfg.bg, borderRadius: 10, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{cfg.label}</span>
                   </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-                  <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: cfg.color, background: cfg.bg, borderRadius: 10, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{cfg.label} ↗</span>
                 </div>
               </div>
+              {inv.status !== 'Paid' && (
+                <div style={{ borderTop: '1px solid var(--border)', padding: '6px 12px', display: 'flex', gap: 6, background: 'rgba(0,0,0,0.12)' }}>
+                  <button onClick={() => onAction(inv)} style={{ padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer', background: 'rgba(0,212,232,0.12)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>Take action</button>
+                  <button onClick={() => drillInvoice(inv)} style={{ padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer', background: 'none', border: '1px solid var(--border)', color: 'var(--muted)' }}>View & export ↗</button>
+                </div>
+              )}
             </div>
           );
         })}

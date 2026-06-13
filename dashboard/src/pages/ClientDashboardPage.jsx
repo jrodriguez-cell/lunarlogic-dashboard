@@ -3,6 +3,7 @@ import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
+import InvoiceActionSheet from '../components/client/InvoiceActionSheet';
 import ClientOverview from '../components/client/ClientOverview';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientCashForecast from '../components/client/ClientCashForecast';
@@ -16,8 +17,9 @@ const TABS = [
 ];
 
 export default function ClientDashboardPage({ session, onLogout }) {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [drill, setDrill]         = useState(null);
+  const [activeTab, setActiveTab]   = useState('overview');
+  const [drill, setDrill]           = useState(null);
+  const [actionInv, setActionInv]   = useState(null); // invoice for action sheet
   const isMobile = useMobile();
   const data = useMemo(() => getClientData(session.clientId), [session.clientId]);
 
@@ -96,13 +98,31 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
       {/* Content */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
-        {activeTab === 'overview' && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} />}
-        {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} isMobile={isMobile} onDrill={setDrill} />}
-        {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} />}
-        {activeTab === 'invoices' && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} />}
+        {activeTab === 'overview' && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'invoices' && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
       </div>
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
+      {actionInv && (
+        <InvoiceActionSheet
+          inv={actionInv}
+          companyName={data.name}
+          onClose={() => setActionInv(null)}
+          onDrill={() => {
+            const INV_COLS = [
+              { key: 'id', label: 'Invoice' }, { key: 'customer', label: 'Customer' },
+              { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+              { key: 'issued', label: 'Issued' }, { key: 'due', label: 'Due Date' },
+              { key: 'status', label: 'Status' },
+              { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: row => row.daysOverdue > 0 ? row.daysOverdue : '' },
+            ];
+            setDrill({ title: `Invoice ${actionInv.id} — ${actionInv.customer}`, subtitle: `$${actionInv.amount.toLocaleString()} · Due ${actionInv.due}`, source: 'Invoice data from QuickBooks Online.', filename: `invoice_${actionInv.id}`, columns: INV_COLS, rows: [actionInv] });
+            setActionInv(null);
+          }}
+        />
+      )}
     </div>
   );
 }

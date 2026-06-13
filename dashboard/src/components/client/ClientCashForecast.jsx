@@ -40,7 +40,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientCashForecast({ invoices, paymentBehavior, isMobile, onDrill }) {
+export default function ClientCashForecast({ invoices, paymentBehavior, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
 
