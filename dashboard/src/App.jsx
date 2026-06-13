@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getSession } from './lib/auth';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import ClientDashboardPage from './pages/ClientDashboardPage';
 
 export default function App() {
   const [session, setSession] = useState(() => getSession());
@@ -10,5 +11,9 @@ export default function App() {
     return <LoginPage onLogin={setSession} />;
   }
 
-  return <DashboardPage session={session} onLogout={() => setSession(null)} />;
+  if (session.role === 'admin') {
+    return <DashboardPage session={session} onLogout={() => setSession(null)} />;
+  }
+
+  return <ClientDashboardPage session={session} onLogout={() => setSession(null)} />;
 }
