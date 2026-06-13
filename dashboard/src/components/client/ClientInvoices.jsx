@@ -8,20 +8,19 @@ function fmtM(v) {
 }
 
 const STATUS_CONFIG = {
-  Paid:    { color: '#22c55e', label: 'Paid',           bg: 'rgba(34,197,94,0.1)' },
-  Sent:    { color: '#60a5fa', label: 'Sent',           bg: 'rgba(96,165,250,0.1)' },
-  Viewed:  { color: '#a78bfa', label: 'Viewed',         bg: 'rgba(167,139,250,0.1)' },
-  Overdue: { color: '#ef4444', label: 'Overdue',        bg: 'rgba(239,68,68,0.1)' },
+  Paid:    { color: '#22c55e', label: 'Paid',    bg: 'rgba(34,197,94,0.1)'  },
+  Sent:    { color: '#60a5fa', label: 'Sent',    bg: 'rgba(96,165,250,0.1)' },
+  Viewed:  { color: '#a78bfa', label: 'Viewed',  bg: 'rgba(167,139,250,0.1)' },
+  Overdue: { color: '#ef4444', label: 'Overdue', bg: 'rgba(239,68,68,0.1)'  },
 };
 
 const FILTERS = ['All', 'Overdue', 'Sent', 'Viewed', 'Paid'];
 
-export default function ClientInvoices({ invoices, paymentBehavior }) {
+export default function ClientInvoices({ invoices, paymentBehavior, isMobile }) {
   const [filter, setFilter] = useState('All');
   const [sort, setSort]     = useState('urgency');
 
   const pbMap = Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p]));
-
   const urgencyOrder = { Overdue: 0, Viewed: 1, Sent: 2, Paid: 3 };
 
   const visible = invoices
@@ -33,43 +32,36 @@ export default function ClientInvoices({ invoices, paymentBehavior }) {
       return 0;
     });
 
-  const overduePct = Math.round((invoices.filter(i => i.status === 'Overdue').length / invoices.filter(i => i.status !== 'Paid').length) * 100) || 0;
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* Status summary chips */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {FILTERS.map(f => {
-          const count = f === 'All' ? invoices.length : invoices.filter(i => i.status === f).length;
-          const cfg   = STATUS_CONFIG[f] ?? { color: 'var(--muted)', bg: 'rgba(255,255,255,0.04)' };
-          const active = filter === f;
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{
-                padding: '5px 12px', fontSize: 11, fontWeight: 600, borderRadius: 20, cursor: 'pointer',
+      {/* Filter chips */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', flex: 1 }}>
+          {FILTERS.map(f => {
+            const count  = f === 'All' ? invoices.length : invoices.filter(i => i.status === f).length;
+            const cfg    = STATUS_CONFIG[f] ?? { color: 'var(--muted)', bg: 'rgba(255,255,255,0.04)' };
+            const active = filter === f;
+            return (
+              <button key={f} onClick={() => setFilter(f)} style={{
+                padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 20, cursor: 'pointer',
                 border: `1px solid ${active ? cfg.color : 'var(--border)'}`,
                 background: active ? cfg.bg : 'none',
                 color: active ? cfg.color : 'var(--muted)',
-              }}
-            >{f} {count > 0 && <span style={{ opacity: 0.7 }}>({count})</span>}</button>
-          );
-        })}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, alignItems: 'center' }}>
-          <span style={{ fontSize: 10, color: 'var(--muted)' }}>Sort:</span>
-          {[{ id: 'urgency', label: 'Priority' }, { id: 'amount', label: 'Amount' }, { id: 'due', label: 'Due date' }].map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSort(s.id)}
-              style={{
-                padding: '3px 8px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
-                border: `1px solid ${sort === s.id ? 'var(--teal)' : 'var(--border)'}`,
-                background: sort === s.id ? 'rgba(0,212,232,0.08)' : 'none',
-                color: sort === s.id ? 'var(--teal)' : 'var(--muted)',
-              }}
-            >{s.label}</button>
+              }}>{f}{count > 0 ? ` (${count})` : ''}</button>
+            );
+          })}
+        </div>
+        {/* Sort — icon-only on mobile */}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
+          {!isMobile && <span style={{ fontSize: 10, color: 'var(--muted)' }}>Sort:</span>}
+          {[{ id: 'urgency', label: isMobile ? 'Pri' : 'Priority' }, { id: 'amount', label: isMobile ? '$' : 'Amount' }, { id: 'due', label: isMobile ? 'Due' : 'Due date' }].map(s => (
+            <button key={s.id} onClick={() => setSort(s.id)} style={{
+              padding: '3px 8px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
+              border: `1px solid ${sort === s.id ? 'var(--teal)' : 'var(--border)'}`,
+              background: sort === s.id ? 'rgba(0,212,232,0.08)' : 'none',
+              color: sort === s.id ? 'var(--teal)' : 'var(--muted)',
+            }}>{s.label}</button>
           ))}
         </div>
       </div>
@@ -81,25 +73,27 @@ export default function ClientInvoices({ invoices, paymentBehavior }) {
           const pb  = pbMap[inv.customer];
           return (
             <div key={inv.id} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '12px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)',
+              padding: isMobile ? '10px 12px' : '12px 16px',
+              background: 'var(--bg-card)', border: '1px solid var(--border)',
               borderLeft: `3px solid ${cfg.color}`, borderRadius: 8,
             }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)' }}>{inv.id}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                    {!isMobile && <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)', flexShrink: 0 }}>{inv.id}</span>}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: isMobile ? 8 : 12, fontSize: 11, color: 'var(--muted)', flexWrap: 'wrap' }}>
+                    {!isMobile && <span>Issued {inv.issued}</span>}
+                    <span>Due {inv.due}</span>
+                    {inv.daysOverdue > 0 && <span style={{ color: cfg.color, fontWeight: 600 }}>{inv.daysOverdue}d overdue</span>}
+                    {pb && !isMobile && <span>Avg pay: {pb.avgDays}d</span>}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--muted)' }}>
-                  <span>Issued {inv.issued}</span>
-                  <span>Due {inv.due}</span>
-                  {inv.daysOverdue > 0 && <span style={{ color: cfg.color, fontWeight: 600 }}>{inv.daysOverdue}d overdue</span>}
-                  {pb && <span style={{ color: 'var(--muted)' }}>Avg pay: {pb.avgDays}d</span>}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+                  <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: cfg.color, background: cfg.bg, borderRadius: 10, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{cfg.label}</span>
                 </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0, marginLeft: 16 }}>
-                <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: cfg.color, background: cfg.bg, borderRadius: 10, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{cfg.label}</span>
               </div>
             </div>
           );
@@ -112,7 +106,7 @@ export default function ClientInvoices({ invoices, paymentBehavior }) {
       </div>
 
       <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-        Invoice status reflects the latest data from QuickBooks. LunarLogic automatically sends reminders and tracks opens. Overdue invoices have active follow-up sequences running.
+        LunarLogic automatically sends reminders and tracks invoice views. Overdue invoices have active follow-up sequences running.
       </div>
     </div>
   );
