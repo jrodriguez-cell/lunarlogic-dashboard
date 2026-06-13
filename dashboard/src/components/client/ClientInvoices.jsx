@@ -8,15 +8,25 @@ function fmtM(v) {
 }
 
 const STATUS_CONFIG = {
-  Paid:    { color: '#22c55e', label: 'Paid',    bg: 'rgba(34,197,94,0.1)'  },
-  Sent:    { color: '#60a5fa', label: 'Sent',    bg: 'rgba(96,165,250,0.1)' },
+  Paid:    { color: '#22c55e', label: 'Paid',    bg: 'rgba(34,197,94,0.1)'   },
+  Sent:    { color: '#60a5fa', label: 'Sent',    bg: 'rgba(96,165,250,0.1)'  },
   Viewed:  { color: '#a78bfa', label: 'Viewed',  bg: 'rgba(167,139,250,0.1)' },
-  Overdue: { color: '#ef4444', label: 'Overdue', bg: 'rgba(239,68,68,0.1)'  },
+  Overdue: { color: '#ef4444', label: 'Overdue', bg: 'rgba(239,68,68,0.1)'   },
 };
 
 const FILTERS = ['All', 'Overdue', 'Sent', 'Viewed', 'Paid'];
 
-export default function ClientInvoices({ invoices, paymentBehavior, isMobile }) {
+const INV_COLS = [
+  { key: 'id',          label: 'Invoice' },
+  { key: 'customer',    label: 'Customer' },
+  { key: 'amount',      label: 'Amount',      render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+  { key: 'issued',      label: 'Issued' },
+  { key: 'due',         label: 'Due Date' },
+  { key: 'status',      label: 'Status' },
+  { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: row => row.daysOverdue > 0 ? row.daysOverdue : '' },
+];
+
+export default function ClientInvoices({ invoices, paymentBehavior, isMobile, onDrill }) {
   const [filter, setFilter] = useState('All');
   const [sort, setSort]     = useState('urgency');
 
@@ -31,6 +41,31 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile }) 
       if (sort === 'due')     return a.due.localeCompare(b.due);
       return 0;
     });
+
+  function drillInvoice(inv) {
+    const pb = pbMap[inv.customer];
+    onDrill({
+      title: `Invoice ${inv.id} — ${inv.customer}`,
+      subtitle: `$${inv.amount.toLocaleString()} · Due ${inv.due}${inv.daysOverdue > 0 ? ` · ${inv.daysOverdue}d overdue` : ''}${pb ? ` · Customer avg pay: ${pb.avgDays}d` : ''}`,
+      source: 'Invoice data from QuickBooks Online. LunarLogic tracks opens and sends automated reminders.',
+      filename: `invoice_${inv.id}`,
+      columns: INV_COLS,
+      rows: [inv],
+    });
+  }
+
+  function drillFilter(f) {
+    const rows = f === 'All' ? invoices : invoices.filter(i => i.status === f);
+    const total = rows.reduce((s, i) => s + i.amount, 0);
+    onDrill({
+      title: f === 'All' ? 'All Invoices' : `${f} Invoices`,
+      subtitle: `${fmtM(total)} · ${rows.length} invoice${rows.length !== 1 ? 's' : ''}`,
+      source: 'Invoice data from QuickBooks Online.',
+      filename: `invoices_${f.toLowerCase()}`,
+      columns: INV_COLS,
+      rows,
+    });
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -52,10 +87,9 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile }) 
             );
           })}
         </div>
-        {/* Sort — icon-only on mobile */}
         <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
           {!isMobile && <span style={{ fontSize: 10, color: 'var(--muted)' }}>Sort:</span>}
-          {[{ id: 'urgency', label: isMobile ? 'Pri' : 'Priority' }, { id: 'amount', label: isMobile ? '$' : 'Amount' }, { id: 'due', label: isMobile ? 'Due' : 'Due date' }].map(s => (
+          {[{ id: 'urgency', label: isMobile ? 'Pri' : 'Priority' }, { id: 'amount', label: isMobile ? '$' : 'Amount' }, { id: 'due', label: 'Due' }].map(s => (
             <button key={s.id} onClick={() => setSort(s.id)} style={{
               padding: '3px 8px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
               border: `1px solid ${sort === s.id ? 'var(--teal)' : 'var(--border)'}`,
@@ -63,6 +97,9 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile }) 
               color: sort === s.id ? 'var(--teal)' : 'var(--muted)',
             }}>{s.label}</button>
           ))}
+          <button onClick={() => drillFilter(filter)} style={{ padding: '3px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)' }}>
+            Export ↗
+          </button>
         </div>
       </div>
 
@@ -72,11 +109,11 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile }) 
           const cfg = STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.Sent;
           const pb  = pbMap[inv.customer];
           return (
-            <div key={inv.id} style={{
-              padding: isMobile ? '10px 12px' : '12px 16px',
-              background: 'var(--bg-card)', border: '1px solid var(--border)',
-              borderLeft: `3px solid ${cfg.color}`, borderRadius: 8,
-            }}>
+            <div key={inv.id} onClick={() => drillInvoice(inv)}
+              style={{ padding: isMobile ? '10px 12px' : '12px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: `3px solid ${cfg.color}`, borderRadius: 8, cursor: 'pointer', transition: 'background 0.1s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
@@ -92,21 +129,19 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile }) 
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
                   <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: cfg.color, background: cfg.bg, borderRadius: 10, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{cfg.label}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: cfg.color, background: cfg.bg, borderRadius: 10, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{cfg.label} ↗</span>
                 </div>
               </div>
             </div>
           );
         })}
         {visible.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)', fontSize: 13 }}>
-            No invoices matching this filter.
-          </div>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)', fontSize: 13 }}>No invoices matching this filter.</div>
         )}
       </div>
 
       <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-        LunarLogic automatically sends reminders and tracks invoice views. Overdue invoices have active follow-up sequences running.
+        Click any invoice to view detail and export. Use the Export button to download the current filtered view as CSV or Excel.
       </div>
     </div>
   );

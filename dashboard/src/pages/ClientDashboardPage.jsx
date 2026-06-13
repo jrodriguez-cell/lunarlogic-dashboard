@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { useMobile } from '../lib/useMobile';
+import DrillDrawer from '../components/DrillDrawer';
 import ClientOverview from '../components/client/ClientOverview';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientCashForecast from '../components/client/ClientCashForecast';
@@ -16,6 +17,7 @@ const TABS = [
 
 export default function ClientDashboardPage({ session, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [drill, setDrill]         = useState(null);
   const isMobile = useMobile();
   const data = useMemo(() => getClientData(session.clientId), [session.clientId]);
 
@@ -62,41 +64,59 @@ export default function ClientDashboardPage({ session, onLogout }) {
               <DSOMiniChart trend={data.dsoTrend} goLiveDate={data.goLiveDate} />
             </div>
           )}
-          <ProjectedDSO invoices={data.invoices} currentDSO={currentDSO} isMobile={isMobile} />
+          <ProjectedDSO invoices={data.invoices} currentDSO={currentDSO} isMobile={isMobile}
+            onDrill={() => setDrill({
+              title: 'Overdue Invoices — DSO Impact',
+              subtitle: 'Resolving these would improve your DSO this week',
+              source: 'Expected receipt dates adjusted for each customer\'s historical avg days-to-pay.',
+              filename: `overdue_dso_impact_${data.name.replace(/\s/g,'_')}`,
+              columns: INV_COLS,
+              rows: data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0),
+            })}
+          />
         </div>
       </div>
 
-      {/* Tab nav — scrollable on mobile */}
+      {/* Tab nav */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ display: 'flex', padding: isMobile ? '0 4px' : '0 24px', minWidth: 'max-content' }}>
           {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              style={{
-                padding: isMobile ? '10px 14px' : '12px 20px',
-                fontSize: isMobile ? 12 : 13,
-                fontWeight: activeTab === t.id ? 700 : 400,
-                color: activeTab === t.id ? 'var(--teal)' : 'var(--muted)',
-                borderBottom: activeTab === t.id ? '2px solid var(--teal)' : '2px solid transparent',
-                background: 'none', border: 'none', borderRadius: 0, cursor: 'pointer',
-                transition: 'color 0.12s', whiteSpace: 'nowrap',
-              }}
-            >{t.label}</button>
+            <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+              padding: isMobile ? '10px 14px' : '12px 20px',
+              fontSize: isMobile ? 12 : 13,
+              fontWeight: activeTab === t.id ? 700 : 400,
+              color: activeTab === t.id ? 'var(--teal)' : 'var(--muted)',
+              borderBottom: activeTab === t.id ? '2px solid var(--teal)' : '2px solid transparent',
+              background: 'none', border: 'none', borderRadius: 0, cursor: 'pointer',
+              transition: 'color 0.12s', whiteSpace: 'nowrap',
+            }}>{t.label}</button>
           ))}
         </div>
       </div>
 
       {/* Content */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
-        {activeTab === 'overview' && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} onNavigate={setActiveTab} isMobile={isMobile} />}
-        {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} isMobile={isMobile} />}
-        {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} />}
-        {activeTab === 'invoices' && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} />}
+        {activeTab === 'overview' && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} />}
+        {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} isMobile={isMobile} onDrill={setDrill} />}
+        {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} />}
+        {activeTab === 'invoices' && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} />}
       </div>
+
+      <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
     </div>
   );
 }
+
+// Shared column definitions used across all drill views
+export const INV_COLS = [
+  { key: 'id',          label: 'Invoice' },
+  { key: 'customer',    label: 'Customer' },
+  { key: 'amount',      label: 'Amount',       render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+  { key: 'issued',      label: 'Issued' },
+  { key: 'due',         label: 'Due Date' },
+  { key: 'status',      label: 'Status' },
+  { key: 'daysOverdue', label: 'Days Overdue',  render: v => v > 0 ? `${v}d` : '—',  csvVal: row => row.daysOverdue > 0 ? row.daysOverdue : '' },
+];
 
 function DSOMiniChart({ trend, goLiveDate }) {
   const W = 260, H = 48;
@@ -124,21 +144,27 @@ function DSOMiniChart({ trend, goLiveDate }) {
   );
 }
 
-function ProjectedDSO({ invoices, currentDSO, isMobile }) {
-  const overdue  = invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
-  const totalAR  = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
+function ProjectedDSO({ invoices, currentDSO, isMobile, onDrill }) {
+  const overdue   = invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
+  const totalAR   = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
   const overdueAR = overdue.reduce((s, i) => s + i.amount, 0);
-  const pct = totalAR > 0 ? overdueAR / totalAR : 0;
+  const pct       = totalAR > 0 ? overdueAR / totalAR : 0;
   const projected = Math.max(Math.round(currentDSO * (1 - pct * 0.6)), Math.round(currentDSO * 0.75));
   const improvement = Math.round(currentDSO - projected);
   if (overdue.length === 0) return null;
   return (
-    <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '12px 16px', minWidth: isMobile ? '100%' : 180, boxSizing: 'border-box' }}>
+    <div
+      onClick={onDrill}
+      style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '12px 16px', minWidth: isMobile ? '100%' : 180, boxSizing: 'border-box', cursor: 'pointer' }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(34,197,94,0.14)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'rgba(34,197,94,0.08)'}
+    >
       <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>If overdue resolved this week</div>
       <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--green)', lineHeight: 1, letterSpacing: -1 }}>
         {projected}<span style={{ fontSize: 12, fontWeight: 400, color: 'var(--muted)', marginLeft: 4 }}>days</span>
       </div>
       <div style={{ fontSize: 10, color: 'var(--green)', marginTop: 4 }}>↓ {improvement} day{improvement !== 1 ? 's' : ''} additional improvement</div>
+      <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 6 }}>tap to view invoices</div>
     </div>
   );
 }
