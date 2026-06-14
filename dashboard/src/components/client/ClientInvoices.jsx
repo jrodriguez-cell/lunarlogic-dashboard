@@ -70,37 +70,36 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* Filter chips */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', flex: 1 }}>
-          {FILTERS.map(f => {
-            const count  = f === 'All' ? invoices.length : invoices.filter(i => i.status === f).length;
-            const cfg    = STATUS_CONFIG[f] ?? { color: 'var(--muted)', bg: 'rgba(255,255,255,0.04)' };
-            const active = filter === f;
-            return (
-              <button key={f} onClick={() => setFilter(f)} style={{
-                padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 20, cursor: 'pointer',
-                border: `1px solid ${active ? cfg.color : 'var(--border)'}`,
-                background: active ? cfg.bg : 'none',
-                color: active ? cfg.color : 'var(--muted)',
-              }}>{f}{count > 0 ? ` (${count})` : ''}</button>
-            );
-          })}
-        </div>
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
-          {!isMobile && <span style={{ fontSize: 10, color: 'var(--muted)' }}>Sort:</span>}
-          {[{ id: 'urgency', label: isMobile ? 'Pri' : 'Priority' }, { id: 'amount', label: isMobile ? '$' : 'Amount' }, { id: 'due', label: 'Due' }].map(s => (
-            <button key={s.id} onClick={() => setSort(s.id)} style={{
-              padding: '3px 8px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
-              border: `1px solid ${sort === s.id ? 'var(--teal)' : 'var(--border)'}`,
-              background: sort === s.id ? 'rgba(0,212,232,0.08)' : 'none',
-              color: sort === s.id ? 'var(--teal)' : 'var(--muted)',
-            }}>{s.label}</button>
-          ))}
-          <button onClick={() => drillFilter(filter)} style={{ padding: '3px 10px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)' }}>
-            Export ↗
-          </button>
-        </div>
+      {/* Filter row */}
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+        {FILTERS.map(f => {
+          const count  = f === 'All' ? invoices.length : invoices.filter(i => i.status === f).length;
+          const cfg    = STATUS_CONFIG[f] ?? { color: 'var(--muted)', bg: 'rgba(255,255,255,0.04)' };
+          const active = filter === f;
+          return (
+            <button key={f} onClick={() => setFilter(f)} style={{
+              padding: '5px 12px', fontSize: 11, fontWeight: 600, borderRadius: 20, cursor: 'pointer',
+              border: `1px solid ${active ? cfg.color : 'var(--border)'}`,
+              background: active ? cfg.bg : 'none',
+              color: active ? cfg.color : 'var(--muted)',
+            }}>{f}{count > 0 ? ` (${count})` : ''}</button>
+          );
+        })}
+      </div>
+      {/* Sort + export row */}
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <span style={{ fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>Sort by:</span>
+        {[{ id: 'urgency', label: 'Priority' }, { id: 'amount', label: 'Amount' }, { id: 'due', label: 'Due date' }].map(s => (
+          <button key={s.id} onClick={() => setSort(s.id)} style={{
+            padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer',
+            border: `1px solid ${sort === s.id ? 'var(--teal)' : 'var(--border)'}`,
+            background: sort === s.id ? 'rgba(0,212,232,0.08)' : 'none',
+            color: sort === s.id ? 'var(--teal)' : 'var(--muted)',
+          }}>{s.label}</button>
+        ))}
+        <button onClick={() => drillFilter(filter)} style={{ marginLeft: 'auto', padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', flexShrink: 0 }}>
+          Export ↗
+        </button>
       </div>
 
       {/* Invoice rows */}

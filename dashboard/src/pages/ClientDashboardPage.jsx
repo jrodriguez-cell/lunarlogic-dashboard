@@ -10,10 +10,10 @@ import ClientCashForecast from '../components/client/ClientCashForecast';
 import ClientInvoices from '../components/client/ClientInvoices';
 
 const TABS = [
-  { id: 'overview', label: 'My AR Health' },
+  { id: 'overview', label: 'Overview' },
   { id: 'action',   label: 'Action Plan' },
-  { id: 'cash',     label: 'Cash Coming In' },
-  { id: 'invoices', label: 'Invoice Status' },
+  { id: 'cash',     label: 'Cash In' },
+  { id: 'invoices', label: 'Invoices' },
 ];
 
 export default function ClientDashboardPage({ session, onLogout }) {
@@ -28,6 +28,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const currentDSOEntry = data.dsoTrend[data.dsoTrend.length - 1];
   const currentDSO  = currentDSOEntry?.dso ?? 0;
   const dsoChange   = Math.round(currentDSO - data.preLiveDSO);
+  const urgentCount = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0).length;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font)' }}>
@@ -91,7 +92,13 @@ export default function ClientDashboardPage({ session, onLogout }) {
               borderBottom: activeTab === t.id ? '2px solid var(--teal)' : '2px solid transparent',
               background: 'none', border: 'none', borderRadius: 0, cursor: 'pointer',
               transition: 'color 0.12s', whiteSpace: 'nowrap',
-            }}>{t.label}</button>
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              {t.label}
+              {t.id === 'action' && urgentCount > 0 && (
+                <span style={{ background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800, borderRadius: 10, padding: '1px 6px', lineHeight: 1.6 }}>{urgentCount}</span>
+              )}
+            </button>
           ))}
         </div>
       </div>

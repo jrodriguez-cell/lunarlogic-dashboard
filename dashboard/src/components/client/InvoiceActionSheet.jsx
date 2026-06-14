@@ -19,7 +19,9 @@ function emailDraft(inv, companyName) {
 
 export default function InvoiceActionSheet({ inv, companyName, onClose, onDrill }) {
   const toast   = useToast();
-  const [tab, setTab]     = useState('actions'); // actions | reminder | log | task | snooze
+  // Context-aware default: overdue invoices open directly to reminder, others show action menu
+  const defaultTab = inv.daysOverdue > 0 ? 'reminder' : 'actions';
+  const [tab, setTab] = useState(defaultTab);
   const [logForm, setLog] = useState({ method: 'Phone call', outcome: '', promisedDate: '', notes: '' });
   const [taskForm, setTask] = useState({ assignee: TEAM[0], dueDate: '', description: '' });
   const [snoozeDate, setSnooze] = useState('');
