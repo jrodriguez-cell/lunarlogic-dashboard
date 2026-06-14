@@ -3,7 +3,7 @@ import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
-import InvoiceActionSheet from '../components/client/InvoiceActionSheet';
+import CustomerPanel from '../components/client/CustomerPanel';
 import ClientOverview from '../components/client/ClientOverview';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientCashForecast from '../components/client/ClientCashForecast';
@@ -113,21 +113,13 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
       {actionInv && (
-        <InvoiceActionSheet
+        <CustomerPanel
           inv={actionInv}
+          allInvoices={data.invoices}
+          paymentBehavior={data.paymentBehavior}
+          payments={data.payments}
           companyName={data.name}
           onClose={() => setActionInv(null)}
-          onDrill={() => {
-            const INV_COLS = [
-              { key: 'id', label: 'Invoice' }, { key: 'customer', label: 'Customer' },
-              { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
-              { key: 'issued', label: 'Issued' }, { key: 'due', label: 'Due Date' },
-              { key: 'status', label: 'Status' },
-              { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: row => row.daysOverdue > 0 ? row.daysOverdue : '' },
-            ];
-            setDrill({ title: `Invoice ${actionInv.id} — ${actionInv.customer}`, subtitle: `$${actionInv.amount.toLocaleString()} · Due ${actionInv.due}`, source: 'Invoice data from QuickBooks Online.', filename: `invoice_${actionInv.id}`, columns: INV_COLS, rows: [actionInv] });
-            setActionInv(null);
-          }}
         />
       )}
     </div>
