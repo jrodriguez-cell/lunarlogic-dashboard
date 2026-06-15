@@ -137,7 +137,7 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
     const rows = disputeSuspects.map(inv => {
       const pb = pbMap[inv.customer];
       const reason = inv.status === 'Viewed' && inv.daysOverdue > 7
-        ? 'Viewed but not paid — billing question likely stalling payment'
+        ? 'Invoice viewed but not paid — billing question likely stalling payment'
         : `${inv.daysOverdue}d overdue vs ${pb?.avgDays ?? '?'}d customer average — anomalous behavior`;
       const actionsTaken = inv.reminders?.length > 0
         ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent — ${inv.reminders.join(', ')}`
@@ -337,7 +337,7 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
                   ? 'Invoice viewed but not paid — billing question likely stalling payment'
                   : `${inv.daysOverdue}d overdue vs ${pb?.avgDays ?? '?'}d customer average — anomalous behavior`;
                 const actionsTaken = inv.reminders?.length > 0
-                  ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent: ${inv.reminders.join(', ')}`
+                  ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent — ${inv.reminders.join(', ')}`
                   : 'No reminders sent yet';
                 return {
                   ...inv,
@@ -453,63 +453,51 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             These invoices are overdue in ways inconsistent with the customer's payment history. A billing question, internal approval delay, or dispute may be stalling payment.
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {disputeSuspects.map(inv => {
-              const pb     = pbMap[inv.customer];
-              const reason = inv.status === 'Viewed' && inv.daysOverdue > 7
-                ? 'Invoice was opened but payment has not been received — a billing question or internal approval delay may be stalling this.'
-                : `${inv.daysOverdue}d overdue vs this customer's typical ${pb?.avgDays ?? '?'}d — payment is outside their normal pattern.`;
-              const actionsTaken = inv.reminders?.length > 0
-                ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent — ${inv.reminders.join(', ')}`
-                : 'No reminders sent yet';
-              const nextStep = inv.nextReminder
-                ? `Reminder scheduled ${new Date(inv.nextReminder + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — consider calling before then`
-                : 'Automated sequence complete — direct call recommended';
-              return (
-                <div key={inv.id}
-                  style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, padding: '10px 12px' }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{inv.customer}</span>
-                        <span style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.id}</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.15)', borderRadius: 8, padding: '1px 7px' }}>Possible Dispute</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>
-                        {inv.status === 'Viewed' && inv.daysOverdue > 7
-                          ? 'Invoice was opened but payment has not been received — a billing question or internal approval delay may be stalling this.'
-                          : (() => { const pb = (data.paymentBehavior ?? []).find(p => p.customer === inv.customer); return `${inv.daysOverdue}d overdue vs this customer's typical ${pb?.avgDays ?? '?'}d — this is outside their normal pattern.`; })()
-                        }
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <div style={{ fontSize: 10, color: 'var(--muted)' }}>
-                          <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>Actions taken: </span>
-                          {inv.reminders?.length > 0
-                            ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent — ${inv.reminders.join(', ')}`
-                            : 'No reminders sent yet'}
-                        </div>
-                        <div style={{ fontSize: 10, color: 'var(--muted)' }}>
-                          <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>Next step: </span>
-                          {inv.nextReminder
-                            ? `Reminder scheduled ${new Date(inv.nextReminder).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — consider calling before then`
-                            : 'Automated sequence complete — direct call recommended'}
-                        </div>
-                      </div>
+            {disputeSuspects.map(inv => (
+              <div key={inv.id}
+                style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, padding: '10px 12px' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{inv.customer}</span>
+                      <span style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.id}</span>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.15)', borderRadius: 8, padding: '1px 7px' }}>Possible Dispute</span>
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{fmtM(inv.amount)}</div>
-                      <div style={{ fontSize: 10, color: inv.daysOverdue > 0 ? '#a78bfa' : 'var(--muted)' }}>{inv.daysOverdue > 0 ? `${inv.daysOverdue}d overdue` : `Due ${inv.due}`}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>
+                      {inv.status === 'Viewed' && inv.daysOverdue > 7
+                        ? 'Invoice was opened but payment has not been received — a billing question or internal approval delay may be stalling this.'
+                        : (() => { const pb = (data.paymentBehavior ?? []).find(p => p.customer === inv.customer); return `${inv.daysOverdue}d overdue vs this customer's typical ${pb?.avgDays ?? '?'}d — this is outside their normal pattern.`; })()
+                      }
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                        <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>Actions taken: </span>
+                        {inv.reminders?.length > 0
+                          ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent — ${inv.reminders.join(', ')}`
+                          : 'No reminders sent yet'}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                        <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>Next step: </span>
+                        {inv.nextReminder
+                          ? `Reminder scheduled ${new Date(inv.nextReminder).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — consider calling before then`
+                          : 'Automated sequence complete — direct call recommended'}
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => onAction(inv)}
-                    style={{ width: '100%', padding: '6px 0', fontSize: 11, fontWeight: 600, borderRadius: 6, border: '1px solid rgba(167,139,250,0.4)', background: 'rgba(167,139,250,0.1)', color: '#a78bfa', cursor: 'pointer' }}
-                  >
-                    Open invoice + take action
-                  </button>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{fmtM(inv.amount)}</div>
+                    <div style={{ fontSize: 10, color: inv.daysOverdue > 0 ? '#a78bfa' : 'var(--muted)' }}>{inv.daysOverdue > 0 ? `${inv.daysOverdue}d overdue` : `Due ${inv.due}`}</div>
+                  </div>
                 </div>
-              );
-            })}
+                <button
+                  onClick={() => onAction(inv)}
+                  style={{ width: '100%', padding: '6px 0', fontSize: 11, fontWeight: 600, borderRadius: 6, border: '1px solid rgba(167,139,250,0.4)', background: 'rgba(167,139,250,0.1)', color: '#a78bfa', cursor: 'pointer' }}
+                >
+                  Open invoice + take action
+                </button>
+              </div>
+            ))}
           </div>
           <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 10, fontStyle: 'italic' }}>
             Disputes left unresolved become bad debt. LunarLogic flags them early — when recovery is still straightforward.
