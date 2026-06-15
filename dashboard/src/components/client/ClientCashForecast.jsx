@@ -325,7 +325,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         <div style={{ background: 'var(--bg-card)', border: `1px solid ${pendingPmts.length > 0 ? 'rgba(245,158,11,0.35)' : 'var(--border)'}`, borderRadius: 12, padding: '16px' }}>
           <SectionLabel>Payment confirmations needed</SectionLabel>
           {pendingPmts.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--green)', marginTop: 10, fontStyle: 'italic' }}>All payments matched automatically — nothing needs your review.</div>
+            <div style={{ fontSize: 12, color: 'var(--green)', marginTop: 10, fontStyle: 'italic' }}>All payments auto-applied — no action needed.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
               {pendingPmts.map(p => (
