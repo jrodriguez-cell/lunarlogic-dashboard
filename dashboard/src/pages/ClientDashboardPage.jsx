@@ -9,6 +9,17 @@ import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientCashForecast from '../components/client/ClientCashForecast';
 import ClientInvoices from '../components/client/ClientInvoices';
 
+const DSO_BENCHMARKS = [
+  { max: 30,       label: 'Excellent', color: '#22c55e', desc: 'Top-quartile efficiency'   },
+  { max: 45,       label: 'Healthy',   color: '#00d4e8', desc: 'Industry-average'           },
+  { max: 60,       label: 'Friction',  color: '#f59e0b', desc: 'Friction in process'        },
+  { max: 90,       label: 'Breakdown', color: '#f97316', desc: 'Collections under pressure' },
+  { max: Infinity, label: 'Crisis',    color: '#ef4444', desc: 'Existential cash-flow risk' },
+];
+function getDSOBenchmark(dso) {
+  return DSO_BENCHMARKS.find(b => dso < b.max) ?? DSO_BENCHMARKS[4];
+}
+
 const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'action',   label: 'Action Plan' },
@@ -29,6 +40,11 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const currentDSO  = currentDSOEntry?.dso ?? 0;
   const dsoChange   = Math.round(currentDSO - data.preLiveDSO);
   const urgentCount = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0).length;
+
+  const nonOverdueAR = data.invoices.filter(i => i.status !== 'Paid' && i.daysOverdue <= 0).reduce((s, i) => s + i.amount, 0);
+  const bpdso = Math.round(nonOverdueAR / (data.annualRevenue / 365));
+  const dsoGapDays = Math.max(0, Math.round(currentDSO) - bpdso);
+  const dsoGapDollars = Math.round(dsoGapDays * (data.annualRevenue / 365));
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font)' }}>
@@ -60,6 +76,14 @@ export default function ClientDashboardPage({ session, onLogout }) {
               <span style={{ fontSize: 14, color: 'var(--muted)' }}>days</span>
               <span style={{ fontSize: 13, color: 'var(--green)', fontWeight: 700 }}>↓ {Math.abs(dsoChange)} days since LunarLogic</span>
             </div>
+            {(() => {
+              const bm = getDSOBenchmark(Math.round(currentDSO));
+              return (
+                <span style={{ fontSize: 10, fontWeight: 700, color: bm.color, background: `${bm.color}1a`, border: `1px solid ${bm.color}40`, borderRadius: 20, padding: '2px 10px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  {bm.label} — {bm.desc}
+                </span>
+              );
+            })()}
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Was {data.preLiveDSO} days before go-live · {data.goLiveDate}</div>
           </div>
           {!isMobile && (
@@ -77,6 +101,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
               rows: data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0),
             })}
           />
+          <BPDSOTile bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} isMobile={isMobile} />
         </div>
       </div>
 
@@ -160,6 +185,21 @@ function DSOMiniChart({ trend, goLiveDate }) {
         </>
       )}
     </svg>
+  );
+}
+
+function BPDSOTile({ bpdso, dsoGapDays, dsoGapDollars, isMobile }) {
+  if (dsoGapDays <= 0) return null;
+  function fmtK(v) { return v >= 1000 ? `$${Math.round(v/1000)}k` : `$${v}`; }
+  return (
+    <div style={{ background: 'rgba(0,212,232,0.06)', border: '1px solid rgba(0,212,232,0.2)', borderRadius: 10, padding: '12px 16px', minWidth: isMobile ? '100%' : 180, boxSizing: 'border-box' }}>
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Best Possible DSO</div>
+      <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -1 }}>
+        {bpdso}<span style={{ fontSize: 12, fontWeight: 400, color: 'var(--muted)', marginLeft: 4 }}>days</span>
+      </div>
+      <div style={{ fontSize: 10, color: 'var(--teal)', marginTop: 4 }}>↑ {dsoGapDays}-day gap = {fmtK(dsoGapDollars)} recoverable</div>
+      <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 6 }}>Working capital locked in overdue AR</div>
+    </div>
   );
 }
 

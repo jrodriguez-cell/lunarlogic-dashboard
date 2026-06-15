@@ -6,6 +6,31 @@ function addDays(base, n) {
   return d.toISOString().split('T')[0];
 }
 
+function genReminders(dueStr) {
+  const todayD = new Date('2026-06-11');
+  const dueD   = new Date(dueStr);
+  const out    = [];
+  const offsets = [-7, 1, 7, 14, 21, 28];
+  for (const d of offsets) {
+    const r = new Date(dueD);
+    r.setDate(r.getDate() + d);
+    if (r <= todayD) out.push(r.toISOString().split('T')[0]);
+  }
+  return out;
+}
+
+function genNextReminder(dueStr) {
+  const todayD = new Date('2026-06-11');
+  const dueD   = new Date(dueStr);
+  const offsets = [-7, 1, 7, 14, 21, 28, 35, 42];
+  for (const d of offsets) {
+    const r = new Date(dueD);
+    r.setDate(r.getDate() + d);
+    if (r > todayD) return r.toISOString().split('T')[0];
+  }
+  return null;
+}
+
 function genDSOTrend(goLiveDate, preLiveDSO, targetDSO) {
   const NOISE = [0.2,-0.4,0.8,-0.3,0.5,-0.7,0.3,-0.2,0.6,-0.5,0.4,-0.8,0.1,-0.3,0.7,-0.4,0.2,-0.6,0.5,-0.1];
   const data = [];
@@ -37,6 +62,7 @@ const CLIENTS = {
   kaptain: {
     name: 'Kaptain Clean LLC',
     industry: 'Commercial Cleaning Services',
+    annualRevenue: 900000,
     goLiveDate: '2026-03-17',
     preLiveDSO: 47,
     collectionEfficiency: 91,
@@ -95,6 +121,7 @@ const CLIENTS = {
   gualapack: {
     name: 'Gualapack',
     industry: 'Packaging Manufacturing',
+    annualRevenue: 2000000,
     goLiveDate: '2026-02-10',
     preLiveDSO: 52,
     collectionEfficiency: 86,
@@ -149,6 +176,7 @@ const CLIENTS = {
     name: 'Forvis Mazars',
     industry: 'Professional Services - Audit & Advisory',
     office: 'Chicago Office - POC',
+    annualRevenue: 8000000,
     goLiveDate: '2026-04-07',
     preLiveDSO: 58,
     collectionEfficiency: 89,
@@ -221,6 +249,7 @@ const CLIENTS = {
   meridian: {
     name: 'Meridian Advisory Group',
     industry: 'Management Consulting & Advisory',
+    annualRevenue: 1400000,
     goLiveDate: '2026-04-10',
     preLiveDSO: 50,
     collectionEfficiency: 94,
@@ -280,5 +309,13 @@ const CLIENTS = {
 };
 
 export function getClientData(clientId) {
-  return CLIENTS[clientId] || CLIENTS.kaptain;
+  const client = CLIENTS[clientId] || CLIENTS.kaptain;
+  return {
+    ...client,
+    invoices: client.invoices.map(inv => ({
+      ...inv,
+      reminders: inv.status !== 'Paid' ? genReminders(inv.due) : [],
+      nextReminder: inv.status !== 'Paid' ? genNextReminder(inv.due) : null,
+    })),
+  };
 }
