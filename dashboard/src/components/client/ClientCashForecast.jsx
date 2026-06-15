@@ -2,9 +2,6 @@ import { useRef, useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { enrichInvoices, forecastWithin, addDays } from '../../lib/forecast';
 
-const TODAY_ISO = '2026-06-11';
-const TODAY = new Date(TODAY_ISO + 'T00:00:00');
-
 function fmtM(v) {
   if (!v || v === 0) return '$0';
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
@@ -67,6 +64,7 @@ function CustomTooltip({ active, payload, label }) {
 export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
+  const TODAY = new Date();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -75,6 +73,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
     return () => ro.disconnect();
   }, []);
 
+  const TODAY_ISO = TODAY.toISOString().slice(0, 10);
   const enriched   = enrichInvoices(invoices, paymentBehavior, TODAY_ISO);
   const rows30     = forecastWithin(enriched, 30);
   const rows60     = forecastWithin(enriched, 60);
@@ -92,7 +91,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
 
   const allPayments   = payments ?? [];
   const pendingPmts   = allPayments.filter(p => p.status === 'Pending Review');
-  const autoPmts      = allPayments.filter(p => p.status === 'Auto-Applied').slice(0, 6);
+  const autoPmts      = allPayments.filter(p => p.status !== 'Pending Review').slice(-6);
 
   const weeks = Array.from({ length: 13 }, (_, i) => {
     const start = addDays(TODAY, i * 7);
@@ -325,7 +324,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         <div style={{ background: 'var(--bg-card)', border: `1px solid ${pendingPmts.length > 0 ? 'rgba(245,158,11,0.35)' : 'var(--border)'}`, borderRadius: 12, padding: '16px' }}>
           <SectionLabel>Payment confirmations needed</SectionLabel>
           {pendingPmts.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--green)', marginTop: 10, fontStyle: 'italic' }}>All payments auto-applied — no action needed.</div>
+            <div style={{ fontSize: 12, color: 'var(--green)', marginTop: 10, fontStyle: 'italic' }}>All payments matched automatically — nothing needs your review.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
               {pendingPmts.map(p => (
@@ -391,7 +390,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 10, color: 'var(--muted)' }}>{p.received}</span>
                       {p.matchedInvoice && <span style={{ fontSize: 10, color: 'var(--muted)' }}>→ {p.matchedInvoice}</span>}
-                      <span style={{ fontSize: 9, fontWeight: 700, color: p.status === 'Auto-Applied' ? '#22c55e' : p.status === 'Manual' ? '#f59e0b' : 'var(--muted)', background: p.status === 'Auto-Applied' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', borderRadius: 6, padding: '1px 5px' }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: p.status === 'Auto-Applied' ? '#22c55e' : '#f59e0b', background: p.status === 'Auto-Applied' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', borderRadius: 6, padding: '1px 5px' }}>
                         {p.status === 'Auto-Applied' ? `Auto ${p.confidence}%` : p.status}
                       </span>
                     </div>
