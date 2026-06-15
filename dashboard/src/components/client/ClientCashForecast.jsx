@@ -40,9 +40,10 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, isMobile, onDrill, onAction }) {
+export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
+  const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -116,6 +117,34 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         ))}
       </div>
 
+      {/* Expected this week */}
+      {(() => {
+        const thisWeek = enriched.filter(inv => {
+          if (!inv.expectedDate) return false;
+          const d = new Date(inv.expectedDate);
+          return d >= TODAY && d <= addDays(TODAY, 7);
+        });
+        if (thisWeek.length === 0) return null;
+        return (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Expected this week</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {thisWeek.sort((a, b) => new Date(a.expectedDate) - new Date(b.expectedDate)).map(inv => (
+                <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{inv.customer}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.id} · Due {inv.due} · Expected {new Date(inv.expectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#22c55e' }}>{fmtM(inv.amount)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Predictive Cash Gap Alert */}
       {(() => {
         if (!annualRevenue) return null;
@@ -165,6 +194,37 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         );
       })()}
 
+      {/* Overdue: Accelerate Collection */}
+      {enriched.filter(inv => inv.daysOverdue > 0).length > 0 && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 12, padding: '16px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Overdue — accelerate collection</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {enriched.filter(inv => inv.daysOverdue > 0).sort((a, b) => b.amount - a.amount).map(inv => (
+              <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 8, gap: 8 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{inv.customer}</div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4 }}>{inv.id} · {inv.daysOverdue}d overdue · Expected {inv.expectedDate ? new Date(inv.expectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'unknown'}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444' }}>{fmtM(inv.amount)}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>overdue</div>
+                  </div>
+                  {onAction && (
+                    <button
+                      onClick={() => onAction(inv)}
+                      style={{ padding: '5px 10px', fontSize: 10, fontWeight: 600, borderRadius: 6, border: '1px solid rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      Take action
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Chart */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 4 }}>Weekly cash expected — click any bar to drill in</div>
@@ -191,6 +251,72 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
               {l.label}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Payment confirmations + recent payments */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
+        {/* Payment confirmations needed */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Payment confirmations needed</div>
+          {(payments ?? []).filter(p => p.status === 'Pending Review').length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--muted)', padding: '12px 0' }}>All payments matched and applied automatically</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(payments ?? []).filter(p => p.status === 'Pending Review').map((p, i) => (
+                <div
+                  key={p.txId ?? i}
+                  onClick={() => onDrill && onDrill({
+                    title: 'Payment Confirmation Required',
+                    subtitle: `${fmtM(p.amount)} from ${p.matchedCustomer} — AI confidence ${p.confidence}%`,
+                    source: 'LunarLogic auto-applies payments when match confidence is 90%+. Below that threshold, confirmation is required.',
+                    filename: 'payment_confirmation',
+                    columns: [
+                      { key: 'txId',            label: 'Transaction' },
+                      { key: 'matchedCustomer', label: 'Customer' },
+                      { key: 'amount',          label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+                      { key: 'received',        label: 'Date Received' },
+                      { key: 'confidence',      label: 'AI Confidence', render: v => `${v}%` },
+                      { key: 'rule',            label: 'Why Pending' },
+                      { key: 'candidates',      label: 'Candidate Invoices', render: v => Array.isArray(v) ? v.join(' · ') : '—', csvVal: row => Array.isArray(row.candidates) ? row.candidates.join(', ') : '' },
+                    ],
+                    rows: [p],
+                  })}
+                  style={{ padding: '10px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, cursor: onDrill ? 'pointer' : 'default' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{p.matchedCustomer}</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#f59e0b' }}>{fmtM(p.amount)}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>{p.received} · {p.confidence}% confidence</div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.rule}</div>
+                  {Array.isArray(p.candidates) && p.candidates.length > 0 && (
+                    <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4 }}>Candidates: {p.candidates.join(' · ')}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent payments received */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Recent payments received</div>
+          {(payments ?? []).filter(p => p.status !== 'Pending Review').length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--muted)', padding: '12px 0' }}>No recent payments</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(payments ?? []).filter(p => p.status !== 'Pending Review').slice(-6).reverse().map((p, i) => (
+                <div key={p.txId ?? i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.12)', borderRadius: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{p.matchedCustomer}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.received} · {p.matchedInvoice ?? '—'} · {p.confidence}% confidence</div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#22c55e', flexShrink: 0 }}>{fmtM(p.amount)}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
