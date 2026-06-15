@@ -40,7 +40,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, isMobile, onDrill, onAction }) {
+export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
 
@@ -116,6 +116,35 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         ))}
       </div>
 
+      {/* Expected this week */}
+      {(() => {
+        const thisWeekEnd = addDays(TODAY, 7);
+        const thisWeek = enriched.filter(i => i.expectedDate >= TODAY && i.expectedDate <= thisWeekEnd);
+        if (thisWeek.length === 0) return null;
+        const thisWeekTotal = thisWeek.reduce((s, i) => s + i.amount, 0);
+        return (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>
+              Expected this week — {fmtM(thisWeekTotal)} · {thisWeek.length} invoice{thisWeek.length !== 1 ? 's' : ''}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {thisWeek.sort((a, b) => b.amount - a.amount).map(inv => (
+                <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-dim)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer} — {inv.id}</span>
+                    <span style={{ fontSize: 10, color: 'var(--muted)' }}>Expected {inv.expectedDateStr}</span>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>{fmtM(inv.amount)}</div>
+                    <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'capitalize' }}>{inv.riskLevel} risk</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Predictive Cash Gap Alert */}
       {(() => {
         if (!annualRevenue) return null;
@@ -165,6 +194,34 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         );
       })()}
 
+      {/* Overdue: Accelerate Collection */}
+      {overdue.length > 0 && (
+        <div style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '16px' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>
+            Overdue — accelerate collection · {fmtM(totalOvd)} outstanding
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[...overdue].sort((a, b) => b.amount - a.amount).map(inv => (
+              <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, background: 'rgba(239,68,68,0.04)', borderRadius: 8, padding: '8px 10px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer} — {inv.id}</div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.daysOverdue}d overdue · expected receipt {inv.expectedDateStr}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0, marginRight: 8 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444' }}>{fmtM(inv.amount)}</div>
+                </div>
+                <button
+                  onClick={() => onAction(inv)}
+                  style={{ fontSize: 10, fontWeight: 600, borderRadius: 6, border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', cursor: 'pointer', padding: '5px 10px', flexShrink: 0 }}
+                >
+                  Take action
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Chart */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 4 }}>Weekly cash expected — click any bar to drill in</div>
@@ -193,6 +250,57 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
           ))}
         </div>
       </div>
+
+      {/* Payment confirmations + recent payments */}
+      {(() => {
+        const allPayments = payments ?? [];
+        const pendingReview = allPayments.filter(p => p.status === 'Pending Review');
+        const recentApplied = allPayments.filter(p => p.status === 'Auto-Applied').slice(-6).reverse();
+        if (pendingReview.length === 0 && recentApplied.length === 0) return null;
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+            {pendingReview.length > 0 && (
+              <div style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 12, padding: '16px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>
+                  Payment confirmations needed — {pendingReview.length} pending
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {pendingReview.map(p => (
+                    <div key={p.txId} style={{ borderRadius: 8, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', padding: '8px 10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{p.matchedCustomer}</span>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#f59e0b' }}>{fmtM(p.amount)}</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>{p.rule ?? 'AI confidence below threshold'}</div>
+                      {Array.isArray(p.candidates) && p.candidates.length > 0 && (
+                        <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>Candidates: {p.candidates.join(' · ')}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {recentApplied.length > 0 && (
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>
+                  Recent payments received
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {recentApplied.map(p => (
+                    <div key={p.txId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.matchedCustomer}</div>
+                        <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.received} · {p.matchedInvoice ?? p.txId} · {p.confidence}% match</div>
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)', flexShrink: 0 }}>{fmtM(p.amount)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
         Click any tile or chart bar to drill into underlying invoices — CSV and Excel export available. Expected receipt dates use each customer's historical payment patterns.

@@ -40,7 +40,7 @@ function getDisputeSuspects(invoices, paymentBehavior) {
   });
 }
 
-export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate, isMobile, onDrill }) {
+export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate, isMobile, onDrill, onAction }) {
   const open     = data.invoices.filter(i => i.status !== 'Paid');
   const overdue  = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
   const next30   = open.filter(i => i.daysOverdue <= 0 && i.daysOverdue > -30);
@@ -117,42 +117,177 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
 
       {/* Root Cause Diagnostic */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
-        <SectionLabel>DSO root cause diagnostic — your 5 drivers tracked live</SectionLabel>
+        <SectionLabel>DSO root cause diagnostic — click any driver to see source data</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
           <RootCause
             status="resolved" color="#22c55e"
             title="Invoice Lag"
             detail="Invoices auto-sent within minutes of job approval via LunarLogic"
             sub="Was adding 3–8 days to DSO before go-live"
+            onClick={() => onDrill({
+              title: 'Invoice Lag — Send Time Log',
+              subtitle: 'All invoices are created and sent automatically — was 3–8 days manual lag before LunarLogic',
+              source: 'Invoice creation timestamps from QuickBooks Online. LunarLogic sends immediately upon job approval.',
+              filename: 'invoice_lag_log',
+              columns: [
+                { key: 'id',       label: 'Invoice' },
+                { key: 'customer', label: 'Customer' },
+                { key: 'amount',   label: 'Amount',    render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+                { key: 'issued',   label: 'Date Issued' },
+                { key: 'due',      label: 'Due Date' },
+                { key: 'status',   label: 'Status' },
+                { key: 'daysOut',  label: 'Days to Send', render: v => v === 0 ? 'Same day' : `${v}d`, csvVal: row => row.daysOut },
+              ],
+              rows: [...data.invoices].sort((a, b) => new Date(b.issued) - new Date(a.issued)).slice(0, 20),
+            })}
           />
           <RootCause
             status="resolved" color="#22c55e"
             title="Inconsistent Follow-Up"
-            detail={`${data.invoices.filter(i => i.status !== 'Paid' && i.reminders && i.reminders.length > 0).length} active invoices in automated reminder sequences`}
+            detail={`${data.invoices.filter(i => i.status !== 'Paid' && i.reminders?.length > 0).length} active invoices in automated reminder sequences`}
             sub="Customers with 3+ reminders pay 40% faster on average"
+            onClick={() => {
+              const pbMap = Object.fromEntries((data.paymentBehavior ?? []).map(p => [p.customer, p]));
+              const rows = data.invoices
+                .filter(i => i.status !== 'Paid')
+                .map(inv => {
+                  const pb = pbMap[inv.customer];
+                  return {
+                    ...inv,
+                    remindersCount: inv.reminders?.length ?? 0,
+                    lastReminder: inv.reminders?.length > 0 ? inv.reminders[inv.reminders.length - 1] : 'None sent',
+                    nextReminderDate: inv.nextReminder ?? 'Sequence complete',
+                    customerAvg: pb?.avgDays ?? '?',
+                    riskLevel: pb?.riskLevel ?? '—',
+                  };
+                })
+                .sort((a, b) => b.remindersCount - a.remindersCount);
+              onDrill({
+                title: 'Follow-Up Cadence — All Open Invoices',
+                subtitle: `${rows.length} invoices · ${rows.filter(r => r.remindersCount > 0).length} in active sequences`,
+                source: 'Reminder schedule: −7d before due, then +1, +7, +14, +21, +28 days after due. Sent via LunarLogic/Outlook to customer contact.',
+                filename: 'followup_cadence',
+                columns: [
+                  { key: 'customer',        label: 'Customer' },
+                  { key: 'id',              label: 'Invoice' },
+                  { key: 'amount',          label: 'Amount',          render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+                  { key: 'daysOverdue',     label: 'Status',          render: (v, row) => v > 0 ? `${v}d overdue` : `Due ${row.due}` },
+                  { key: 'remindersCount',  label: 'Reminders Sent',  render: v => v > 0 ? `${v} sent` : 'None yet' },
+                  { key: 'lastReminder',    label: 'Last Reminder' },
+                  { key: 'nextReminderDate',label: 'Next Reminder' },
+                  { key: 'customerAvg',     label: 'Customer Avg Pay', render: v => `${v}d` },
+                  { key: 'riskLevel',       label: 'Risk' },
+                ],
+                rows,
+              });
+            }}
           />
           <RootCause
             status={pending.length > 0 ? 'attention' : 'resolved'}
             color={pending.length > 0 ? '#f59e0b' : '#22c55e'}
             title="Unapplied Payments"
-            detail={pending.length > 0 ? `${pending.length} payment${pending.length !== 1 ? 's' : ''} pending match confirmation` : 'All payments matched and applied automatically'}
-            sub={pending.length > 0 ? 'Review in Cash In tab — one-click approval' : 'AI fuzzy-matching active, 90%+ confidence auto-applied'}
-            onClick={pending.length > 0 ? () => onNavigate('cash') : null}
+            detail={pending.length > 0 ? `${pending.length} payment${pending.length !== 1 ? 's' : ''} received but not yet matched to an invoice` : 'All payments matched and applied automatically'}
+            sub={pending.length > 0 ? `Total ${fmtM(pending.reduce((s, p) => s + p.amount, 0))} held — AI confidence below threshold, needs your confirmation` : 'AI fuzzy-matching active, 90%+ confidence auto-applied'}
+            onClick={() => onDrill({
+              title: 'Unapplied Payments — Confirmation Needed',
+              subtitle: `${pending.length} payment${pending.length !== 1 ? 's' : ''} · ${fmtM(pending.reduce((s, p) => s + p.amount, 0))} held pending your review`,
+              source: 'Payments received via bank feed. LunarLogic auto-applies when match confidence is 90%+. Below that threshold, your confirmation is required to prevent misapplication.',
+              filename: 'unapplied_payments',
+              columns: [
+                { key: 'txId',            label: 'Transaction' },
+                { key: 'matchedCustomer', label: 'Customer' },
+                { key: 'amount',          label: 'Amount Received',  render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+                { key: 'received',        label: 'Date Received' },
+                { key: 'confidence',      label: 'AI Confidence',    render: v => `${v}% — below 90% threshold` },
+                { key: 'rule',            label: 'Why It Needs Review' },
+                { key: 'candidates',      label: 'Candidate Invoices', render: v => Array.isArray(v) ? v.join(' · ') : '—', csvVal: row => Array.isArray(row.candidates) ? row.candidates.join(', ') : '' },
+              ],
+              rows: pending,
+            })}
           />
           <RootCause
-            status={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? 'attention' : 'resolved'}
-            color={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? '#f97316' : '#22c55e'}
+            status={disputeSuspects.length > 0 ? 'attention' : (data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? 'attention' : 'resolved')}
+            color={disputeSuspects.length > 0 ? '#a78bfa' : (data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? '#f97316' : '#22c55e')}
             title="Disputes & Aging Risk"
-            detail={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0
-              ? `${data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length} invoice${data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length !== 1 ? 's' : ''} 45+ days overdue — recovery rate drops below 50% at 90 days`
-              : 'No invoices at critical aging risk'}
-            sub="Invoices over 90 days past due have under 50% average recovery"
+            detail={disputeSuspects.length > 0
+              ? `${disputeSuspects.length} invoice${disputeSuspects.length !== 1 ? 's' : ''} showing anomalous payment behavior — possible dispute or billing question`
+              : data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0
+                ? `${data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length} invoices 45+ days overdue — escalation recommended`
+                : 'No invoices at dispute or aging risk'}
+            sub="Recovery rate drops below 50% at 90 days — early intervention is critical"
+            onClick={() => {
+              const pbMap = Object.fromEntries((data.paymentBehavior ?? []).map(p => [p.customer, p]));
+              const rows = disputeSuspects.map(inv => {
+                const pb = pbMap[inv.customer];
+                const reason = inv.status === 'Viewed' && inv.daysOverdue > 7
+                  ? 'Viewed but not paid — billing question likely stalling payment'
+                  : `${inv.daysOverdue}d overdue vs ${pb?.avgDays ?? '?'}d customer average — anomalous behavior`;
+                const actionsTaken = inv.reminders?.length > 0
+                  ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent: ${inv.reminders.join(', ')}`
+                  : 'No reminders sent yet';
+                return {
+                  ...inv,
+                  disputeReason: reason,
+                  actionsTaken,
+                  nextAction: inv.nextReminder ? `Reminder scheduled ${inv.nextReminder}` : 'Direct call recommended — sequence complete',
+                  customerAvg: pb?.avgDays ?? '?',
+                  riskLevel: pb?.riskLevel ?? '—',
+                };
+              });
+              if (rows.length === 0) {
+                const atRisk = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45);
+                onDrill({
+                  title: 'Aging Risk — 45+ Days Overdue',
+                  subtitle: `${atRisk.length} invoice${atRisk.length !== 1 ? 's' : ''} at recovery risk`,
+                  source: 'Invoices over 90 days past due have under 50% average recovery. Escalation to direct contact or collections is recommended.',
+                  filename: 'aging_risk',
+                  columns: [
+                    { key: 'customer',    label: 'Customer' },
+                    { key: 'id',          label: 'Invoice' },
+                    { key: 'amount',      label: 'Amount',       render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+                    { key: 'due',         label: 'Due Date' },
+                    { key: 'daysOverdue', label: 'Days Overdue',  render: v => `${v}d` },
+                    { key: 'status',      label: 'Status' },
+                  ],
+                  rows: atRisk,
+                });
+                return;
+              }
+              onDrill({
+                title: 'Dispute Detection — Anomalous Payment Behavior',
+                subtitle: `${rows.length} invoice${rows.length !== 1 ? 's' : ''} flagged · direct contact recommended`,
+                source: 'Flagged when a low/medium-risk customer pays significantly later than their own average, or when an invoice was viewed but not paid after the due date.',
+                filename: 'dispute_flags',
+                columns: [
+                  { key: 'customer',      label: 'Customer' },
+                  { key: 'id',            label: 'Invoice' },
+                  { key: 'amount',        label: 'Amount',             render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+                  { key: 'daysOverdue',   label: 'Days Overdue',        render: v => `${v}d` },
+                  { key: 'customerAvg',   label: 'Customer Avg Pay',    render: v => `${v}d` },
+                  { key: 'disputeReason', label: 'Anomaly Flag' },
+                  { key: 'actionsTaken',  label: 'Actions Taken' },
+                  { key: 'nextAction',    label: 'Next Step' },
+                ],
+                rows,
+              });
+            }}
           />
           <RootCause
             status="resolved" color="#22c55e"
             title="Visibility Blind Spot"
             detail="Real-time AR dashboard active — data refreshes every 15 minutes"
             sub="LunarLogic is your windshield, not a rearview mirror"
+            onClick={() => onDrill({
+              title: 'DSO Trend — Last 90 Days',
+              subtitle: `${data.preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today · go-live ${data.goLiveDate}`,
+              source: '30-day rolling DSO calculated daily from QuickBooks invoice data. Go-live date marks LunarLogic activation.',
+              filename: 'dso_trend_90d',
+              columns: [
+                { key: 'date', label: 'Date' },
+                { key: 'dso',  label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso },
+              ],
+              rows: data.dsoTrend,
+            })}
           />
         </div>
       </div>
@@ -204,30 +339,51 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             These invoices are overdue in ways that don't match the customer's payment history — a billing question, dispute, or internal delay may be stalling payment.
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {disputeSuspects.map(inv => {
-              const pb = (data.paymentBehavior ?? []).find(p => p.customer === inv.customer);
-              const reason = inv.status === 'Viewed' && inv.daysOverdue > 7
-                ? 'Invoice viewed but payment not received — possible billing question'
-                : `${inv.daysOverdue}d overdue vs ${pb?.avgDays ?? '?'}d typical — anomalous for this customer`;
-              return (
-                <div key={inv.id} style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, padding: '10px 12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <div>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+            {disputeSuspects.map(inv => (
+                <div key={inv.id}
+                  style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, padding: '10px 12px' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{inv.customer}</span>
+                        <span style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.id}</span>
                         <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.15)', borderRadius: 8, padding: '1px 7px' }}>Possible Dispute</span>
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{reason}</div>
-                      <div style={{ fontSize: 10, color: 'var(--muted)' }}>Recommended: direct call to {inv.customer} to confirm receipt and address any questions</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>
+                        {inv.status === 'Viewed' && inv.daysOverdue > 7
+                          ? 'Invoice was opened but payment has not been received — a billing question or internal approval delay may be stalling this.'
+                          : (() => { const pb = (data.paymentBehavior ?? []).find(p => p.customer === inv.customer); return `${inv.daysOverdue}d overdue vs this customer's typical ${pb?.avgDays ?? '?'}d — this is outside their normal pattern.`; })()
+                        }
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                          <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>Actions taken: </span>
+                          {inv.reminders?.length > 0
+                            ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent — ${inv.reminders.join(', ')}`
+                            : 'No reminders sent yet'}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                          <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>Next step: </span>
+                          {inv.nextReminder
+                            ? `Reminder scheduled ${new Date(inv.nextReminder).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — consider calling before then`
+                            : 'Automated sequence complete — direct call recommended'}
+                        </div>
+                      </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</div>
-                      <div style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.id}</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{fmtM(inv.amount)}</div>
+                      <div style={{ fontSize: 10, color: inv.daysOverdue > 0 ? '#a78bfa' : 'var(--muted)' }}>{inv.daysOverdue > 0 ? `${inv.daysOverdue}d overdue` : `Due ${inv.due}`}</div>
                     </div>
                   </div>
+                  <button
+                    onClick={() => onAction(inv)}
+                    style={{ width: '100%', padding: '6px 0', fontSize: 11, fontWeight: 600, borderRadius: 6, border: '1px solid rgba(167,139,250,0.4)', background: 'rgba(167,139,250,0.1)', color: '#a78bfa', cursor: 'pointer' }}
+                  >
+                    Open invoice + take action
+                  </button>
                 </div>
-              );
-            })}
+              ))}
           </div>
           <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 10, fontStyle: 'italic' }}>
             Disputes left unresolved become bad debt. LunarLogic flags them early — when recovery is still straightforward.
