@@ -40,7 +40,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, isMobile, onDrill, onAction }) {
+export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
 
@@ -116,6 +116,36 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         ))}
       </div>
 
+      {/* Expected this week */}
+      {(() => {
+        const TODAY = new Date();
+        const weekOut = new Date(TODAY); weekOut.setDate(TODAY.getDate() + 7);
+        const thisWeek = enriched.filter(e => {
+          if (!e.expectedDate) return false;
+          const d = new Date(e.expectedDate);
+          return d >= TODAY && d <= weekOut;
+        }).sort((a, b) => new Date(a.expectedDate) - new Date(b.expectedDate));
+        if (thisWeek.length === 0) return null;
+        return (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+              Expected this week
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {thisWeek.map(inv => (
+                <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{inv.customer}</span>
+                    <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 6 }}>{inv.id} · expected {new Date(inv.expectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Predictive Cash Gap Alert */}
       {(() => {
         if (!annualRevenue) return null;
@@ -165,6 +195,38 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         );
       })()}
 
+      {/* Overdue: Accelerate Collection */}
+      {enriched.filter(e => e.daysOverdue > 0).length > 0 && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, padding: '16px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+            Overdue — Accelerate Collection
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {enriched
+              .filter(e => e.daysOverdue > 0)
+              .sort((a, b) => b.amount - a.amount)
+              .map(inv => (
+                <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, background: 'rgba(239,68,68,0.05)', borderRadius: 8, padding: '8px 10px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{inv.customer}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.id} · {inv.daysOverdue}d overdue · expected receipt {inv.expectedDate}</div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444', marginBottom: 4 }}>{fmtM(inv.amount)}</div>
+                    <button
+                      onClick={() => onAction(inv)}
+                      style={{ fontSize: 10, fontWeight: 600, borderRadius: 5, border: '1px solid rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer', padding: '3px 8px' }}
+                    >
+                      Take action
+                    </button>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      )}
+
       {/* Chart */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 4 }}>Weekly cash expected — click any bar to drill in</div>
@@ -191,6 +253,55 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
               {l.label}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Payment confirmation queue + Recent payments */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+        {/* Payment confirmations needed */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+            Payment confirmations needed
+          </div>
+          {(payments ?? []).filter(p => p.status === 'Pending Review').length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--muted)' }}>No payments awaiting confirmation</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(payments ?? []).filter(p => p.status === 'Pending Review').map((p, i) => (
+                <div key={p.txId ?? i} style={{ background: 'rgba(245,158,11,0.06)', borderRadius: 8, padding: '8px 10px', border: '1px solid rgba(245,158,11,0.15)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{p.matchedCustomer}</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#f59e0b' }}>{fmtM(p.amount)}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>{p.rule}</div>
+                  {Array.isArray(p.candidates) && p.candidates.length > 0 && (
+                    <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>Candidates: {p.candidates.join(' · ')}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Recent payments received */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+            Recent payments received
+          </div>
+          {(payments ?? []).filter(p => p.status !== 'Pending Review').length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--muted)' }}>No recent payments</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {(payments ?? []).filter(p => p.status !== 'Pending Review').slice(0, 6).map((p, i) => (
+                <div key={p.txId ?? i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{p.matchedCustomer}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.received} · matched {p.candidates?.[0] ?? '—'} · {p.confidence}% confidence</div>
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', flexShrink: 0 }}>{fmtM(p.amount)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
