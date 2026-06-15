@@ -100,19 +100,18 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
         <SectionLabel>DSO root cause diagnostic — your 5 drivers tracked live</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
           <RootCause
-            icon="✓" status="resolved" color="#22c55e"
+            status="resolved" color="#22c55e"
             title="Invoice Lag"
             detail="Invoices auto-sent within minutes of job approval via LunarLogic"
             sub="Was adding 3–8 days to DSO before go-live"
           />
           <RootCause
-            icon="✓" status="resolved" color="#22c55e"
+            status="resolved" color="#22c55e"
             title="Inconsistent Follow-Up"
             detail={`${data.invoices.filter(i => i.status !== 'Paid' && i.reminders && i.reminders.length > 0).length} active invoices in automated reminder sequences`}
             sub="Customers with 3+ reminders pay 40% faster on average"
           />
           <RootCause
-            icon={pending.length > 0 ? '⚠' : '✓'}
             status={pending.length > 0 ? 'attention' : 'resolved'}
             color={pending.length > 0 ? '#f59e0b' : '#22c55e'}
             title="Unapplied Payments"
@@ -121,7 +120,6 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             onClick={pending.length > 0 ? () => onNavigate('cash') : null}
           />
           <RootCause
-            icon={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? '⚠' : '✓'}
             status={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? 'attention' : 'resolved'}
             color={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? '#f97316' : '#22c55e'}
             title="Disputes & Aging Risk"
@@ -131,7 +129,7 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             sub="Invoices over 90 days past due have under 50% average recovery"
           />
           <RootCause
-            icon="✓" status="resolved" color="#22c55e"
+            status="resolved" color="#22c55e"
             title="Visibility Blind Spot"
             detail="Real-time AR dashboard active — data refreshes every 15 minutes"
             sub="LunarLogic is your windshield, not a rearview mirror"
@@ -262,7 +260,7 @@ function RootCause({ icon, status, color, title, detail, sub, onClick }) {
       onMouseEnter={e => { if (onClick) e.currentTarget.style.background = `${color}14`; }}
       onMouseLeave={e => { e.currentTarget.style.background = `${color}08`; }}
     >
-      <div style={{ width: 22, height: 22, borderRadius: '50%', background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color, flexShrink: 0, marginTop: 1 }}>{icon}</div>
+      <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0, marginTop: 6 }} />
       <div style={{ flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{title}</span>

@@ -125,13 +125,13 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
               </div>
               {/* Recommendation */}
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', fontSize: 12, color: urgColor, fontWeight: 600 }}>
-                {inv.daysOverdue > 90 ? '⚡ Escalate to collections immediately'
-                  : inv.daysOverdue > 60 ? '📞 Personal call to senior contact required'
-                  : inv.daysOverdue > 30 ? '📞 Phone call + formal written notice'
-                  : inv.daysOverdue > 14 ? '📞 Follow-up call recommended'
-                  : inv.daysOverdue > 7  ? '✉ Send reminder email'
-                  : inv.daysOverdue > 0  ? '✉ Auto-reminder sent by LunarLogic'
-                  : '✓ On track — LunarLogic monitoring'}
+                {inv.daysOverdue > 90 ? 'Escalate to collections immediately'
+                  : inv.daysOverdue > 60 ? 'Personal call — senior contact required'
+                  : inv.daysOverdue > 30 ? 'Phone call + formal written notice'
+                  : inv.daysOverdue > 14 ? 'Follow-up call recommended'
+                  : inv.daysOverdue > 7  ? 'Send reminder email'
+                  : inv.daysOverdue > 0  ? 'Auto-reminder sent by LunarLogic'
+                  : 'On track — LunarLogic monitoring'}
               </div>
             </div>
           </div>
@@ -142,10 +142,10 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
               <SectionLabel>Take action</SectionLabel>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {[
-                  { id: 'reminder', label: 'Send Reminder',  sub: 'Email draft ready', icon: '✉', primary: true },
-                  { id: 'log',      label: 'Log Contact',    sub: 'Call, email, meeting', icon: '📋' },
-                  { id: 'task',     label: 'Assign Task',    sub: 'Delegate follow-up', icon: '✓' },
-                  { id: 'snooze',   label: 'Snooze',         sub: 'Promise to pay date', icon: '⏸' },
+                  { id: 'reminder', label: 'Send Reminder',  sub: 'Email draft ready',    primary: true },
+                  { id: 'log',      label: 'Log Contact',    sub: 'Call, email, meeting'               },
+                  { id: 'task',     label: 'Assign Task',    sub: 'Delegate follow-up'                 },
+                  { id: 'snooze',   label: 'Snooze',         sub: 'Promise to pay date'                },
                 ].map(a => (
                   <button key={a.id} onClick={() => setAction(a.id)} style={{
                     padding: '10px 12px', background: a.primary ? 'rgba(0,212,232,0.08)' : 'var(--bg)',
@@ -155,7 +155,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.borderColor = 'var(--teal)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = a.primary ? 'rgba(0,212,232,0.08)' : 'var(--bg)'; e.currentTarget.style.borderColor = a.primary ? 'var(--teal)' : 'var(--border)'; }}
                   >
-                    <div style={{ fontSize: 13, marginBottom: 2 }}>{a.icon} <span style={{ fontWeight: 600, color: a.primary ? 'var(--teal)' : 'var(--text)' }}>{a.label}</span></div>
+                    <div style={{ fontSize: 13, marginBottom: 2 }}><span style={{ fontWeight: 600, color: a.primary ? 'var(--teal)' : 'var(--text)' }}>{a.label}</span></div>
                     <div style={{ fontSize: 10, color: 'var(--muted)' }}>{a.sub}</div>
                   </button>
                 ))}
