@@ -137,7 +137,7 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
     const rows = disputeSuspects.map(inv => {
       const pb = pbMap[inv.customer];
       const reason = inv.status === 'Viewed' && inv.daysOverdue > 7
-        ? 'Invoice viewed but not paid — billing question likely stalling payment'
+        ? 'Viewed but not paid — billing question likely stalling payment'
         : `${inv.daysOverdue}d overdue vs ${pb?.avgDays ?? '?'}d customer average — anomalous behavior`;
       const actionsTaken = inv.reminders?.length > 0
         ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent — ${inv.reminders.join(', ')}`
