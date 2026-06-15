@@ -40,7 +40,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientCashForecast({ invoices, paymentBehavior, isMobile, onDrill, onAction }) {
+export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
 
@@ -115,6 +115,55 @@ export default function ClientCashForecast({ invoices, paymentBehavior, isMobile
           </div>
         ))}
       </div>
+
+      {/* Predictive Cash Gap Alert */}
+      {(() => {
+        if (!annualRevenue) return null;
+        const monthlyBurn = Math.round(annualRevenue * 0.65 / 12);
+        const next30Gap   = monthlyBurn - total30;
+        const next14      = forecastWithin(enriched, 14).reduce((s, i) => s + i.amount, 0);
+        const biweeklyBurn = Math.round(monthlyBurn / 2);
+        const nearTermGap  = biweeklyBurn - next14;
+
+        if (nearTermGap <= 0 && next30Gap <= 0) return null;
+
+        const gapAmt     = nearTermGap > 0 ? nearTermGap : next30Gap;
+        const gapWindow  = nearTermGap > 0 ? 14 : 30;
+        const urgentInvs = enriched
+          .filter(i => i.daysOverdue > 0)
+          .sort((a, b) => b.amount - a.amount)
+          .slice(0, 3);
+
+        return (
+          <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 8 }}>
+              Cash Gap Alert — Action Window: {gapWindow} days
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+              <span style={{ fontSize: 22, fontWeight: 900, color: '#ef4444' }}>{fmtM(gapAmt)}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+                expected shortfall vs estimated {gapWindow === 14 ? 'bi-weekly' : 'monthly'} operating costs
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 10 }}>
+              Based on expected collections in the next {gapWindow} days ({fmtM(gapWindow === 14 ? next14 : total30)}) vs estimated operating costs ({fmtM(gapWindow === 14 ? biweeklyBurn : monthlyBurn)}). Accelerating these collections would close the gap:
+            </div>
+            {urgentInvs.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {urgentInvs.map(inv => (
+                  <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239,68,68,0.06)', borderRadius: 6, padding: '6px 10px' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{inv.customer} — {inv.id} ({inv.daysOverdue}d overdue)</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#ef4444' }}>{fmtM(inv.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 8, fontStyle: 'italic' }}>
+              Estimate based on 65% of annual revenue as operating costs. Your actual burn rate may differ.
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Chart */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>

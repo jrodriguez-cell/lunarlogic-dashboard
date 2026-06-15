@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 function fmtK(v) {
   if (!v) return '$0';
@@ -63,6 +63,14 @@ const ACTION_COLS = [
   { key: 'impact',      label: 'DSO Impact',   render: v => v != null ? `~${v}d` : '—', csvVal: row => row.impact ?? '' },
 ];
 
+function isDisputeSuspect(inv, pb) {
+  if (inv.status === 'Paid') return false;
+  if (inv.status === 'Viewed' && inv.daysOverdue > 7) return true;
+  if (pb?.riskLevel === 'low'    && inv.daysOverdue > pb.avgDays * 1.5) return true;
+  if (pb?.riskLevel === 'medium' && inv.daysOverdue > pb.avgDays * 2)   return true;
+  return false;
+}
+
 export default function ClientActionPlan({ invoices, paymentBehavior, payments, currentDSO, isMobile, onDrill, onAction }) {
   const [filter, setFilter] = useState('priority');
 
@@ -72,10 +80,11 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
   const allOpen = invoices
     .filter(i => i.status !== 'Paid')
     .map(inv => {
-      const pb     = pbMap[inv.customer];
-      const na     = nextAction(inv, pb);
-      const impact = dsoImpact(inv, totalAR);
-      return { ...inv, ...na, impact, pb };
+      const pb      = pbMap[inv.customer];
+      const na      = nextAction(inv, pb);
+      const impact  = dsoImpact(inv, totalAR);
+      const dispute = isDisputeSuspect(inv, pb);
+      return { ...inv, ...na, impact, pb, dispute };
     })
     .sort((a, b) => {
       const order = { critical: 0, high: 1, medium: 2, low: 3, watch: 4, ok: 5 };
@@ -244,7 +253,12 @@ function ActionRow({ inv, isMobile, onClick, onAction }) {
       <div style={{ borderTop: '1px solid var(--border)', padding: '6px 14px', display: 'flex', gap: 6, alignItems: 'center', background: 'rgba(0,0,0,0.12)', flexWrap: 'wrap' }}>
         <QuickBtn label="Take action" primary onClick={e => { e.stopPropagation(); onAction(); }} />
         <QuickBtn label="View & export ↗" onClick={e => { e.stopPropagation(); onClick(); }} />
-        {(() => {
+        {inv.dispute && (
+          <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 10, padding: '2px 8px', flexShrink: 0 }}>
+            Possible Dispute — call recommended
+          </span>
+        )}
+        {!inv.dispute && (() => {
           const pred = getPaymentPrediction(inv, inv.pb);
           if (!pred) return null;
           return (

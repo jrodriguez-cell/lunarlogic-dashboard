@@ -8,6 +8,7 @@ import ClientOverview from '../components/client/ClientOverview';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientCashForecast from '../components/client/ClientCashForecast';
 import ClientInvoices from '../components/client/ClientInvoices';
+import ClientReportCard from '../components/client/ClientReportCard';
 
 const DSO_BENCHMARKS = [
   { max: 30,       label: 'Excellent', color: '#22c55e', desc: 'Top-quartile efficiency'   },
@@ -25,6 +26,7 @@ const TABS = [
   { id: 'action',   label: 'Action Plan' },
   { id: 'cash',     label: 'Cash In' },
   { id: 'invoices', label: 'Invoices' },
+  { id: 'report',   label: 'Report Card' },
 ];
 
 export default function ClientDashboardPage({ session, onLogout }) {
@@ -132,8 +134,9 @@ export default function ClientDashboardPage({ session, onLogout }) {
       <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
         {activeTab === 'overview' && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'invoices' && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'report'   && <ClientReportCard data={data} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
       </div>
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />

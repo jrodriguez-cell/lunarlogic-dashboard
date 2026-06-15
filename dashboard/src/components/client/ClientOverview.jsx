@@ -25,6 +25,21 @@ const PMT_COLS = [
   { key: 'confidence',       label: 'Confidence', render: v => `${v}%` },
 ];
 
+function getDisputeSuspects(invoices, paymentBehavior) {
+  const pbMap = Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p]));
+  return invoices.filter(inv => {
+    if (inv.status === 'Paid') return false;
+    const pb = pbMap[inv.customer];
+    // Viewed but still unpaid past due — they saw it, something is wrong
+    if (inv.status === 'Viewed' && inv.daysOverdue > 7) return true;
+    // Low-risk customer paying anomalously late vs their own average
+    if (pb && pb.riskLevel === 'low' && inv.daysOverdue > pb.avgDays * 1.5) return true;
+    // Medium-risk paying >2x their average
+    if (pb && pb.riskLevel === 'medium' && inv.daysOverdue > pb.avgDays * 2) return true;
+    return false;
+  });
+}
+
 export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate, isMobile, onDrill }) {
   const open     = data.invoices.filter(i => i.status !== 'Paid');
   const overdue  = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
@@ -37,6 +52,11 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
   const payments    = data.payments ?? [];
   const autoApplied = payments.filter(p => p.status === 'Auto-Applied');
   const pending     = payments.filter(p => p.status === 'Pending Review');
+
+  const coveredInvs    = open.filter(i => (i.reminders?.length > 0) || i.nextReminder);
+  const uncoveredInvs  = open.filter(i => !(i.reminders?.length > 0) && !i.nextReminder);
+  const coveragePct    = open.length > 0 ? Math.round(coveredInvs.length / open.length * 100) : 100;
+  const disputeSuspects = getDisputeSuspects(data.invoices, data.paymentBehavior);
 
   function drillInvoices(title, rows, sub) {
     onDrill({ title, subtitle: sub, source: 'Live invoice data from QuickBooks Online.', filename: title.toLowerCase().replace(/\s+/g,'_'), columns: INV_COLS, rows });
@@ -136,6 +156,84 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
           />
         </div>
       </div>
+
+      {/* Automation Coverage Report */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+        <SectionLabel>Automation coverage — which invoices LunarLogic is handling</SectionLabel>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 10, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: 36, fontWeight: 900, color: coveragePct >= 80 ? 'var(--green)' : '#f59e0b', lineHeight: 1, letterSpacing: -1 }}>{coveragePct}%</div>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 3 }}>of open invoices in reminder sequence</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <div style={{ height: 8, background: 'var(--bg-hover)', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+              <div style={{ width: `${coveragePct}%`, height: '100%', background: coveragePct >= 80 ? '#22c55e' : '#f59e0b', borderRadius: 4, transition: 'width 0.4s' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+              <span>{coveredInvs.length} handled by LunarLogic</span>
+              <span>{uncoveredInvs.length} need manual attention</span>
+            </div>
+          </div>
+        </div>
+        {uncoveredInvs.length > 0 && (
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Invoices outside automation coverage</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {uncoveredInvs.map(inv => (
+                <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, padding: '4px 0' }}>
+                  <span style={{ color: 'var(--text-dim)' }}>{inv.customer} — {inv.id}</span>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', borderRadius: 8, padding: '1px 7px' }}>Needs you</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {uncoveredInvs.length === 0 && (
+          <div style={{ marginTop: 8, fontSize: 11, color: 'var(--green)', fontStyle: 'italic' }}>All open invoices are in active automation sequences — no manual follow-up needed.</div>
+        )}
+      </div>
+
+      {/* Dispute Detection */}
+      {disputeSuspects.length > 0 && (
+        <div style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 12, padding: '16px' }}>
+          <SectionLabel>Dispute detection — invoices showing anomalous payment behavior</SectionLabel>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6, marginBottom: 12, lineHeight: 1.5 }}>
+            These invoices are overdue in ways that don't match the customer's payment history — a billing question, dispute, or internal delay may be stalling payment.
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {disputeSuspects.map(inv => {
+              const pb = (data.paymentBehavior ?? []).find(p => p.customer === inv.customer);
+              const reason = inv.status === 'Viewed' && inv.daysOverdue > 7
+                ? 'Invoice viewed but payment not received — possible billing question'
+                : `${inv.daysOverdue}d overdue vs ${pb?.avgDays ?? '?'}d typical — anomalous for this customer`;
+              return (
+                <div key={inv.id} style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, padding: '10px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{inv.customer}</span>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.15)', borderRadius: 8, padding: '1px 7px' }}>Possible Dispute</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{reason}</div>
+                      <div style={{ fontSize: 10, color: 'var(--muted)' }}>Recommended: direct call to {inv.customer} to confirm receipt and address any questions</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</div>
+                      <div style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.id}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 10, fontStyle: 'italic' }}>
+            Disputes left unresolved become bad debt. LunarLogic flags them early — when recovery is still straightforward.
+          </div>
+        </div>
+      )}
 
       {/* Two panels */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
