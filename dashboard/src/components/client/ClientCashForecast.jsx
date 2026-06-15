@@ -2,8 +2,6 @@ import { useRef, useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { enrichInvoices, forecastWithin, addDays } from '../../lib/forecast';
 
-const TODAY_ISO = '2026-06-11';
-const TODAY = new Date(TODAY_ISO + 'T00:00:00');
 
 function fmtM(v) {
   if (!v || v === 0) return '$0';
@@ -65,6 +63,8 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isMobile, onDrill, onAction }) {
+  const TODAY     = new Date();
+  const TODAY_ISO = TODAY.toISOString().slice(0, 10);
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
 
@@ -92,7 +92,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
 
   const allPayments   = payments ?? [];
   const pendingPmts   = allPayments.filter(p => p.status === 'Pending Review');
-  const autoPmts      = allPayments.filter(p => p.status === 'Auto-Applied').slice(0, 6);
+  const autoPmts      = allPayments.filter(p => p.status !== 'Pending Review').slice(-6);
 
   const weeks = Array.from({ length: 13 }, (_, i) => {
     const start = addDays(TODAY, i * 7);
