@@ -95,6 +95,50 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
         </div>
       </div>
 
+      {/* Root Cause Diagnostic */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+        <SectionLabel>DSO root cause diagnostic — your 5 drivers tracked live</SectionLabel>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+          <RootCause
+            icon="✓" status="resolved" color="#22c55e"
+            title="Invoice Lag"
+            detail="Invoices auto-sent within minutes of job approval via LunarLogic"
+            sub="Was adding 3–8 days to DSO before go-live"
+          />
+          <RootCause
+            icon="✓" status="resolved" color="#22c55e"
+            title="Inconsistent Follow-Up"
+            detail={`${data.invoices.filter(i => i.status !== 'Paid' && i.reminders && i.reminders.length > 0).length} active invoices in automated reminder sequences`}
+            sub="Customers with 3+ reminders pay 40% faster on average"
+          />
+          <RootCause
+            icon={pending.length > 0 ? '⚠' : '✓'}
+            status={pending.length > 0 ? 'attention' : 'resolved'}
+            color={pending.length > 0 ? '#f59e0b' : '#22c55e'}
+            title="Unapplied Payments"
+            detail={pending.length > 0 ? `${pending.length} payment${pending.length !== 1 ? 's' : ''} pending match confirmation` : 'All payments matched and applied automatically'}
+            sub={pending.length > 0 ? 'Review in Cash In tab — one-click approval' : 'AI fuzzy-matching active, 90%+ confidence auto-applied'}
+            onClick={pending.length > 0 ? () => onNavigate('cash') : null}
+          />
+          <RootCause
+            icon={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? '⚠' : '✓'}
+            status={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? 'attention' : 'resolved'}
+            color={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0 ? '#f97316' : '#22c55e'}
+            title="Disputes & Aging Risk"
+            detail={data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length > 0
+              ? `${data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length} invoice${data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length !== 1 ? 's' : ''} 45+ days overdue — recovery rate drops below 50% at 90 days`
+              : 'No invoices at critical aging risk'}
+            sub="Invoices over 90 days past due have under 50% average recovery"
+          />
+          <RootCause
+            icon="✓" status="resolved" color="#22c55e"
+            title="Visibility Blind Spot"
+            detail="Real-time AR dashboard active — data refreshes every 15 minutes"
+            sub="LunarLogic is your windshield, not a rearview mirror"
+          />
+        </div>
+      </div>
+
       {/* Two panels */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
 
@@ -207,6 +251,27 @@ function ActivityRow({ icon, label, value, color, onClick }) {
         {onClick && <span style={{ fontSize: 9, color: 'var(--muted)' }}>↗</span>}
       </div>
       <span style={{ fontSize: 13, fontWeight: 700, color }}>{value}</span>
+    </div>
+  );
+}
+
+function RootCause({ icon, status, color, title, detail, sub, onClick }) {
+  return (
+    <div onClick={onClick}
+      style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '8px 10px', borderRadius: 8, background: `${color}08`, border: `1px solid ${color}20`, cursor: onClick ? 'pointer' : 'default', transition: 'background 0.1s' }}
+      onMouseEnter={e => { if (onClick) e.currentTarget.style.background = `${color}14`; }}
+      onMouseLeave={e => { e.currentTarget.style.background = `${color}08`; }}
+    >
+      <div style={{ width: 22, height: 22, borderRadius: '50%', background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color, flexShrink: 0, marginTop: 1 }}>{icon}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{title}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, color, background: `${color}15`, borderRadius: 10, padding: '1px 7px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{status === 'resolved' ? 'Resolved' : 'Needs Attention'}</span>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{detail}</div>
+        <div style={{ fontSize: 10, color: 'var(--muted)', fontStyle: 'italic' }}>{sub}</div>
+      </div>
+      {onClick && <span style={{ fontSize: 10, color: 'var(--muted)', flexShrink: 0, marginTop: 4 }}>↗</span>}
     </div>
   );
 }

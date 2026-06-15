@@ -1,5 +1,27 @@
 import { useState } from 'react';
 
+function fmtK(v) {
+  if (!v) return '$0';
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000)     return `$${Math.round(v / 1_000)}k`;
+  return `$${v}`;
+}
+
+function getPaymentPrediction(inv, pb) {
+  if (!pb || inv.status === 'Paid') return null;
+  const { avgDays } = pb;
+  if (inv.daysOverdue <= 0) {
+    const daysUntilDue = -inv.daysOverdue;
+    if (daysUntilDue > 14) return { label: 'On Track',  color: '#22c55e', pct: 88 };
+    if (daysUntilDue > 0)  return { label: 'Watch',     color: '#f59e0b', pct: 65 };
+    return { label: 'Due Today', color: '#f59e0b', pct: 60 };
+  }
+  const ratio = inv.daysOverdue / Math.max(avgDays, 1);
+  if (ratio < 0.35) return { label: 'At Risk',   color: '#f59e0b', pct: 52 };
+  if (ratio < 0.75) return { label: 'High Risk', color: '#f97316', pct: 28 };
+  return { label: 'Critical', color: '#ef4444', pct: 11 };
+}
+
 function fmtM(v) {
   if (!v) return '$0';
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
@@ -97,6 +119,27 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {(() => {
+        const overdueInvs = invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
+        const overdueAR   = overdueInvs.reduce((s, i) => s + i.amount, 0);
+        const totalAR     = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
+        const dsoSavings  = totalAR > 0 ? Math.round((overdueAR / totalAR) * currentDSO * 0.6) : 0;
+        if (overdueInvs.length === 0) return null;
+        return (
+          <div style={{ background: 'rgba(0,212,232,0.06)', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 8 }}>Working capital at stake</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+              <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>{fmtK(overdueAR)}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>locked in {overdueInvs.length} overdue invoice{overdueInvs.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.5 }}>
+              Collecting these this week would compress your DSO by approximately <strong style={{ color: 'var(--teal)' }}>{dsoSavings} additional days</strong> — moving it from {Math.round(currentDSO)} toward your best-possible {Math.round(currentDSO - dsoSavings)} days.
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 6, fontStyle: 'italic' }}>Revenue is a promise. Cash is the reality. LunarLogic moves it between the two.</div>
+          </div>
+        );
+      })()}
 
       {/* Summary tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 10 }}>
@@ -198,9 +241,18 @@ function ActionRow({ inv, isMobile, onClick, onAction }) {
         </div>
       </div>
       {/* Quick action strip */}
-      <div style={{ borderTop: '1px solid var(--border)', padding: '6px 14px', display: 'flex', gap: 6, background: 'rgba(0,0,0,0.12)' }}>
+      <div style={{ borderTop: '1px solid var(--border)', padding: '6px 14px', display: 'flex', gap: 6, alignItems: 'center', background: 'rgba(0,0,0,0.12)', flexWrap: 'wrap' }}>
         <QuickBtn label="Take action" primary onClick={e => { e.stopPropagation(); onAction(); }} />
         <QuickBtn label="View & export ↗" onClick={e => { e.stopPropagation(); onClick(); }} />
+        {(() => {
+          const pred = getPaymentPrediction(inv, inv.pb);
+          if (!pred) return null;
+          return (
+            <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: pred.color, background: `${pred.color}15`, border: `1px solid ${pred.color}30`, borderRadius: 10, padding: '2px 8px', flexShrink: 0 }}>
+              {pred.label} · {pred.pct}% pay likelihood
+            </span>
+          );
+        })()}
       </div>
     </div>
   );

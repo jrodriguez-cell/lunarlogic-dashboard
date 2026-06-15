@@ -133,9 +133,19 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
                 </div>
               </div>
               {inv.status !== 'Paid' && (
-                <div style={{ borderTop: '1px solid var(--border)', padding: '6px 12px', display: 'flex', gap: 6, background: 'rgba(0,0,0,0.12)' }}>
+                <div style={{ borderTop: '1px solid var(--border)', padding: '6px 12px', display: 'flex', gap: 6, alignItems: 'center', background: 'rgba(0,0,0,0.12)', flexWrap: 'wrap' }}>
                   <button onClick={() => onAction(inv)} style={{ padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer', background: 'rgba(0,212,232,0.12)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>Take action</button>
                   <button onClick={() => drillInvoice(inv)} style={{ padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer', background: 'none', border: '1px solid var(--border)', color: 'var(--muted)' }}>View & export ↗</button>
+                  {inv.reminders && inv.reminders.length > 0 ? (
+                    <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>
+                      ↻ {inv.reminders.length} reminder{inv.reminders.length !== 1 ? 's' : ''} sent
+                      {inv.nextReminder && ` · Next: ${new Date(inv.nextReminder).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                    </span>
+                  ) : inv.nextReminder ? (
+                    <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>
+                      ↻ Reminder queued: {new Date(inv.nextReminder).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  ) : null}
                 </div>
               )}
             </div>
