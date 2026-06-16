@@ -84,34 +84,33 @@ export default function ClientDashboardPage({ session, onLogout }) {
       </div>
 
       {/* Hero — DSO + stat grid */}
-      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: isMobile ? '16px 16px' : '16px 24px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'flex-start', gap: isMobile ? 16 : 24 }}>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: isMobile ? '14px 16px' : '14px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch', gap: isMobile ? 14 : 20 }}>
 
           {/* Left — DSO number */}
-          <div style={{ flexShrink: 0 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: 4 }}>
               Days Sales Outstanding
               <SourceTag label="Days Sales Outstanding: average number of days to collect payment after invoice issue. Formula: (Total Open AR ÷ Annual Revenue) × 365. Calculated daily from QuickBooks data." />
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: isMobile ? 48 : 56, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -3 }}>{Math.round(currentDSO)}</span>
-              <span style={{ fontSize: 14, color: 'var(--muted)', fontWeight: 400 }}>days</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 5 }}>
-              <span style={{
-                fontSize: 9, fontWeight: 700, color: bm.color,
-                background: `${bm.color}18`, border: `1px solid ${bm.color}35`,
-                borderRadius: 20, padding: '2px 9px', letterSpacing: '0.06em', textTransform: 'uppercase',
-              }}>
-                {bm.label} — {bm.desc}
-              </span>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 5 }}>
-              Was {data.preLiveDSO}d before LunarLogic &nbsp;·&nbsp; Go-live {data.goLiveDate}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: isMobile ? 44 : 52, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -3 }}>{Math.round(currentDSO)}</span>
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 400, display: 'block', marginBottom: 4 }}>days</span>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, color: bm.color,
+                  background: `${bm.color}18`, border: `1px solid ${bm.color}35`,
+                  borderRadius: 20, padding: '2px 9px', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+                }}>
+                  {bm.label} — {bm.desc}
+                </span>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>Was {data.preLiveDSO}d</span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
               <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                <span style={{ color: '#f59e0b', fontWeight: 700 }}>45d</span> industry avg
+                <span style={{ color: '#f59e0b', fontWeight: 700 }}>45d</span> avg
                 <SourceTag label="Industry average DSO for professional services firms per APQC Process & Performance Management benchmarks (2024 report). Range: 40–60 days." />
               </span>
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
@@ -120,13 +119,13 @@ export default function ClientDashboardPage({ session, onLogout }) {
                 <SourceTag label="Best-in-class DSO for professional services per APQC benchmarks. Top quartile performers sustain 25–35 day DSO through systematic AR automation." />
               </span>
               {Math.round(currentDSO) <= 45 && (
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '1px 7px' }}>
-                  {45 - Math.round(currentDSO)}d ahead of industry avg
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '1px 7px', whiteSpace: 'nowrap' }}>
+                  {45 - Math.round(currentDSO)}d ahead
                 </span>
               )}
               {dsoChange < 0 && (
-                <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                  · ↓ {Math.abs(dsoChange)}d = {fmtK(Math.abs(dsoChange) * Math.round(data.annualRevenue / 365))} freed
+                <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
+                  · ↓{Math.abs(dsoChange)}d = {fmtK(Math.abs(dsoChange) * Math.round(data.annualRevenue / 365))} freed
                   <SourceTag label="Working capital freed = DSO improvement (days) × (Annual Revenue ÷ 365). Represents cash that was previously tied up in the collection cycle and is now available sooner." />
                 </span>
               )}
@@ -134,10 +133,10 @@ export default function ClientDashboardPage({ session, onLogout }) {
           </div>
 
           {/* Divider */}
-          {!isMobile && <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--border)', flexShrink: 0 }} />}
+          {!isMobile && <div style={{ width: 1, background: 'var(--border)', flexShrink: 0 }} />}
 
           {/* Right — stat grid */}
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 8 : 10, alignContent: 'start' }}>
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 8 : 10, alignContent: 'center' }}>
 
             {/* Projected if overdue cleared */}
             {overdueInvs.length > 0 ? (
