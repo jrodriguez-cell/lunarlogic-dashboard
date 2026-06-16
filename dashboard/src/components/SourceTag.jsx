@@ -61,6 +61,8 @@ export default function SourceTag({ label }) {
             bottom: coords.openBelow ? 'auto' : window.innerHeight - coords.top,
             left: coords.left,
             width: 220,
+            maxWidth: 220,
+            boxSizing: 'border-box',
             background: '#1a2235',
             border: '1px solid rgba(0,212,232,0.25)',
             borderRadius: 8,
@@ -71,7 +73,7 @@ export default function SourceTag({ label }) {
           }}
         >
           <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 5 }}>Data Source</div>
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.6 }}>{label}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.6, whiteSpace: 'normal', wordBreak: 'break-word' }}>{label}</div>
         </div>
       )}
     </>
