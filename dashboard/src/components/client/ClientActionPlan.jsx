@@ -400,7 +400,7 @@ function DisputeMonitor({ disputes, isMobile, onAction, onDrill }) {
                       {isDraftOpen ? 'Hide AI draft' : 'Preview AI draft'}
                     </button>
                     {isDraftOpen && (
-                      <pre style={{ margin: 0, padding: '12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, fontSize: 11, color: 'var(--text-dim)', whiteSpace: 'pre-wrap', fontFamily: 'inherit', lineHeight: 1.7 }}>
+                      <pre style={{ margin: 0, padding: '12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, fontSize: 11, color: 'var(--text-dim)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit', lineHeight: 1.7, overflowX: 'auto' }}>
                         {d.aiDraft}
                       </pre>
                     )}
@@ -468,8 +468,8 @@ function ActionRow({ inv, isMobile, onClick, onAction }) {
       </div>
       {/* Quick action strip */}
       <div style={{ borderTop: '1px solid var(--border)', padding: '6px 14px', display: 'flex', gap: 6, alignItems: 'center', background: 'rgba(0,0,0,0.12)', flexWrap: 'wrap' }}>
-        <QuickBtn label="Take action" primary onClick={e => { e.stopPropagation(); onAction(); }} />
-        <QuickBtn label="View detail" onClick={e => { e.stopPropagation(); onClick(); }} />
+        <QuickBtn label="Take action" primary isMobile={isMobile} onClick={e => { e.stopPropagation(); onAction(); }} />
+        <QuickBtn label="View detail" isMobile={isMobile} onClick={e => { e.stopPropagation(); onClick(); }} />
         {inv.dispute && (
           <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 10, padding: '2px 8px', flexShrink: 0 }}>
             Dispute flagged — see AI Monitor above
@@ -531,10 +531,12 @@ function AutomatedRow({ inv, isMobile, onClick, onAction }) {
   );
 }
 
-function QuickBtn({ label, onClick, primary }) {
+function QuickBtn({ label, onClick, primary, isMobile }) {
   return (
     <button onClick={onClick} style={{
-      padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer',
+      padding: isMobile ? '8px 14px' : '4px 10px',
+      minHeight: isMobile ? 36 : 'auto',
+      fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer',
       background: primary ? 'rgba(0,212,232,0.12)' : 'none',
       border: `1px solid ${primary ? 'var(--teal)' : 'var(--border)'}`,
       color: primary ? 'var(--teal)' : 'var(--muted)',
