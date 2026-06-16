@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import SourceTag from '../SourceTag';
 
 const TODAY_ISO = '2026-06-11';
+
+const FALLBACK_SUMMARY = 'A shareable summary of AR performance, DSO progress, and automation impact. Designed to be sent to your accountant or reviewed with leadership.';
 
 function fmtM(v) {
   if (!v || v === 0) return '$0';
@@ -43,6 +46,47 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
 
   const collEff = data.collectionEfficiency;
 
+  const [aiSummary, setAiSummary] = useState(null);
+  const [aiLoading, setAiLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAiLoading(true);
+    setAiSummary(null);
+
+    const metrics = {
+      dsoThisMonth: dsoThis,
+      dsoLastMonth: dsoLast,
+      dsoMonthOverMonthChangeDays: dsoMoChg,
+      currentDSO: Math.round(currentDSO),
+      dsoImprovementSinceGoLive: dsoImprovement,
+      recoveredWorkingCapital: recoveredCapital,
+      collectionEfficiencyPct: collEff,
+      paymentsReceivedThisPeriod: pmtsPeriod.length,
+      paymentsAutoMatchedThisPeriod: autoPeriod.length,
+      hoursSavedThisPeriod: hoursSaved,
+      openInvoiceCount: openInvs.length,
+      reminderCoveragePct: coveragePct,
+      badDebtAmount90PlusDays: badDebtAmt,
+      badDebtInvoiceCount: badDebt.length,
+      invoicesIssuedThisPeriod: totalSent,
+      remindersSentTotal: totalRemindersSent,
+    };
+
+    fetch('/api/ar-insights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientName: data.name, metrics }),
+    })
+      .then(res => { if (!res.ok) throw new Error(`status ${res.status}`); return res.json(); })
+      .then(json => { if (!cancelled) setAiSummary(json.insight); })
+      .catch(err => { console.error('AI insight fetch failed, using fallback summary:', err); })
+      .finally(() => { if (!cancelled) setAiLoading(false); });
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.name, dsoThis, dsoLast, currentDSO, badDebtAmt]);
+
   const DSO_COLS = [
     { key: 'date', label: 'Date' },
     { key: 'dso',  label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso },
@@ -53,11 +97,18 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
 
       {/* Header card */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 6 }}>
-          Monthly AR Performance Report — June 2026
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+            Monthly AR Performance Report — June 2026
+          </div>
+          {aiSummary && !aiLoading && (
+            <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--teal)', background: 'rgba(0,212,232,0.1)', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 10, padding: '1px 8px', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+              AI Generated
+            </span>
+          )}
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6 }}>
-          A shareable summary of AR performance, DSO progress, and automation impact. Designed to be sent to your accountant or reviewed with leadership.
+          {aiLoading ? 'Generating insights from the last 30 days of AR activity…' : (aiSummary || FALLBACK_SUMMARY)}
         </div>
         <button
           style={{ marginTop: 10, padding: '5px 14px', fontSize: 11, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', cursor: 'pointer' }}
