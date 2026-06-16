@@ -3,6 +3,7 @@ import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
+import BPDSODrawer from '../components/BPDSODrawer';
 import CustomerPanel from '../components/client/CustomerPanel';
 import ClientOverview from '../components/client/ClientOverview';
 import ClientActionPlan from '../components/client/ClientActionPlan';
@@ -41,6 +42,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
+  const [showBPDSO, setShowBPDSO] = useState(false);
   const isMobile = useMobile();
   const data = useMemo(() => getClientData(session.clientId), [session.clientId]);
 
@@ -160,49 +162,14 @@ export default function ClientDashboardPage({ session, onLogout }) {
             )}
 
             {/* Best possible DSO */}
-            {dsoGapDays > 0 ? (
-              <StatCard
-                label="Best possible DSO"
-                value={`${bpdso}d`}
-                sub={`${dsoGapDays}d gap = ${fmtK(dsoGapDollars)} recoverable`}
-                color="var(--teal)"
-                clickable
-                onClick={() => {
-                  const dailyRev = data.annualRevenue / 365;
-                  const overdueRows = data.invoices
-                    .filter(i => i.status !== 'Paid' && i.daysOverdue > 0)
-                    .map(inv => {
-                      const dsoContrib = Math.round((inv.amount / (data.annualRevenue / 365)) * 10) / 10;
-                      const action =
-                        inv.daysOverdue > 90 ? 'Escalate to collections immediately' :
-                        inv.daysOverdue > 60 ? 'Personal call — senior contact required' :
-                        inv.daysOverdue > 30 ? 'Phone call + formal written notice' :
-                        inv.daysOverdue > 14 ? 'Follow-up call recommended' :
-                                               'WF2 reminder sequence active';
-                      return { ...inv, dsoContrib, action };
-                    })
-                    .sort((a, b) => b.dsoContrib - a.dsoContrib);
-
-                  setDrill({
-                    title: `Best Possible DSO — ${bpdso} days`,
-                    subtitle: `You are ${dsoGapDays} days above your BPDSO. Closing this gap releases ${fmtK(dsoGapDollars)} in working capital.`,
-                    source: `BPDSO is calculated from your current (non-overdue) AR only: Current AR ÷ (Annual Revenue ÷ 365). It represents the DSO you would have today if every overdue invoice were collected — your theoretical floor given your billing volume. The ${dsoGapDays}-day gap between your actual DSO (${Math.round(currentDSO)}d) and BPDSO (${bpdso}d) is entirely driven by the overdue invoices below. The "DSO days added" column shows exactly how many days each invoice is contributing to that gap. Collecting the top invoices first gives the fastest DSO improvement per dollar.`,
-                    filename: 'bpdso_gap_action_plan',
-                    columns: [
-                      { key: 'customer',    label: 'Customer' },
-                      { key: 'id',          label: 'Invoice' },
-                      { key: 'amount',      label: 'Amount',         render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
-                      { key: 'daysOverdue', label: 'Days Overdue',   render: v => `${v}d` },
-                      { key: 'dsoContrib',  label: 'DSO Days Added', render: v => `+${v}d`, csvVal: row => row.dsoContrib },
-                      { key: 'action',      label: 'Action to Close Gap' },
-                    ],
-                    rows: overdueRows,
-                  });
-                }}
-              />
-            ) : (
-              <StatCard label="Best possible DSO" value={`${bpdso}d`} sub="At optimal efficiency" color="var(--teal)" />
-            )}
+            <StatCard
+              label="Best possible DSO"
+              value={`${bpdso}d`}
+              sub={dsoGapDays > 0 ? `${dsoGapDays}d gap = ${fmtK(dsoGapDollars)} recoverable` : 'At optimal efficiency'}
+              color="var(--teal)"
+              clickable
+              onClick={() => setShowBPDSO(true)}
+            />
 
           </div>
         </div>
@@ -241,6 +208,17 @@ export default function ClientDashboardPage({ session, onLogout }) {
       </div>
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
+      {showBPDSO && (
+        <BPDSODrawer
+          data={data}
+          currentDSO={currentDSO}
+          bpdso={bpdso}
+          dsoGapDays={dsoGapDays}
+          dsoGapDollars={dsoGapDollars}
+          onClose={() => setShowBPDSO(false)}
+          onAction={setActionInv}
+        />
+      )}
       {actionInv && (
         <CustomerPanel
           inv={actionInv}
