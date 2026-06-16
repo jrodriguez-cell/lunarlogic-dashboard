@@ -7,6 +7,30 @@ function fmtK(v) {
   return `$${v}`;
 }
 
+function fmtM(v) {
+  if (!v) return '$0';
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
+  return `$${v}`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Returns WF2 sequence status for an invoice
+function getSequenceStatus(inv) {
+  const reminders = inv.reminders ?? [];
+  const next = inv.nextReminder;
+  return {
+    sent: reminders.length,
+    lastSent: reminders[reminders.length - 1] ?? null,
+    nextDate: next,
+  };
+}
+
 function getPaymentPrediction(inv, pb) {
   if (!pb || inv.status === 'Paid') return null;
   const { avgDays } = pb;
@@ -22,22 +46,14 @@ function getPaymentPrediction(inv, pb) {
   return { label: 'Critical', color: '#ef4444', pct: 11 };
 }
 
-function fmtM(v) {
-  if (!v) return '$0';
-  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
-  return `$${v}`;
-}
-
 function nextAction(inv, pb) {
   const d    = inv.daysOverdue;
   const risk = pb?.riskLevel ?? 'medium';
-  if (d > 90)  return { action: 'Escalate to collections',       urgency: 'critical', daysLabel: `${d}d overdue` };
-  if (d > 60)  return { action: 'Personal call — senior contact', urgency: 'high',    daysLabel: `${d}d overdue` };
-  if (d > 30)  return { action: 'Phone call + formal notice',    urgency: 'high',     daysLabel: `${d}d overdue` };
-  if (d > 14)  return { action: 'Follow-up call',                urgency: 'medium',   daysLabel: `${d}d overdue` };
-  if (d > 7)   return { action: 'Send reminder email',           urgency: 'medium',   daysLabel: `${d}d overdue` };
-  if (d > 0)   return { action: 'Auto-reminder sent',            urgency: 'low',      daysLabel: `${d}d overdue` };
+  if (d > 90)  return { action: 'Escalate to collections',        urgency: 'critical', daysLabel: `${d}d overdue` };
+  if (d > 60)  return { action: 'Personal call — senior contact', urgency: 'high',     daysLabel: `${d}d overdue` };
+  if (d > 30)  return { action: 'Phone call + formal notice',     urgency: 'high',     daysLabel: `${d}d overdue` };
+  if (d > 14)  return { action: 'Follow-up call recommended',     urgency: 'medium',   daysLabel: `${d}d overdue` };
+  if (d > 0)   return { action: 'WF2 reminder sequence active',   urgency: 'low',      daysLabel: `${d}d overdue` };
   if (risk === 'high') return { action: 'Monitor — high-risk payer', urgency: 'watch', daysLabel: 'Not yet due' };
   return { action: 'On track', urgency: 'ok', daysLabel: 'Not yet due' };
 }
@@ -52,6 +68,87 @@ function dsoImpact(inv, totalAR) {
   return impact >= 0.1 ? impact : null;
 }
 
+// Dispute detection — returns null if no dispute signal, or an object with analysis
+function detectDispute(inv, pb) {
+  if (inv.status === 'Paid' || inv.daysOverdue <= 0) return null;
+  const avgDays = pb?.avgDays ?? 30;
+  const risk    = pb?.riskLevel ?? 'medium';
+
+  // Signal 1: Invoice viewed but silent for 7+ days overdue
+  if (inv.status === 'Viewed' && inv.daysOverdue > 7) {
+    return {
+      signal: `Viewed ${inv.daysOverdue}d ago — no payment or response`,
+      confidence: 'medium',
+      diagnosis: `${inv.customer} opened this invoice but has not paid or replied. This view-then-silence pattern typically indicates a question about line items, a change in AP contact, or an internal approval hold. Standard reminders are unlikely to resolve this without direct outreach.`,
+      aiDraft: [
+        `Subject: Quick question on ${inv.id} — ${inv.customer}`,
+        ``,
+        `Hi [Name],`,
+        ``,
+        `I wanted to follow up on invoice ${inv.id} for $${inv.amount.toLocaleString()}, due ${inv.due}. Our records show it was received — if you have any questions about the billing or need anything clarified to process payment, I'm happy to help.`,
+        ``,
+        `If there's a specific concern, a quick call or reply works best.`,
+        ``,
+        `Best,`,
+        `[Your name]`,
+      ].join('\n'),
+      aiStatus: 'draft_ready',
+      suggestedAction: 'Send AI-drafted inquiry. If no response in 48h, escalate to call.',
+    };
+  }
+
+  // Signal 2: Historically reliable customer far outside their normal window
+  if (risk === 'low' && inv.daysOverdue > avgDays * 1.5) {
+    const pctOver = Math.round((inv.daysOverdue / avgDays) * 100);
+    return {
+      signal: `Low-risk customer ${pctOver}% past their avg — anomaly detected`,
+      confidence: 'high',
+      diagnosis: `${inv.customer} consistently pays within ${avgDays} days. Being ${inv.daysOverdue} days overdue is a significant deviation for this account. Most common causes at this stage: AP personnel change, an unraised question about a line item, or an internal approval bottleneck.`,
+      aiDraft: [
+        `Subject: ${inv.id} — Quick check-in`,
+        ``,
+        `Hi [Name],`,
+        ``,
+        `Reaching out about invoice ${inv.id} ($${inv.amount.toLocaleString()}, due ${inv.due}). Given your usual payment pattern, we wanted to check if everything looks correct or if there's something we can help move through on our end.`,
+        ``,
+        `Let us know if anything needs attention.`,
+        ``,
+        `Best,`,
+        `[Your name]`,
+      ].join('\n'),
+      aiStatus: 'draft_ready',
+      suggestedAction: 'Personalized check-in email — deviation from established pattern warrants direct outreach.',
+    };
+  }
+
+  // Signal 3: Any customer significantly beyond double their average
+  if (inv.daysOverdue > avgDays * 2 && inv.daysOverdue > 30) {
+    return {
+      signal: `${inv.daysOverdue}d overdue — ${Math.round(inv.daysOverdue / avgDays)}x their historical avg`,
+      confidence: 'high',
+      diagnosis: `Multiple reminders sent with no payment. At this stage the delay suggests a dispute, internal cash constraint, or a delivery/service quality concern the customer has not raised directly. Automated reminders are no longer sufficient.`,
+      aiDraft: [
+        `Subject: Invoice ${inv.id} — Requires Your Attention`,
+        ``,
+        `Dear [Name],`,
+        ``,
+        `Invoice ${inv.id} for $${inv.amount.toLocaleString()} is now ${inv.daysOverdue} days past due. We've sent several reminders and want to understand if there's an issue we can help resolve.`,
+        ``,
+        `If there's a concern about the invoice or the work completed, please reply so we can address it directly. We'd prefer to resolve this together rather than escalate further.`,
+        ``,
+        `A brief call this week would help — please let me know what works for you.`,
+        ``,
+        `Regards,`,
+        `[Your name]`,
+      ].join('\n'),
+      aiStatus: 'escalated',
+      suggestedAction: 'Direct call required. AI email drafted as backup if call is not answered.',
+    };
+  }
+
+  return null;
+}
+
 const ACTION_COLS = [
   { key: 'id',          label: 'Invoice' },
   { key: 'customer',    label: 'Customer' },
@@ -62,14 +159,6 @@ const ACTION_COLS = [
   { key: 'urgency',     label: 'Priority',     render: v => URGENCY_LABEL[v] ?? v },
   { key: 'impact',      label: 'DSO Impact',   render: v => v != null ? `~${v}d` : '—', csvVal: row => row.impact ?? '' },
 ];
-
-function isDisputeSuspect(inv, pb) {
-  if (inv.status === 'Paid') return false;
-  if (inv.status === 'Viewed' && inv.daysOverdue > 7) return true;
-  if (pb?.riskLevel === 'low'    && inv.daysOverdue > pb.avgDays * 1.5) return true;
-  if (pb?.riskLevel === 'medium' && inv.daysOverdue > pb.avgDays * 2)   return true;
-  return false;
-}
 
 export default function ClientActionPlan({ invoices, paymentBehavior, payments, currentDSO, isMobile, onDrill, onAction }) {
   const [filter, setFilter] = useState('priority');
@@ -83,14 +172,16 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
       const pb      = pbMap[inv.customer];
       const na      = nextAction(inv, pb);
       const impact  = dsoImpact(inv, totalAR);
-      const dispute = isDisputeSuspect(inv, pb);
-      return { ...inv, ...na, impact, pb, dispute };
+      const dispute = detectDispute(inv, pb);
+      const seq     = getSequenceStatus(inv);
+      return { ...inv, ...na, impact, pb, dispute, seq };
     })
     .sort((a, b) => {
       const order = { critical: 0, high: 1, medium: 2, low: 3, watch: 4, ok: 5 };
       return (order[a.urgency] - order[b.urgency]) || b.amount - a.amount;
     });
 
+  const disputes    = allOpen.filter(i => i.dispute != null);
   const needsAction = allOpen.filter(i => filter === 'all' ? true : ['critical','high','medium'].includes(i.urgency));
   const onTrack     = allOpen.filter(i => ['ok','low','watch'].includes(i.urgency));
 
@@ -129,10 +220,10 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+      {/* Working capital summary */}
       {(() => {
         const overdueInvs = invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
         const overdueAR   = overdueInvs.reduce((s, i) => s + i.amount, 0);
-        const totalAR     = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
         const dsoSavings  = totalAR > 0 ? Math.round((overdueAR / totalAR) * currentDSO * 0.6) : 0;
         if (overdueInvs.length === 0) return null;
         return (
@@ -149,6 +240,11 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
           </div>
         );
       })()}
+
+      {/* AI Dispute Monitor */}
+      {disputes.length > 0 && (
+        <DisputeMonitor disputes={disputes} isMobile={isMobile} onAction={onAction} onDrill={onDrill} />
+      )}
 
       {/* Summary tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 10 }}>
@@ -185,7 +281,7 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
         )}
       </div>
 
-      {/* On track */}
+      {/* Handled by LunarLogic */}
       {onTrack.length > 0 && filter === 'all' && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -197,27 +293,147 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {onTrack.map(inv => (
-              <div key={inv.id} onClick={() => drillInvoice(inv)}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, opacity: 0.7, cursor: 'pointer' }}
-                onMouseEnter={e => { e.currentTarget.style.opacity='1'; e.currentTarget.style.background='var(--bg-hover)'; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity='0.7'; e.currentTarget.style.background='var(--bg-card)'; }}
-              >
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0, flex: 1 }}>
-                  {!isMobile && <span style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'monospace', flexShrink: 0 }}>{inv.id}</span>}
-                  <span style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
-                  <span style={{ fontSize: 10, color: '#22c55e' }}>On track ↗</span>
-                </div>
-              </div>
+              <AutomatedRow key={inv.id} inv={inv} isMobile={isMobile} onClick={() => drillInvoice(inv)} onAction={() => onAction(inv)} />
             ))}
           </div>
         </div>
       )}
 
       <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-        Click any row to drill into invoice detail and payment history — CSV and Excel export available. Items marked "Automated" are handled by LunarLogic — no action needed.
+        Click any row to drill into invoice detail and payment history — CSV and Excel export available. Items in "Handled by LunarLogic" are in the WF2 automated reminder sequence — no manual action needed unless escalated.
+      </div>
+    </div>
+  );
+}
+
+// AI Dispute Monitor panel
+function DisputeMonitor({ disputes, isMobile, onAction, onDrill }) {
+  const [expanded, setExpanded] = useState(null);
+  const [draftOpen, setDraftOpen] = useState(null);
+
+  return (
+    <div style={{ border: '1px solid rgba(167,139,250,0.35)', borderRadius: 12, overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ background: 'rgba(167,139,250,0.08)', borderBottom: '1px solid rgba(167,139,250,0.2)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+            AI Dispute Monitor — {disputes.length} invoice{disputes.length !== 1 ? 's' : ''} flagged
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+            Anomalies detected by LunarLogic — AI has prepared outreach for each. Review and approve or escalate.
+          </div>
+        </div>
+      </div>
+
+      {/* Dispute cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {disputes.map((inv, idx) => {
+          const d = inv.dispute;
+          const isOpen = expanded === inv.id;
+          const isDraftOpen = draftOpen === inv.id;
+          const confidenceColor = d.confidence === 'high' ? '#ef4444' : '#f59e0b';
+
+          return (
+            <div key={inv.id} style={{ borderBottom: idx < disputes.length - 1 ? '1px solid rgba(167,139,250,0.15)' : 'none' }}>
+              {/* Summary row */}
+              <div
+                onClick={() => setExpanded(isOpen ? null : inv.id)}
+                style={{ padding: '12px 16px', cursor: 'pointer', background: isOpen ? 'rgba(167,139,250,0.06)' : 'transparent', transition: 'background 0.1s' }}
+                onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background = 'rgba(167,139,250,0.04)'; }}
+                onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 3 }}>
+                      {!isMobile && <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)' }}>{inv.id}</span>}
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{inv.customer}</span>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: confidenceColor, background: `${confidenceColor}15`, border: `1px solid ${confidenceColor}30`, borderRadius: 10, padding: '1px 7px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        {d.confidence} confidence
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#a78bfa' }}>{d.signal}</div>
+                    {d.aiStatus === 'draft_ready' && (
+                      <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 3 }}>AI draft ready — awaiting your approval to send</div>
+                    )}
+                    {d.aiStatus === 'escalated' && (
+                      <div style={{ fontSize: 10, color: '#f97316', marginTop: 3 }}>Automated sequence exhausted — direct call required</div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                    <span style={{ fontSize: isMobile ? 14 : 15, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+                    <span style={{ fontSize: 10, color: 'var(--muted)' }}>{isOpen ? '▲ collapse' : '▼ expand'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Expanded detail */}
+              {isOpen && (
+                <div style={{ padding: '0 16px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* AI diagnosis */}
+                  <div style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.15)', borderRadius: 8, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>AI Diagnosis</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6 }}>{d.diagnosis}</div>
+                    <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-dim)', borderTop: '1px solid rgba(167,139,250,0.12)', paddingTop: 8 }}>
+                      <span style={{ fontWeight: 600, color: '#a78bfa' }}>Suggested action: </span>{d.suggestedAction}
+                    </div>
+                  </div>
+
+                  {/* WF2 reminder history */}
+                  {inv.seq.sent > 0 && (
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                      <span style={{ color: 'var(--muted)', fontWeight: 600 }}>WF2 reminder history: </span>
+                      {(inv.reminders ?? []).map((r, i) => (
+                        <span key={i} style={{ marginRight: 8 }}>Reminder {i + 1} — {fmtDate(r)}</span>
+                      ))}
+                      {inv.nextReminder && (
+                        <span style={{ color: 'var(--teal)' }}>· Next scheduled: {fmtDate(inv.nextReminder)}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* AI draft toggle */}
+                  <div>
+                    <button
+                      onClick={() => setDraftOpen(isDraftOpen ? null : inv.id)}
+                      style={{ fontSize: 11, fontWeight: 600, color: isDraftOpen ? '#a78bfa' : 'var(--muted)', background: 'none', border: `1px solid ${isDraftOpen ? 'rgba(167,139,250,0.4)' : 'var(--border)'}`, borderRadius: 5, padding: '4px 12px', cursor: 'pointer', marginBottom: isDraftOpen ? 8 : 0 }}
+                    >
+                      {isDraftOpen ? 'Hide AI draft' : 'Preview AI draft'}
+                    </button>
+                    {isDraftOpen && (
+                      <pre style={{ margin: 0, padding: '12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, fontSize: 11, color: 'var(--text-dim)', whiteSpace: 'pre-wrap', fontFamily: 'inherit', lineHeight: 1.7 }}>
+                        {d.aiDraft}
+                      </pre>
+                    )}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {d.aiStatus === 'draft_ready' && (
+                      <button
+                        onClick={() => onAction(inv)}
+                        style={{ padding: '5px 14px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.4)', color: '#a78bfa' }}
+                      >
+                        Approve &amp; send AI draft
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onAction(inv)}
+                      style={{ padding: '5px 14px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', background: 'none', border: '1px solid var(--border)', color: 'var(--muted)' }}
+                    >
+                      Open invoice — take action
+                    </button>
+                    <button
+                      onClick={() => onAction(inv)}
+                      style={{ padding: '5px 14px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444' }}
+                    >
+                      Escalate to call
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -225,6 +441,7 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
 
 function ActionRow({ inv, isMobile, onClick, onAction }) {
   const color = URGENCY_COLOR[inv.urgency];
+  const isAutomated = inv.urgency === 'low';
   return (
     <div style={{ background: 'var(--bg-card)', border: `1px solid ${['critical','high'].includes(inv.urgency) ? color+'44' : 'var(--border)'}`, borderLeft: `3px solid ${color}`, borderRadius: 8, overflow: 'hidden' }}>
       <div onClick={onClick} style={{ padding: '12px 14px', cursor: 'pointer', transition: 'background 0.1s' }}
@@ -252,10 +469,10 @@ function ActionRow({ inv, isMobile, onClick, onAction }) {
       {/* Quick action strip */}
       <div style={{ borderTop: '1px solid var(--border)', padding: '6px 14px', display: 'flex', gap: 6, alignItems: 'center', background: 'rgba(0,0,0,0.12)', flexWrap: 'wrap' }}>
         <QuickBtn label="Take action" primary onClick={e => { e.stopPropagation(); onAction(); }} />
-        <QuickBtn label="View & export ↗" onClick={e => { e.stopPropagation(); onClick(); }} />
+        <QuickBtn label="View detail" onClick={e => { e.stopPropagation(); onClick(); }} />
         {inv.dispute && (
           <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 10, padding: '2px 8px', flexShrink: 0 }}>
-            Possible Dispute — call recommended
+            Dispute flagged — see AI Monitor above
           </span>
         )}
         {!inv.dispute && (() => {
@@ -267,6 +484,48 @@ function ActionRow({ inv, isMobile, onClick, onAction }) {
             </span>
           );
         })()}
+      </div>
+    </div>
+  );
+}
+
+// Rows for invoices in WF2 automated sequence
+function AutomatedRow({ inv, isMobile, onClick, onAction }) {
+  const { seq } = inv;
+  return (
+    <div
+      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid #22c55e', borderRadius: 8, opacity: 0.85, cursor: 'pointer', gap: 10 }}
+      onClick={onClick}
+      onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
+      onMouseLeave={e => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 3 }}>
+          {!isMobile && <span style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'monospace', flexShrink: 0 }}>{inv.id}</span>}
+          <span style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
+          <span style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.daysLabel}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          {seq.sent > 0 ? (
+            <span style={{ fontSize: 10, color: '#22c55e' }}>
+              WF2 — Reminder {seq.sent} sent {seq.lastSent ? fmtDate(seq.lastSent) : ''}
+            </span>
+          ) : (
+            <span style={{ fontSize: 10, color: '#22c55e' }}>WF2 — First reminder scheduled</span>
+          )}
+          {seq.nextDate && (
+            <span style={{ fontSize: 10, color: 'var(--teal)' }}>· Next: {fmtDate(seq.nextDate)}</span>
+          )}
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+        <button
+          onClick={e => { e.stopPropagation(); onAction(); }}
+          style={{ fontSize: 10, fontWeight: 600, color: 'var(--teal)', background: 'none', border: '1px solid rgba(0,212,232,0.3)', borderRadius: 5, padding: '3px 9px', cursor: 'pointer' }}
+        >
+          Open
+        </button>
       </div>
     </div>
   );
