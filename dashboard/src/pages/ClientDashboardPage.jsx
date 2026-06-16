@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
+import { fetchDashboardData } from '../lib/quickbooks';
 import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
 import CustomerPanel from '../components/client/CustomerPanel';
@@ -43,7 +44,29 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [actionInv, setActionInv] = useState(null);
   const [actionPlanSort, setActionPlanSort] = useState(null);
   const isMobile = useMobile();
-  const data = useMemo(() => getClientData(session.clientId), [session.clientId]);
+  const base = useMemo(() => getClientData(session.clientId), [session.clientId]);
+  const [liveData, setLiveData] = useState(null);
+
+  useEffect(() => {
+    setLiveData(null);
+    let cancelled = false;
+    fetchDashboardData(session.clientId).then(d => { if (!cancelled) setLiveData(d); });
+    return () => { cancelled = true; };
+  }, [session.clientId]);
+
+  // Live-connected clients (e.g. qbsandbox) overlay real QB numbers onto the
+  // static metadata (name, industry, annualRevenue) mock data still provides.
+  const data = useMemo(() => {
+    if (!liveData) return base;
+    return {
+      ...base,
+      dsoTrend: liveData.dsoTrend,
+      arAging: liveData.arAging,
+      invoices: liveData.invoices,
+      paymentBehavior: liveData.paymentBehavior,
+      goLiveDate: liveData.goLiveDate,
+    };
+  }, [base, liveData]);
 
   function handleLogout() { logout(); onLogout(); }
 

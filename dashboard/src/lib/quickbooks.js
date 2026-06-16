@@ -1,10 +1,45 @@
 import { getClientData } from '../data/mockData';
 
-// ERP-agnostic data layer — replace this function body with live ERP connector calls.
-// Supports any accounting system via REST API adapter (NetSuite, SAP, Dynamics, etc.).
-// DSO formula: (Total AR / Total Revenue last 90 days) * 90
+// Clients with a live QuickBooks connection (token seeded via /api/qb-auth-connect).
+// Everything else still runs on mock data until onboarded the same way.
+const LIVE_CLIENTS = new Set(['qbsandbox']);
+
+// ERP-agnostic data layer. DSO formula: (Total AR / Total Revenue last 90 days) * 90
 export async function fetchDashboardData(clientId) {
   const client = getClientData(clientId);
+
+  if (!LIVE_CLIENTS.has(clientId)) {
+    return mockShape(client);
+  }
+
+  try {
+    const res = await fetch(`/api/dashboard-data?clientId=${encodeURIComponent(clientId)}`);
+    if (!res.ok) throw new Error(`dashboard-data request failed: ${res.status}`);
+    const live = await res.json();
+
+    return {
+      clientName:           client.name,
+      industry:             client.industry,
+      dsoTrend:             live.dsoTrend,
+      arAging:              live.arAging,
+      invoices:             live.invoices.map(inv => ({
+        ...inv,
+        daysOverdue: inv.status === 'Overdue' ? inv.daysOut : 0,
+        origin: 'live_qb',
+      })),
+      paymentBehavior:      live.paymentBehavior,
+      goLiveDate:           live.goLiveDate,
+      preLiveDSO:           client.preLiveDSO,
+      collectionEfficiency: client.collectionEfficiency,
+      payments:             client.payments,
+    };
+  } catch (err) {
+    console.error(`Live QB fetch failed for client "${clientId}", falling back to mock data:`, err);
+    return mockShape(client);
+  }
+}
+
+function mockShape(client) {
   return {
     clientName:           client.name,
     industry:             client.industry,
