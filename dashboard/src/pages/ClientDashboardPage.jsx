@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { AreaChart, Area, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { useMobile } from '../lib/useMobile';
@@ -166,28 +167,76 @@ export const INV_COLS = [
 ];
 
 function DSOMiniChart({ trend, goLiveDate }) {
-  const W = 260, H = 48;
   if (!trend?.length) return null;
-  const vals = trend.map(p => p.dso);
-  const min = Math.min(...vals) - 2;
-  const max = Math.max(...vals) + 2;
-  const pts = trend.map((p, i) => {
-    const x = (i / (trend.length - 1)) * W;
-    const y = H - ((p.dso - min) / (max - min)) * H;
-    return `${x},${y}`;
-  }).join(' ');
-  const goLiveIdx = trend.findIndex(p => p.date >= goLiveDate);
-  const glX = goLiveIdx >= 0 ? (goLiveIdx / (trend.length - 1)) * W : null;
+
+  // Build two series: pre-go-live (muted) and post-go-live (teal), overlapping at the boundary
+  const data = trend.map(p => ({
+    date: p.date,
+    dso: p.dso,
+    pre:  p.date <= goLiveDate ? p.dso : null,
+    post: p.date >= goLiveDate ? p.dso : null,
+  }));
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0]?.payload;
+    return (
+      <div style={{ background: '#141824', border: '1px solid rgba(0,212,232,0.3)', borderRadius: 6, padding: '5px 10px', fontSize: 11, pointerEvents: 'none' }}>
+        <div style={{ color: '#6b7280', marginBottom: 1 }}>{d.date}</div>
+        <div style={{ color: '#00d4e8', fontWeight: 700 }}>{d.dso.toFixed(1)}d DSO</div>
+        {d.date >= goLiveDate
+          ? <div style={{ color: '#22c55e', fontSize: 10 }}>Post go-live</div>
+          : <div style={{ color: '#6b7280', fontSize: 10 }}>Pre go-live</div>
+        }
+      </div>
+    );
+  };
+
   return (
-    <svg width={W} height={H} style={{ display: 'block', overflow: 'visible' }}>
-      <polyline points={pts} fill="none" stroke="var(--teal)" strokeWidth="1.5" strokeOpacity="0.7" />
-      {glX !== null && (
-        <>
-          <line x1={glX} y1={0} x2={glX} y2={H} stroke="var(--teal)" strokeWidth="1" strokeDasharray="3,2" strokeOpacity="0.5" />
-          <text x={glX + 4} y={10} fontSize={8} fill="var(--teal)" opacity={0.7}>Go-live</text>
-        </>
-      )}
-    </svg>
+    <div style={{ width: '100%', height: 80 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id="preFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#4b5563" stopOpacity={0.25} />
+              <stop offset="95%" stopColor="#4b5563" stopOpacity={0.02} />
+            </linearGradient>
+            <linearGradient id="postFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#00d4e8" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#00d4e8" stopOpacity={0.03} />
+            </linearGradient>
+          </defs>
+          <ReferenceLine
+            x={goLiveDate}
+            stroke="rgba(0,212,232,0.5)"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+            label={{ value: 'Go-live', position: 'insideTopRight', fill: 'rgba(0,212,232,0.65)', fontSize: 8, fontWeight: 700 }}
+          />
+          <Area
+            type="monotone"
+            dataKey="pre"
+            stroke="#4b5563"
+            strokeWidth={1.5}
+            fill="url(#preFill)"
+            dot={false}
+            isAnimationActive={false}
+            connectNulls={false}
+          />
+          <Area
+            type="monotone"
+            dataKey="post"
+            stroke="#00d4e8"
+            strokeWidth={2}
+            fill="url(#postFill)"
+            dot={false}
+            isAnimationActive={false}
+            connectNulls={false}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,212,232,0.2)', strokeWidth: 1 }} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
