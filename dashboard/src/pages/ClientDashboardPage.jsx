@@ -141,6 +141,39 @@ export default function ClientDashboardPage({ session, onLogout }) {
                 value={`${bpdso}d`}
                 sub={`${dsoGapDays}d gap = ${fmtK(dsoGapDollars)} recoverable`}
                 color="var(--teal)"
+                clickable
+                onClick={() => {
+                  const dailyRev = data.annualRevenue / 365;
+                  const overdueRows = data.invoices
+                    .filter(i => i.status !== 'Paid' && i.daysOverdue > 0)
+                    .map(inv => {
+                      const dsoContrib = Math.round((inv.amount / (data.annualRevenue / 365)) * 10) / 10;
+                      const action =
+                        inv.daysOverdue > 90 ? 'Escalate to collections immediately' :
+                        inv.daysOverdue > 60 ? 'Personal call — senior contact required' :
+                        inv.daysOverdue > 30 ? 'Phone call + formal written notice' :
+                        inv.daysOverdue > 14 ? 'Follow-up call recommended' :
+                                               'WF2 reminder sequence active';
+                      return { ...inv, dsoContrib, action };
+                    })
+                    .sort((a, b) => b.dsoContrib - a.dsoContrib);
+
+                  setDrill({
+                    title: `Best Possible DSO — ${bpdso} days`,
+                    subtitle: `You are ${dsoGapDays} days above your BPDSO. Closing this gap releases ${fmtK(dsoGapDollars)} in working capital.`,
+                    source: `BPDSO is calculated from your current (non-overdue) AR only: Current AR ÷ (Annual Revenue ÷ 365). It represents the DSO you would have today if every overdue invoice were collected — your theoretical floor given your billing volume. The ${dsoGapDays}-day gap between your actual DSO (${Math.round(currentDSO)}d) and BPDSO (${bpdso}d) is entirely driven by the overdue invoices below. The "DSO days added" column shows exactly how many days each invoice is contributing to that gap. Collecting the top invoices first gives the fastest DSO improvement per dollar.`,
+                    filename: 'bpdso_gap_action_plan',
+                    columns: [
+                      { key: 'customer',    label: 'Customer' },
+                      { key: 'id',          label: 'Invoice' },
+                      { key: 'amount',      label: 'Amount',         render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
+                      { key: 'daysOverdue', label: 'Days Overdue',   render: v => `${v}d` },
+                      { key: 'dsoContrib',  label: 'DSO Days Added', render: v => `+${v}d`, csvVal: row => row.dsoContrib },
+                      { key: 'action',      label: 'Action to Close Gap' },
+                    ],
+                    rows: overdueRows,
+                  });
+                }}
               />
             ) : (
               <StatCard label="Best possible DSO" value={`${bpdso}d`} sub="At optimal efficiency" color="var(--teal)" />
