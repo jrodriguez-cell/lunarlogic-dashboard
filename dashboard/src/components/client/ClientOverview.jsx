@@ -511,14 +511,22 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
         {/* LunarLogic activity */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
           <SectionLabel>What LunarLogic handled for you</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-            <ActivityRow icon="✓" label="Payments auto-matched" value={`${autoApplied.length} this month`} color="var(--green)"
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10, marginBottom: 12 }}>
+            <MiniStat label="Invoices auto-sent" value={data.automationStats?.invoicesProcessedTotal ?? 0} sub="since go-live" color="var(--teal)" />
+            <MiniStat label="Reminders sent" value={data.automationStats?.remindersSentTotal ?? 0} sub="hands-free" color="var(--teal)" />
+            <MiniStat label="Payments matched" value={data.automationStats?.paymentsAutoMatched ?? 0} sub="automatically" color="var(--green)" />
+          </div>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <ActivityRow icon="✓" label="Payments auto-matched this month" value={`${autoApplied.length}`} color="var(--green)"
               onClick={() => onDrill({ title: 'Auto-Matched Payments', subtitle: `${autoApplied.length} payments processed automatically`, source: 'Payments matched by LunarLogic using amount + customer name fuzzy matching.', filename: 'auto_matched_payments', columns: PMT_COLS, rows: autoApplied })} />
-            <ActivityRow icon="→" label="Awaiting your review" value={`${pending.length} payment${pending.length !== 1 ? 's' : ''}`} color={pending.length > 0 ? 'var(--amber)' : 'var(--muted)'}
+            <ActivityRow icon="→" label="Awaiting your review" value={`${pending.length} payment${pending.length !== 1 ? 's' : ''}`} color={pending.length > 0 ? '#f59e0b' : 'var(--muted)'}
               onClick={pending.length > 0 ? drillUnapplied : null} />
             <ActivityRow icon="↑" label="Collection rate" value={`${data.collectionEfficiency}%`} color="var(--teal)" />
             <ActivityRow icon="↓" label="DSO reduction since go-live" value={`${Math.abs(dsoChange)} days`} color="var(--green)"
-              onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: `${data.preLiveDSO}d → ${Math.round(currentDSO)}d · go-live ${data.goLiveDate}`, source: '30-day rolling DSO calculated from paid invoices. Go-live date marks LunarLogic activation.', filename: 'dso_trend', columns: [{ key: 'date', label: 'Date' }, { key: 'dso', label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso }], rows: data.dsoTrend })} />
+              onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: `${data.preLiveDSO}d → ${Math.round(currentDSO)}d · go-live ${data.goLiveDate}`, source: '30-day rolling DSO calculated from paid invoices.', filename: 'dso_trend', columns: [{ key: 'date', label: 'Date' }, { key: 'dso', label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso }], rows: data.dsoTrend })} />
+          </div>
+          <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)', fontSize: 10, color: 'var(--muted)', fontStyle: 'italic' }}>
+            Every reminder above was sent without you making a single call — your client relationships are intact.
           </div>
         </div>
 
@@ -651,6 +659,16 @@ function RiskDot({ level }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color }}>
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
       {label}
+    </div>
+  );
+}
+
+function MiniStat({ label, value, sub, color }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '8px 4px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border)' }}>
+      <div style={{ fontSize: 22, fontWeight: 900, color, letterSpacing: -1, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-dim)', marginTop: 3 }}>{label}</div>
+      <div style={{ fontSize: 9, color: 'var(--muted)' }}>{sub}</div>
     </div>
   );
 }

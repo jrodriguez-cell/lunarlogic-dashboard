@@ -105,6 +105,25 @@ export default function ClientDashboardPage({ session, onLogout }) {
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 7 }}>
               Was {data.preLiveDSO}d before LunarLogic &nbsp;·&nbsp; Go-live {data.goLiveDate}
             </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>
+                <span style={{ color: '#f59e0b', fontWeight: 700 }}>45d</span> industry avg
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>
+                <span style={{ color: '#22c55e', fontWeight: 700 }}>28d</span> best-in-class
+              </span>
+              {Math.round(currentDSO) <= 45 && (
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '1px 8px' }}>
+                  {45 - Math.round(currentDSO)}d ahead of industry avg
+                </span>
+              )}
+            </div>
+            {dsoChange < 0 && (
+              <div style={{ marginTop: 6, fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
+                ↓ {Math.abs(dsoChange)}d improvement = {fmtK(Math.abs(dsoChange) * Math.round(data.annualRevenue / 365))} in freed working capital
+              </div>
+            )}
           </div>
 
           {/* Divider */}

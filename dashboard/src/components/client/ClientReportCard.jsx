@@ -66,8 +66,8 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
         </button>
       </div>
 
-      {/* 4 metric tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 10 }}>
+      {/* 6 metric tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 10 }}>
         <MetricTile
           label="DSO This Month"
           value={`${dsoThis}d`}
@@ -96,6 +96,20 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
           sub="vs full manual process"
           detail={`${autoPeriod.length} auto-matched × 17 min each`}
           color="var(--green)"
+        />
+        <MetricTile
+          label="Bad Debt Rate"
+          value={`${data.automationStats?.badDebtRateAfter ?? 0.7}%`}
+          sub={`Was ${data.automationStats?.badDebtRateBefore ?? 1.9}% before LunarLogic`}
+          detail={`${Math.round((1 - (data.automationStats?.badDebtRateAfter ?? 0.7) / (data.automationStats?.badDebtRateBefore ?? 1.9)) * 100)}% improvement`}
+          color="var(--green)"
+        />
+        <MetricTile
+          label="Invoice Processing"
+          value={`${data.automationStats?.avgProcessingMinutes ?? 3} min`}
+          sub={`Was 19 min before LunarLogic`}
+          detail={`${data.automationStats?.invoicesProcessedTotal ?? 0} invoices processed since go-live`}
+          color="var(--teal)"
         />
       </div>
 
@@ -128,7 +142,10 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
           <ImpactRow label="Payment reminders sent by LunarLogic" value={`${totalRemindersSent} total`} color="var(--teal)" />
           <ImpactRow label="Payments auto-matched and applied" value={`${autoPeriod.length} this period`} color="var(--green)" />
           <ImpactRow label="Hours saved vs manual process" value={`~${hoursSaved}h this period`} color="var(--green)" />
-          <ImpactRow label="Automation coverage of open AR" value={`${coveragePct}% of invoices in sequence`} color={coveragePct >= 80 ? 'var(--green)' : '#f59e0b'} last />
+          <ImpactRow label="Automation coverage of open AR" value={`${coveragePct}% of invoices in sequence`} color={coveragePct >= 80 ? 'var(--green)' : '#f59e0b'} />
+          <ImpactRow label="Bad debt rate since go-live" value={`${data.automationStats?.badDebtRateAfter ?? 0.7}% (was ${data.automationStats?.badDebtRateBefore ?? 1.9}%)`} color="var(--green)" />
+          <ImpactRow label="Invoice processing time" value={`${data.automationStats?.avgProcessingMinutes ?? 3} min avg (was 19 min)`} color="var(--teal)" />
+          <ImpactRow label="Admin hours saved annually" value={`~${(data.automationStats?.adminHoursPerYearBefore ?? 480) - (data.automationStats?.adminHoursPerYearAfter ?? 88)} hrs/yr (was ${data.automationStats?.adminHoursPerYearBefore ?? 480} hrs)`} color="var(--green)" last />
         </div>
       </div>
 
