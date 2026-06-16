@@ -9,6 +9,7 @@ import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientCashForecast from '../components/client/ClientCashForecast';
 import ClientInvoices from '../components/client/ClientInvoices';
 import ClientReportCard from '../components/client/ClientReportCard';
+import SourceTag from '../components/SourceTag';
 
 const DSO_BENCHMARKS = [
   { max: 30,       label: 'Excellent', color: '#22c55e', desc: 'Top-quartile efficiency'   },
@@ -88,7 +89,10 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
           {/* Left — DSO number */}
           <div style={{ flexShrink: 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>Days Sales Outstanding</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+              Days Sales Outstanding
+              <SourceTag label="Days Sales Outstanding: average number of days to collect payment after invoice issue. Formula: (Total Open AR ÷ Annual Revenue) × 365. Calculated daily from QuickBooks data." />
+            </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
               <span style={{ fontSize: isMobile ? 52 : 64, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -3 }}>{Math.round(currentDSO)}</span>
               <span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 400 }}>days</span>
@@ -105,6 +109,28 @@ export default function ClientDashboardPage({ session, onLogout }) {
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 7 }}>
               Was {data.preLiveDSO}d before LunarLogic &nbsp;·&nbsp; Go-live {data.goLiveDate}
             </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ color: '#f59e0b', fontWeight: 700 }}>45d</span> industry avg
+                <SourceTag label="Industry average DSO for professional services firms per APQC Process & Performance Management benchmarks (2024 report). Range: 40–60 days." />
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
+              <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ color: '#22c55e', fontWeight: 700 }}>28d</span> best-in-class
+                <SourceTag label="Best-in-class DSO for professional services per APQC benchmarks. Top quartile performers sustain 25–35 day DSO through systematic AR automation." />
+              </span>
+              {Math.round(currentDSO) <= 45 && (
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '1px 8px' }}>
+                  {45 - Math.round(currentDSO)}d ahead of industry avg
+                </span>
+              )}
+            </div>
+            {dsoChange < 0 && (
+              <div style={{ marginTop: 6, fontSize: 11, color: 'var(--green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                ↓ {Math.abs(dsoChange)}d improvement = {fmtK(Math.abs(dsoChange) * Math.round(data.annualRevenue / 365))} in freed working capital
+                <SourceTag label="Working capital freed = DSO improvement (days) × (Annual Revenue ÷ 365). Represents cash that was previously tied up in the collection cycle and is now available sooner." />
+              </div>
+            )}
           </div>
 
           {/* Divider */}

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import SourceTag from '../SourceTag';
 
 function fmtK(v) {
   if (!v) return '$0';
@@ -147,6 +148,41 @@ function detectDispute(inv, pb) {
   }
 
   return null;
+}
+
+function SequenceDots({ seq }) {
+  if (!seq || (seq.sent === 0 && !seq.nextDate)) return null;
+  const STAGES = [
+    { label: '7d pre-due' },
+    { label: '1d post-due' },
+    { label: '7d overdue' },
+    { label: '14d overdue' },
+    { label: '21d overdue' },
+    { label: '28d overdue' },
+  ];
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap', marginTop: 4 }}>
+      <span style={{ fontSize: 9, color: 'var(--muted)', marginRight: 2 }}>WF2:</span>
+      {STAGES.map((s, i) => {
+        const sent = i < seq.sent;
+        const next = i === seq.sent && seq.nextDate;
+        return (
+          <span
+            key={i}
+            title={sent ? `Sent: ${s.label}` : next ? `Next: ${seq.nextDate}` : `Scheduled: ${s.label}`}
+            style={{
+              width: 8, height: 8, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
+              background: sent ? '#00d4e8' : next ? 'rgba(0,212,232,0.35)' : 'var(--border)',
+              border: next ? '1.5px solid #00d4e8' : 'none',
+            }}
+          />
+        );
+      })}
+      <span style={{ fontSize: 9, color: 'var(--muted)', marginLeft: 2 }}>
+        {seq.sent} sent{seq.nextDate ? ` · next ${seq.nextDate}` : ' · sequence complete'}
+      </span>
+    </div>
+  );
 }
 
 const ACTION_COLS = [
@@ -400,7 +436,7 @@ function DisputeMonitor({ disputes, isMobile, onAction, onDrill }) {
                       {isDraftOpen ? 'Hide AI draft' : 'Preview AI draft'}
                     </button>
                     {isDraftOpen && (
-                      <pre style={{ margin: 0, padding: '12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, fontSize: 11, color: 'var(--text-dim)', whiteSpace: 'pre-wrap', fontFamily: 'inherit', lineHeight: 1.7 }}>
+                      <pre style={{ margin: 0, padding: '12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, fontSize: 11, color: 'var(--text-dim)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit', lineHeight: 1.7, overflowX: 'auto' }}>
                         {d.aiDraft}
                       </pre>
                     )}
@@ -452,13 +488,22 @@ function ActionRow({ inv, isMobile, onClick, onAction }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
               {!isMobile && <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)' }}>{inv.id}</span>}
+              {inv.origin === 'wf1_auto' && (
+                <span style={{ fontSize: 8, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 8, padding: '1px 5px' }}>AI</span>
+              )}
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{inv.customer}</span>
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.daysLabel}</span>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11, color, fontWeight: 600 }}>{inv.action}</span>
-              {inv.impact != null && <span style={{ fontSize: 10, color: 'var(--green)', background: 'rgba(34,197,94,0.08)', borderRadius: 4, padding: '1px 6px' }}>saves ~{inv.impact}d DSO</span>}
+              {inv.impact != null && (
+                <span style={{ fontSize: 10, color: 'var(--green)', background: 'rgba(34,197,94,0.08)', borderRadius: 4, padding: '1px 6px', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  saves ~{inv.impact}d DSO
+                  <SourceTag label="DSO impact = (invoice amount ÷ total open AR) × days overdue × 0.8. Represents this invoice's estimated contribution to your current DSO." />
+                </span>
+              )}
             </div>
+            {inv.seq && (inv.seq.sent > 0 || inv.seq.nextDate) && <SequenceDots seq={inv.seq} />}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
             <span style={{ fontSize: isMobile ? 15 : 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
@@ -468,8 +513,8 @@ function ActionRow({ inv, isMobile, onClick, onAction }) {
       </div>
       {/* Quick action strip */}
       <div style={{ borderTop: '1px solid var(--border)', padding: '6px 14px', display: 'flex', gap: 6, alignItems: 'center', background: 'rgba(0,0,0,0.12)', flexWrap: 'wrap' }}>
-        <QuickBtn label="Take action" primary onClick={e => { e.stopPropagation(); onAction(); }} />
-        <QuickBtn label="View detail" onClick={e => { e.stopPropagation(); onClick(); }} />
+        <QuickBtn label="Take action" primary isMobile={isMobile} onClick={e => { e.stopPropagation(); onAction(); }} />
+        <QuickBtn label="View detail" isMobile={isMobile} onClick={e => { e.stopPropagation(); onClick(); }} />
         {inv.dispute && (
           <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 10, padding: '2px 8px', flexShrink: 0 }}>
             Dispute flagged — see AI Monitor above
@@ -505,18 +550,7 @@ function AutomatedRow({ inv, isMobile, onClick, onAction }) {
           <span style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
           <span style={{ fontSize: 10, color: 'var(--muted)' }}>{inv.daysLabel}</span>
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-          {seq.sent > 0 ? (
-            <span style={{ fontSize: 10, color: '#22c55e' }}>
-              WF2 — Reminder {seq.sent} sent {seq.lastSent ? fmtDate(seq.lastSent) : ''}
-            </span>
-          ) : (
-            <span style={{ fontSize: 10, color: '#22c55e' }}>WF2 — First reminder scheduled</span>
-          )}
-          {seq.nextDate && (
-            <span style={{ fontSize: 10, color: 'var(--teal)' }}>· Next: {fmtDate(seq.nextDate)}</span>
-          )}
-        </div>
+        <SequenceDots seq={seq} />
       </div>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
@@ -531,10 +565,12 @@ function AutomatedRow({ inv, isMobile, onClick, onAction }) {
   );
 }
 
-function QuickBtn({ label, onClick, primary }) {
+function QuickBtn({ label, onClick, primary, isMobile }) {
   return (
     <button onClick={onClick} style={{
-      padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer',
+      padding: isMobile ? '8px 14px' : '4px 10px',
+      minHeight: isMobile ? 36 : 'auto',
+      fontSize: 11, fontWeight: 600, borderRadius: 5, cursor: 'pointer',
       background: primary ? 'rgba(0,212,232,0.12)' : 'none',
       border: `1px solid ${primary ? 'var(--teal)' : 'var(--border)'}`,
       color: primary ? 'var(--teal)' : 'var(--muted)',

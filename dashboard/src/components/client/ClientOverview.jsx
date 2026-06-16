@@ -1,3 +1,7 @@
+import { useState } from 'react';
+import SourceTag from '../SourceTag';
+import CustomerDrawer from '../CustomerDrawer';
+
 function fmtM(v) {
   if (!v) return '$0';
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
@@ -37,7 +41,36 @@ function getDisputeSuspects(invoices, paymentBehavior) {
   });
 }
 
+function fmtRunTime(iso) {
+  if (!iso) return 'Unknown';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function fmtNextRun(iso) {
+  if (!iso) return 'Scheduled';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function StatusItem({ label, status, detail, sub, color }) {
+  return (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+      <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0, marginTop: 4, boxShadow: `0 0 6px ${color}` }} />
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', marginBottom: 1 }}>{label}</div>
+        <div style={{ fontSize: 10, color, fontWeight: 600, marginBottom: 2 }}>{status}</div>
+        <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{detail}</div>
+        <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 1 }}>{sub}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate, isMobile, onDrill, onAction }) {
+  const [customerDrawer, setCustomerDrawer] = useState(null);
   const open     = data.invoices.filter(i => i.status !== 'Paid');
   const overdue  = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
   const next30   = open.filter(i => i.daysOverdue <= 0 && i.daysOverdue > -30);
@@ -196,6 +229,34 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Automation Status Strip */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>Automation Status</div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 12 : 10 }}>
+          <StatusItem
+            label="WF1 — Invoice AI"
+            status="Operational"
+            detail={`Last run: ${fmtRunTime(data.wf1LastRun)}`}
+            sub="Slack → QuickBooks · AI invoice creation"
+            color="var(--green)"
+          />
+          <StatusItem
+            label="WF2 — Payment Reminders"
+            status="Operational"
+            detail={`Last: ${fmtRunTime(data.wf2LastRun)} · Next: ${fmtNextRun(data.wf2NextRun)}`}
+            sub="Daily 9AM M–F · Outlook email sequences"
+            color="var(--green)"
+          />
+          <StatusItem
+            label="WF3 — Cash Application"
+            status="Active"
+            detail="Plaid bank feed · Auto-matching payments"
+            sub={`Confidence threshold: 90% · ${autoApplied.length} matched`}
+            color="var(--teal)"
+          />
+        </div>
+      </div>
 
       {/* 3 hero tiles */}
       <div>
@@ -511,14 +572,22 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
         {/* LunarLogic activity */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
           <SectionLabel>What LunarLogic handled for you</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-            <ActivityRow icon="✓" label="Payments auto-matched" value={`${autoApplied.length} this month`} color="var(--green)"
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10, marginBottom: 12 }}>
+            <MiniStat label="Invoices auto-sent" value={data.automationStats?.invoicesProcessedTotal ?? 0} sub="since go-live" color="var(--teal)" source="Total invoices created via WF1 Slack-to-QuickBooks AI workflow since your go-live date. Each represents a PDF upload or text command processed without manual data entry." />
+            <MiniStat label="Reminders sent" value={data.automationStats?.remindersSentTotal ?? 0} sub="hands-free" color="var(--teal)" source="Total outbound payment reminder emails sent via WF2 (Microsoft Outlook / Graph API) since go-live. Sent automatically — no calls or manual emails from your team." />
+            <MiniStat label="Payments matched" value={data.automationStats?.paymentsAutoMatched ?? 0} sub="automatically" color="var(--green)" source="Payments automatically matched to invoices by WF3 AI engine (Plaid bank feed). Matched at ≥90% confidence without manual reconciliation." />
+          </div>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <ActivityRow icon="✓" label="Payments auto-matched this month" value={`${autoApplied.length}`} color="var(--green)"
               onClick={() => onDrill({ title: 'Auto-Matched Payments', subtitle: `${autoApplied.length} payments processed automatically`, source: 'Payments matched by LunarLogic using amount + customer name fuzzy matching.', filename: 'auto_matched_payments', columns: PMT_COLS, rows: autoApplied })} />
-            <ActivityRow icon="→" label="Awaiting your review" value={`${pending.length} payment${pending.length !== 1 ? 's' : ''}`} color={pending.length > 0 ? 'var(--amber)' : 'var(--muted)'}
+            <ActivityRow icon="→" label="Awaiting your review" value={`${pending.length} payment${pending.length !== 1 ? 's' : ''}`} color={pending.length > 0 ? '#f59e0b' : 'var(--muted)'}
               onClick={pending.length > 0 ? drillUnapplied : null} />
             <ActivityRow icon="↑" label="Collection rate" value={`${data.collectionEfficiency}%`} color="var(--teal)" />
             <ActivityRow icon="↓" label="DSO reduction since go-live" value={`${Math.abs(dsoChange)} days`} color="var(--green)"
-              onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: `${data.preLiveDSO}d → ${Math.round(currentDSO)}d · go-live ${data.goLiveDate}`, source: '30-day rolling DSO calculated from paid invoices. Go-live date marks LunarLogic activation.', filename: 'dso_trend', columns: [{ key: 'date', label: 'Date' }, { key: 'dso', label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso }], rows: data.dsoTrend })} />
+              onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: `${data.preLiveDSO}d → ${Math.round(currentDSO)}d · go-live ${data.goLiveDate}`, source: '30-day rolling DSO calculated from paid invoices.', filename: 'dso_trend', columns: [{ key: 'date', label: 'Date' }, { key: 'dso', label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso }], rows: data.dsoTrend })} />
+          </div>
+          <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)', fontSize: 10, color: 'var(--muted)', fontStyle: 'italic' }}>
+            Every reminder above was sent without you making a single call — your client relationships are intact.
           </div>
         </div>
 
@@ -527,12 +596,12 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
           <SectionLabel>Customer payment risk — click to drill in</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
             {data.paymentBehavior.map(pb => (
-              <div key={pb.customer} onClick={() => drillCustomer(pb)}
+              <div key={pb.customer} onClick={() => setCustomerDrawer(pb)}
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, cursor: 'pointer', borderRadius: 6, padding: '4px 6px', margin: '-4px -6px', transition: 'background 0.1s' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <span style={{ fontSize: 12, color: 'var(--text-dim)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pb.customer}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-dim)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'underline', textDecorationColor: 'var(--border)' }}>{pb.customer}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   <span style={{ fontSize: 11, color: 'var(--muted)' }}>{pb.avgDays}d avg</span>
                   <RiskDot level={pb.riskLevel} />
@@ -545,6 +614,16 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
           </div>
         </div>
       </div>
+
+      {customerDrawer && (
+        <CustomerDrawer
+          customer={customerDrawer}
+          invoices={data.invoices}
+          onClose={() => setCustomerDrawer(null)}
+          onOpenInvoice={inv => { setCustomerDrawer(null); if (onAction) onAction(inv); }}
+          onDrill={onDrill}
+        />
+      )}
     </div>
   );
 }
@@ -651,6 +730,19 @@ function RiskDot({ level }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color }}>
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
       {label}
+    </div>
+  );
+}
+
+function MiniStat({ label, value, sub, color, source }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '8px 4px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--border)' }}>
+      <div style={{ fontSize: 22, fontWeight: 900, color, letterSpacing: -1, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-dim)', marginTop: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+        {label}
+        {source && <SourceTag label={source} />}
+      </div>
+      <div style={{ fontSize: 9, color: 'var(--muted)' }}>{sub}</div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { enrichInvoices, forecastWithin, addDays } from '../../lib/forecast';
+import SourceTag from '../SourceTag';
 
 function fmtM(v) {
   if (!v || v === 0) return '$0';
@@ -162,6 +163,16 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
       {thisWeek.length > 0 && (
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
           <SectionLabel>Expected to arrive this week — {fmtM(thisWeek.reduce((s, i) => s + i.amount, 0))} across {thisWeek.length} invoice{thisWeek.length !== 1 ? 's' : ''}</SectionLabel>
+          {(() => {
+            const withSeqs = thisWeek.filter(i => i.reminders?.length > 0);
+            return withSeqs.length > 0 ? (
+              <div style={{ fontSize: 10, color: '#00d4e8', margin: '6px 0 4px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d4e8', display: 'inline-block', flexShrink: 0 }} />
+                WF2 actively following up on {withSeqs.length} of these — automated reminders working
+                <SourceTag label="Invoices with active WF2 reminder sequences (at least one reminder delivered via Outlook / Microsoft Graph API). These are being followed up automatically — no action needed from you." />
+              </div>
+            ) : null;
+          })()}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
             {thisWeek.map(inv => (
               <div key={inv.id}
@@ -178,6 +189,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
                   <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>
                     Expected {new Date(inv.expectedDateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     {inv.isOverdue && <span style={{ color: '#f97316', marginLeft: 6 }}>{inv.daysOverdue}d overdue — in active collection</span>}
+                    {(inv.reminders?.length > 0) && <span style={{ color: '#00d4e8', marginLeft: 6 }}>WF2 active ({inv.reminders.length} sent)</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
@@ -403,8 +415,9 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         </div>
       </div>
 
-      <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-        Click any tile or chart bar to export underlying invoices as CSV or Excel. Expected receipt dates use each customer's historical payment patterns. Cash gap estimate assumes 65% of annual revenue as operating costs.
+      <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 8, borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: 4 }}>
+        <span>Click any tile or chart bar to export underlying invoices. Expected receipt dates use each customer's historical payment patterns. Cash gap assumes 65% of annual revenue as operating costs.</span>
+        <SourceTag label="Cash forecast: Expected receipt date = invoice due date + customer's historical avg days-to-pay (from QuickBooks payment history). Cash gap uses 65% of annual revenue as operating cost estimate. WF2 status from Microsoft Outlook delivery records." />
       </div>
     </div>
   );
