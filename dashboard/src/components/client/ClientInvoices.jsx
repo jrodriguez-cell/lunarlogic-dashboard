@@ -117,6 +117,9 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
                       {!isMobile && <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--muted)', flexShrink: 0 }}>{inv.id}</span>}
+                      {inv.origin === 'wf1_auto' && (
+                        <span style={{ fontSize: 8, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 8, padding: '1px 5px', flexShrink: 0 }}>AI</span>
+                      )}
                       <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
                     </div>
                     <div style={{ display: 'flex', gap: isMobile ? 8 : 12, fontSize: 11, color: 'var(--muted)', flexWrap: 'wrap' }}>
