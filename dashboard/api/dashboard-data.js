@@ -15,11 +15,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const clientId = req.query.clientId || 'default';
+
   try {
     // Fetch unpaid invoices and last 90 days of invoices from QuickBooks
     const [unpaidInvoices, allInvoices] = await Promise.all([
-      fetchUnpaidInvoices(),
-      fetchLast90DaysInvoices(),
+      fetchUnpaidInvoices(clientId),
+      fetchLast90DaysInvoices(clientId),
     ]);
 
     // Calculate dashboard metrics
@@ -48,22 +50,22 @@ export default async function handler(req, res) {
 /**
  * Fetch all unpaid invoices from QuickBooks
  */
-async function fetchUnpaidInvoices() {
+async function fetchUnpaidInvoices(clientId) {
   const query = encodeURIComponent("SELECT * FROM Invoice WHERE Balance > '0'");
-  const response = await qbApiRequest(`/query?query=${query}`);
+  const response = await qbApiRequest(`/query?query=${query}`, {}, clientId);
   return response.QueryResponse?.Invoice || [];
 }
 
 /**
  * Fetch last 90 days of invoices for DSO calculation
  */
-async function fetchLast90DaysInvoices() {
+async function fetchLast90DaysInvoices(clientId) {
   const date90DaysAgo = new Date();
   date90DaysAgo.setDate(date90DaysAgo.getDate() - 90);
   const dateStr = date90DaysAgo.toISOString().split('T')[0];
 
   const query = encodeURIComponent(`SELECT * FROM Invoice WHERE TxnDate >= '${dateStr}'`);
-  const response = await qbApiRequest(`/query?query=${query}`);
+  const response = await qbApiRequest(`/query?query=${query}`, {}, clientId);
   return response.QueryResponse?.Invoice || [];
 }
 

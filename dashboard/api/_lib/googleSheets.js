@@ -1,6 +1,10 @@
 /**
  * Google Sheets API Helper for Vercel Serverless Functions
- * Handles OAuth token storage and reminder activity logging
+ * Handles non-sensitive reminder activity logging.
+ *
+ * QB OAuth tokens are NOT stored here — they live encrypted in Vercel KV
+ * via ./tokenStore.js. Plaintext credentials in a shared spreadsheet are
+ * not an acceptable storage pattern for client onboarding.
  */
 
 import { google } from 'googleapis';
@@ -16,60 +20,6 @@ function getSheets() {
 }
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID; // Your "Demo Data" sheet ID
-
-/**
- * Get QuickBooks OAuth token from Google Sheets
- * Reads from QB_OAuth_Credentials tab (same sheet n8n uses)
- */
-export async function getQBTokenFromSheets() {
-  const sheets = getSheets();
-
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'QB_OAuth_Credentials!A2:C2', // Row 2 has the actual token data
-    });
-
-    const [row] = response.data.values || [];
-
-    if (!row || row.length < 3) {
-      throw new Error('No QB OAuth credentials found in Google Sheets');
-    }
-
-    return {
-      access_token: row[0],
-      refresh_token: row[1],
-      expires_at: row[2],
-    };
-  } catch (error) {
-    console.error('Error reading QB token from Sheets:', error);
-    throw new Error(`Failed to get QB token: ${error.message}`);
-  }
-}
-
-/**
- * Save refreshed QuickBooks token back to Google Sheets
- * Keeps n8n and Vercel in sync
- */
-export async function saveQBTokenToSheets(token) {
-  const sheets = getSheets();
-
-  try {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SHEET_ID,
-      range: 'QB_OAuth_Credentials!A2:C2',
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [[token.access_token, token.refresh_token, token.expires_at]],
-      },
-    });
-
-    console.log('QB token updated in Google Sheets');
-  } catch (error) {
-    console.error('Error saving QB token to Sheets:', error);
-    throw new Error(`Failed to save QB token: ${error.message}`);
-  }
-}
 
 /**
  * Log reminder activity to Google Sheets

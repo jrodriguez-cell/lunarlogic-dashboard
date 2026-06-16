@@ -15,7 +15,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { invoice_id } = req.body;
+    const { invoice_id, client_id } = req.body;
+    const clientId = client_id || 'default';
 
     if (!invoice_id) {
       return res.status(400).json({ error: 'invoice_id is required' });
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
 
     // Step 1: Get invoice details from QuickBooks
     console.log('Fetching invoice:', invoice_id);
-    const invoiceData = await getInvoice(invoice_id);
+    const invoiceData = await getInvoice(invoice_id, clientId);
     const invoice = invoiceData.Invoice;
 
     if (!invoice) {
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
     }
 
     console.log('Sending reminder to:', customerEmail);
-    await sendInvoiceEmail(invoice_id, customerEmail);
+    await sendInvoiceEmail(invoice_id, customerEmail, clientId);
 
     // Step 3: Calculate days overdue for logging
     const dueDate = new Date(invoice.DueDate);
