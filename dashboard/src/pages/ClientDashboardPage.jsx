@@ -111,22 +111,14 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {!isMobile && <div style={{ width: 1, height: 80, background: 'var(--border)', flexShrink: 0 }} />}
 
           {/* Right — stat grid */}
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: isMobile ? 10 : 12 }}>
-
-            {/* Improvement since go-live */}
-            <StatCard
-              label="Since go-live"
-              value={`↓ ${Math.abs(dsoChange)}d`}
-              sub={`${data.preLiveDSO}d → ${Math.round(currentDSO)}d`}
-              color="#22c55e"
-            />
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 10 : 12 }}>
 
             {/* Projected if overdue cleared */}
             {overdueInvs.length > 0 ? (
               <StatCard
                 label="If overdue resolved"
                 value={`${projectedDSO}d`}
-                sub={`↓ ${projectedImprove} more days possible`}
+                sub={`↓ ${projectedImprove} more days this week`}
                 color="#22c55e"
                 onClick={() => setDrill({
                   title: 'Overdue Invoices — DSO Impact',
@@ -149,7 +141,6 @@ export default function ClientDashboardPage({ session, onLogout }) {
                 value={`${bpdso}d`}
                 sub={`${dsoGapDays}d gap = ${fmtK(dsoGapDollars)} recoverable`}
                 color="var(--teal)"
-                span={isMobile}
               />
             ) : (
               <StatCard label="Best possible DSO" value={`${bpdso}d`} sub="At optimal efficiency" color="var(--teal)" />

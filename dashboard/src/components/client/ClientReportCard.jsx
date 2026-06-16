@@ -1,3 +1,5 @@
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
+
 const TODAY_ISO = '2026-06-11';
 
 function fmtM(v) {
@@ -97,6 +99,9 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
         />
       </div>
 
+      {/* DSO Trend Chart */}
+      <DSOTrendChart trend={data.dsoTrend} goLiveDate={data.goLiveDate} preLiveDSO={data.preLiveDSO} currentDSO={currentDSO} isMobile={isMobile} onDrill={onDrill} DSO_COLS={DSO_COLS} />
+
       {/* DSO journey */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
         <SectionLabel>DSO journey since go-live</SectionLabel>
@@ -144,6 +149,73 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
       <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 4, borderTop: '1px solid var(--border)' }}>
         Data as of {TODAY_ISO}. Reflects LunarLogic automation from {data.goLiveDate}. In production, this report auto-emails to your accountant on the 1st of each month.
       </div>
+    </div>
+  );
+}
+
+function DSOTrendChart({ trend, goLiveDate, preLiveDSO, currentDSO, isMobile, onDrill, DSO_COLS }) {
+  if (!trend?.length) return null;
+  const data = trend.map(p => ({
+    date: p.date, dso: p.dso,
+    pre:  p.date <= goLiveDate ? p.dso : null,
+    post: p.date >= goLiveDate ? p.dso : null,
+  }));
+  const step = Math.max(1, Math.floor(trend.length / 5));
+  const tickDates = trend.filter((_, i) => i % step === 0 || i === trend.length - 1).map(p => p.date);
+  const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0]?.payload;
+    return (
+      <div style={{ background: '#141824', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 7, padding: '7px 11px', fontSize: 11, pointerEvents: 'none' }}>
+        <div style={{ color: '#6b7280', marginBottom: 2 }}>{d.date}</div>
+        <div style={{ color: '#00d4e8', fontWeight: 700 }}>{d.dso.toFixed(1)}d DSO</div>
+        <div style={{ color: d.date >= goLiveDate ? '#22c55e' : '#6b7280', fontSize: 10 }}>{d.date >= goLiveDate ? 'Post go-live' : 'Pre go-live'}</div>
+      </div>
+    );
+  };
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 16px 12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+        <div>
+          <SectionLabel>DSO trend — last 90 days</SectionLabel>
+          <div style={{ display: 'flex', gap: 16, marginTop: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 20, height: 2, background: '#4b5563', borderRadius: 1 }} />
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>Before LunarLogic ({preLiveDSO}d)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 20, height: 2, background: '#00d4e8', borderRadius: 1 }} />
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>After go-live ({Math.round(currentDSO)}d now)</span>
+            </div>
+          </div>
+        </div>
+        <button onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: `${preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today`, source: '30-day rolling DSO from QuickBooks.', filename: 'dso_trend_90d', columns: DSO_COLS, rows: trend })}
+          style={{ fontSize: 10, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 10px', cursor: 'pointer' }}>
+          Export data
+        </button>
+      </div>
+      <ResponsiveContainer width="100%" height={isMobile ? 120 : 160}>
+        <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+          <defs>
+            <linearGradient id="rcPreFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#4b5563" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#4b5563" stopOpacity={0.01} />
+            </linearGradient>
+            <linearGradient id="rcPostFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#00d4e8" stopOpacity={0.25} />
+              <stop offset="95%" stopColor="#00d4e8" stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <XAxis dataKey="date" ticks={tickDates} tick={{ fontSize: 9, fill: '#4b5563' }} tickLine={false} axisLine={false}
+            tickFormatter={v => { const d = new Date(v + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }} />
+          <YAxis tick={{ fontSize: 9, fill: '#4b5563' }} tickLine={false} axisLine={false} tickFormatter={v => `${v}d`} domain={['auto', 'auto']} width={36} />
+          <ReferenceLine x={goLiveDate} stroke="rgba(0,212,232,0.5)" strokeWidth={1} strokeDasharray="4 3"
+            label={{ value: 'Go-live', position: 'insideTopRight', fill: 'rgba(0,212,232,0.65)', fontSize: 9, fontWeight: 700 }} />
+          <Area type="monotone" dataKey="pre"  stroke="#4b5563" strokeWidth={1.5} fill="url(#rcPreFill)"  dot={false} isAnimationActive={false} connectNulls={false} />
+          <Area type="monotone" dataKey="post" stroke="#00d4e8" strokeWidth={2}   fill="url(#rcPostFill)" dot={false} isAnimationActive={false} connectNulls={false} />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,212,232,0.15)', strokeWidth: 1 }} />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
