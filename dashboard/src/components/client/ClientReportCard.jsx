@@ -95,14 +95,6 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
           source="Payments automatically applied to invoices by LunarLogic's WF3 AI matching engine (Plaid bank feed). Confidence threshold: 90%. Below-threshold payments require manual confirmation."
         />
         <MetricTile
-          label="Hours Saved"
-          value={`${hoursSaved}h`}
-          sub="vs full manual process"
-          detail={`${autoPeriod.length} auto-matched × 17 min each`}
-          color="var(--green)"
-          source="Based on internal time study: 17 min per payment for manual reconciliation vs. ~2 min with WF3 auto-matching. Applied to all auto-matched payments this period."
-        />
-        <MetricTile
           label="Bad Debt Rate"
           value={`${data.automationStats?.badDebtRateAfter ?? 0.7}%`}
           sub={`Was ${data.automationStats?.badDebtRateBefore ?? 1.9}% before LunarLogic`}
