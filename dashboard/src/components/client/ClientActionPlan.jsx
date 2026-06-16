@@ -196,11 +196,14 @@ const ACTION_COLS = [
   { key: 'impact',      label: 'DSO Impact',   render: v => v != null ? `~${v}d` : '—', csvVal: row => row.impact ?? '' },
 ];
 
-export default function ClientActionPlan({ invoices, paymentBehavior, payments, currentDSO, isMobile, onDrill, onAction }) {
+export default function ClientActionPlan({ invoices, paymentBehavior, payments, currentDSO, annualRevenue, bpdso, dsoGapDays, dsoGapDollars, initialSort, isMobile, onDrill, onAction }) {
   const [filter, setFilter] = useState('priority');
+  const [sortMode, setSortMode] = useState(initialSort ?? 'priority');
+  const [showBanner, setShowBanner] = useState(initialSort === 'dsoImpact');
 
   const totalAR = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
   const pbMap   = Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p]));
+  const dailyRev = (annualRevenue ?? 0) / 365;
 
   const allOpen = invoices
     .filter(i => i.status !== 'Paid')
@@ -210,12 +213,27 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
       const impact  = dsoImpact(inv, totalAR);
       const dispute = detectDispute(inv, pb);
       const seq     = getSequenceStatus(inv);
-      return { ...inv, ...na, impact, pb, dispute, seq };
+      const dsoContrib = inv.daysOverdue > 0 && dailyRev > 0 ? Math.round((inv.amount / dailyRev) * 10) / 10 : null;
+      return { ...inv, ...na, impact, pb, dispute, seq, dsoContrib };
     })
     .sort((a, b) => {
+      if (sortMode === 'dsoImpact') {
+        return (b.dsoContrib ?? -1) - (a.dsoContrib ?? -1) || b.amount - a.amount;
+      }
       const order = { critical: 0, high: 1, medium: 2, low: 3, watch: 4, ok: 5 };
       return (order[a.urgency] - order[b.urgency]) || b.amount - a.amount;
     });
+
+  // Running DSO after collecting each overdue invoice, when sorted by DSO impact
+  if (sortMode === 'dsoImpact' && bpdso != null) {
+    let runningDSO = Math.round(currentDSO * 10) / 10;
+    for (const inv of allOpen) {
+      if (inv.daysOverdue > 0 && inv.dsoContrib != null) {
+        runningDSO = Math.round((runningDSO - inv.dsoContrib) * 10) / 10;
+        inv.dsoAfter = Math.max(runningDSO, bpdso);
+      }
+    }
+  }
 
   const disputes    = allOpen.filter(i => i.dispute != null);
   const needsAction = allOpen.filter(i => filter === 'all' ? true : ['critical','high','medium'].includes(i.urgency));
@@ -277,6 +295,51 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
         );
       })()}
 
+      {/* Best Possible DSO banner */}
+      {bpdso != null && (
+        <div style={{ background: 'rgba(0,212,232,0.05)', border: '1px solid rgba(0,212,232,0.15)', borderRadius: 12, overflow: 'hidden' }}>
+          <div
+            onClick={() => setShowBanner(v => !v)}
+            style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+                Path to Best Possible DSO
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                {Math.round(currentDSO)}d today → {bpdso}d target · {dsoGapDays}d gap{dsoGapDollars ? ` · ${fmtK(dsoGapDollars)} recoverable` : ''}
+              </div>
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>{showBanner ? '▲ hide' : '▼ show'}</span>
+          </div>
+
+          {showBanner && (
+            <div style={{ padding: '0 16px 14px' }}>
+              {/* Gap visualization */}
+              <div style={{ position: 'relative', height: 26, borderRadius: 6, overflow: 'hidden', background: 'var(--bg)', marginBottom: 10 }}>
+                <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${currentDSO > 0 ? Math.round((bpdso / Math.round(currentDSO)) * 100) : 0}%`, background: 'rgba(0,212,232,0.25)', borderRight: '2px solid #00d4e8' }} />
+                <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '100%', background: 'rgba(239,68,68,0.1)' }} />
+                <div style={{ position: 'absolute', left: 6, top: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#00d4e8' }}>{bpdso}d BPDSO</span>
+                </div>
+                <div style={{ position: 'absolute', right: 6, top: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#ef4444' }}>+{dsoGapDays}d overdue gap</span>
+                </div>
+              </div>
+
+              {/* Formula */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+                <FormulaRow label="Non-overdue AR ÷ Daily revenue" value={`= ${bpdso}d Best Possible DSO`} />
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', lineHeight: 1.6 }}>
+                BPDSO is your theoretical DSO floor — the number you'd have today if every overdue invoice were collected right now. Sort by "DSO Impact" below to see the fastest path to close the {dsoGapDays}-day gap.
+                <SourceTag label="BPDSO = Non-overdue AR ÷ (Annual Revenue ÷ 365). DSO contribution per invoice = Invoice amount ÷ Daily revenue." />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* AI Dispute Monitor */}
       {disputes.length > 0 && (
         <DisputeMonitor disputes={disputes} isMobile={isMobile} onAction={onAction} onDrill={onDrill} />
@@ -293,8 +356,8 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
           onClick={() => drillAction('Full Action Plan Export', allOpen, `${allOpen.length} open invoices with recommended actions`)} />
       </div>
 
-      {/* Filter */}
-      <div style={{ display: 'flex', gap: 6 }}>
+      {/* Filter + sort */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         {[{ id: 'priority', label: 'Needs action' }, { id: 'all', label: 'All open' }].map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)} style={{
             padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer',
@@ -303,6 +366,19 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
             color: filter === f.id ? 'var(--teal)' : 'var(--muted)',
           }}>{f.label}</button>
         ))}
+        {bpdso != null && (
+          <>
+            <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 6 }}>Sort:</span>
+            {[{ id: 'priority', label: 'Urgency' }, { id: 'dsoImpact', label: 'DSO Impact' }].map(s => (
+              <button key={s.id} onClick={() => setSortMode(s.id)} style={{
+                padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer',
+                border: `1px solid ${sortMode === s.id ? 'var(--teal)' : 'var(--border)'}`,
+                background: sortMode === s.id ? 'rgba(0,212,232,0.08)' : 'none',
+                color: sortMode === s.id ? 'var(--teal)' : 'var(--muted)',
+              }}>{s.label}</button>
+            ))}
+          </>
+        )}
         <button onClick={() => drillAction('Full Action Plan Export', allOpen, `${allOpen.length} open invoices`)}
           style={{ marginLeft: 'auto', padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)' }}>
           Export all
@@ -504,6 +580,11 @@ function ActionRow({ inv, isMobile, onClick, onAction }) {
               )}
             </div>
             {inv.seq && (inv.seq.sent > 0 || inv.seq.nextDate) && <SequenceDots seq={inv.seq} />}
+            {inv.dsoAfter != null && (
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>
+                DSO after collecting this invoice: <span style={{ fontWeight: 700, color: '#00d4e8' }}>{inv.dsoAfter}d</span>
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
             <span style={{ fontSize: isMobile ? 15 : 16, fontWeight: 800, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
@@ -575,6 +656,15 @@ function QuickBtn({ label, onClick, primary, isMobile }) {
       border: `1px solid ${primary ? 'var(--teal)' : 'var(--border)'}`,
       color: primary ? 'var(--teal)' : 'var(--muted)',
     }}>{label}</button>
+  );
+}
+
+function FormulaRow({ label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+      <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{label}</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color: '#00d4e8' }}>{value}</span>
+    </div>
   );
 }
 

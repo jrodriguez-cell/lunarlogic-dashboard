@@ -3,7 +3,6 @@ import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
-import BPDSODrawer from '../components/BPDSODrawer';
 import CustomerPanel from '../components/client/CustomerPanel';
 import ClientOverview from '../components/client/ClientOverview';
 import ClientActionPlan from '../components/client/ClientActionPlan';
@@ -42,7 +41,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
-  const [showBPDSO, setShowBPDSO] = useState(false);
+  const [actionPlanSort, setActionPlanSort] = useState(null);
   const isMobile = useMobile();
   const data = useMemo(() => getClientData(session.clientId), [session.clientId]);
 
@@ -168,7 +167,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
               sub={dsoGapDays > 0 ? `${dsoGapDays}d gap = ${fmtK(dsoGapDollars)} recoverable` : 'At optimal efficiency'}
               color="var(--teal)"
               clickable
-              onClick={() => setShowBPDSO(true)}
+              onClick={() => { setActionPlanSort('dsoImpact'); setActiveTab('action'); }}
             />
 
           </div>
@@ -201,24 +200,13 @@ export default function ClientDashboardPage({ session, onLogout }) {
       {/* Content */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
         {activeTab === 'overview' && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} payments={data.payments} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'invoices' && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'report'   && <ClientReportCard data={data} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
       </div>
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
-      {showBPDSO && (
-        <BPDSODrawer
-          data={data}
-          currentDSO={currentDSO}
-          bpdso={bpdso}
-          dsoGapDays={dsoGapDays}
-          dsoGapDollars={dsoGapDollars}
-          onClose={() => setShowBPDSO(false)}
-          onAction={setActionInv}
-        />
-      )}
       {actionInv && (
         <CustomerPanel
           inv={actionInv}
