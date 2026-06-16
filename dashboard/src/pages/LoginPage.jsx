@@ -5,6 +5,7 @@ const DEMO = [
   { label: 'Demo — Meridian Advisory Group', email: 'demo@lunarlogic.ai',   pw: 'Demo2026!'   },
   { label: 'Client — Forvis Mazars',         email: 'forvis@lunarlogic.ai', pw: 'Forvis2026!' },
   { label: 'Admin — LunarLogic',             email: 'admin@lunarlogic.ai',  pw: 'Admin2026!'  },
+  { label: 'Sandbox — QB Integration Test',  email: 'sandbox@lunarlogic.ai',pw: 'Sandbox2026!'},
 ];
 
 export default function LoginPage({ onLogin }) {

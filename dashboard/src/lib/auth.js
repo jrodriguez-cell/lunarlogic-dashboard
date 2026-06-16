@@ -5,6 +5,7 @@ const CREDENTIALS = {
   'demo@lunarlogic.ai':    { password: 'Demo2026!',  name: 'Meridian Advisory Group', clientId: 'meridian',     role: 'client' },
   'forvis@lunarlogic.ai':  { password: 'Forvis2026!',name: 'Forvis Mazars',           clientId: 'forvismazars', role: 'client' },
   'admin@lunarlogic.ai':   { password: 'Admin2026!', name: 'LunarLogic Admin',        clientId: 'forvismazars', role: 'admin'  },
+  'sandbox@lunarlogic.ai': { password: 'Sandbox2026!', name: 'Demo Company Inc. (QB Sandbox)', clientId: 'qbsandbox', role: 'client' },
 };
 
 export function login(email, password) {
