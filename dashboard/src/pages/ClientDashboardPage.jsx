@@ -113,12 +113,12 @@ export default function ClientDashboardPage({ session, onLogout }) {
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
               <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 <span style={{ color: '#f59e0b', fontWeight: 700 }}>45d</span> avg
-                <SourceTag label="Industry average DSO for professional services firms per APQC Process & Performance Management benchmarks (2024 report). Range: 40–60 days." />
+                <SourceTag label="Industry average DSO for professional services firms per APQC Process & Performance Management benchmarks (2024 report). Range: 40–60 days." pos="below" />
               </span>
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
               <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 <span style={{ color: '#22c55e', fontWeight: 700 }}>28d</span> best-in-class
-                <SourceTag label="Best-in-class DSO for professional services per APQC benchmarks. Top quartile performers sustain 25–35 day DSO through systematic AR automation." />
+                <SourceTag label="Best-in-class DSO for professional services per APQC benchmarks. Top quartile performers sustain 25–35 day DSO through systematic AR automation." pos="below" />
               </span>
               {Math.round(currentDSO) <= 45 && (
                 <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '1px 7px', whiteSpace: 'nowrap' }}>
@@ -128,7 +128,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
               {dsoChange < 0 && (
                 <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
                   · ↓{Math.abs(dsoChange)}d = {fmtK(Math.abs(dsoChange) * Math.round(data.annualRevenue / 365))} freed
-                  <SourceTag label="Working capital freed = DSO improvement (days) × (Annual Revenue ÷ 365). Represents cash that was previously tied up in the collection cycle and is now available sooner." />
+                  <SourceTag label="Working capital freed = DSO improvement (days) × (Annual Revenue ÷ 365). Represents cash that was previously tied up in the collection cycle and is now available sooner." pos="below" />
                 </span>
               )}
             </div>
