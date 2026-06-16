@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { AreaChart, Area, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { useMobile } from '../lib/useMobile';
@@ -13,13 +12,20 @@ import ClientReportCard from '../components/client/ClientReportCard';
 
 const DSO_BENCHMARKS = [
   { max: 30,       label: 'Excellent', color: '#22c55e', desc: 'Top-quartile efficiency'   },
-  { max: 45,       label: 'Healthy',   color: '#00d4e8', desc: 'Industry-average'           },
-  { max: 60,       label: 'Friction',  color: '#f59e0b', desc: 'Friction in process'        },
+  { max: 45,       label: 'Healthy',   color: '#00d4e8', desc: 'Industry average'           },
+  { max: 60,       label: 'Friction',  color: '#f59e0b', desc: 'Friction in collections'    },
   { max: 90,       label: 'Breakdown', color: '#f97316', desc: 'Collections under pressure' },
   { max: Infinity, label: 'Crisis',    color: '#ef4444', desc: 'Existential cash-flow risk' },
 ];
 function getDSOBenchmark(dso) {
   return DSO_BENCHMARKS.find(b => dso < b.max) ?? DSO_BENCHMARKS[4];
+}
+
+function fmtK(v) {
+  if (!v) return '$0';
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `$${Math.round(v / 1_000)}k`;
+  return `$${v}`;
 }
 
 const TABS = [
@@ -31,9 +37,9 @@ const TABS = [
 ];
 
 export default function ClientDashboardPage({ session, onLogout }) {
-  const [activeTab, setActiveTab]   = useState('overview');
-  const [drill, setDrill]           = useState(null);
-  const [actionInv, setActionInv]   = useState(null); // invoice for action sheet
+  const [activeTab, setActiveTab] = useState('overview');
+  const [drill, setDrill]         = useState(null);
+  const [actionInv, setActionInv] = useState(null);
   const isMobile = useMobile();
   const data = useMemo(() => getClientData(session.clientId), [session.clientId]);
 
@@ -44,10 +50,19 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const dsoChange   = Math.round(currentDSO - data.preLiveDSO);
   const urgentCount = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0).length;
 
-  const nonOverdueAR = data.invoices.filter(i => i.status !== 'Paid' && i.daysOverdue <= 0).reduce((s, i) => s + i.amount, 0);
-  const bpdso = Math.round(nonOverdueAR / (data.annualRevenue / 365));
-  const dsoGapDays = Math.max(0, Math.round(currentDSO) - bpdso);
-  const dsoGapDollars = Math.round(dsoGapDays * (data.annualRevenue / 365));
+  const nonOverdueAR   = data.invoices.filter(i => i.status !== 'Paid' && i.daysOverdue <= 0).reduce((s, i) => s + i.amount, 0);
+  const bpdso          = Math.round(nonOverdueAR / (data.annualRevenue / 365));
+  const dsoGapDays     = Math.max(0, Math.round(currentDSO) - bpdso);
+  const dsoGapDollars  = Math.round(dsoGapDays * (data.annualRevenue / 365));
+
+  const overdueInvs = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
+  const totalAR     = data.invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
+  const overdueAR   = overdueInvs.reduce((s, i) => s + i.amount, 0);
+  const pct         = totalAR > 0 ? overdueAR / totalAR : 0;
+  const projectedDSO      = Math.max(Math.round(currentDSO * (1 - pct * 0.6)), Math.round(currentDSO * 0.75));
+  const projectedImprove  = Math.round(currentDSO - projectedDSO);
+
+  const bm = getDSOBenchmark(Math.round(currentDSO));
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font)' }}>
@@ -56,10 +71,8 @@ export default function ClientDashboardPage({ session, onLogout }) {
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: `0 ${isMobile ? 16 : 24}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 52 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--teal)', letterSpacing: -0.3, flexShrink: 0 }}>LunarLogic</div>
-          {!isMobile && <>
-            <div style={{ width: 1, height: 16, background: 'var(--border)' }} />
-            <div style={{ fontSize: 13, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
-          </>}
+          <div style={{ width: 1, height: 16, background: 'var(--border)', flexShrink: 0 }} />
+          <div style={{ fontSize: 13, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {!isMobile && <div style={{ fontSize: 11, color: 'var(--muted)' }}>As of June 11, 2026</div>}
@@ -69,42 +82,80 @@ export default function ClientDashboardPage({ session, onLogout }) {
         </div>
       </div>
 
-      {/* DSO Hero Banner */}
-      <div style={{ background: 'linear-gradient(135deg, rgba(0,212,232,0.06) 0%, rgba(0,212,232,0.02) 100%)', borderBottom: '1px solid var(--border)', padding: isMobile ? '16px' : '20px 24px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 14 : 40, flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Days Sales Outstanding</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: isMobile ? 40 : 48, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -2 }}>{Math.round(currentDSO)}</span>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>days</span>
-              <span style={{ fontSize: 13, color: 'var(--green)', fontWeight: 700 }}>↓ {Math.abs(dsoChange)} days since LunarLogic</span>
+      {/* Hero — DSO + stat grid */}
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: isMobile ? '20px 16px' : '24px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 20 : 40 }}>
+
+          {/* Left — DSO number */}
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>Days Sales Outstanding</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: isMobile ? 52 : 64, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -3 }}>{Math.round(currentDSO)}</span>
+              <span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 400 }}>days</span>
             </div>
-            {(() => {
-              const bm = getDSOBenchmark(Math.round(currentDSO));
-              return (
-                <span style={{ fontSize: 10, fontWeight: 700, color: bm.color, background: `${bm.color}1a`, border: `1px solid ${bm.color}40`, borderRadius: 20, padding: '2px 10px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  {bm.label} — {bm.desc}
-                </span>
-              );
-            })()}
-            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Was {data.preLiveDSO} days before go-live · {data.goLiveDate}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{
+                fontSize: 10, fontWeight: 700, color: bm.color,
+                background: `${bm.color}18`, border: `1px solid ${bm.color}35`,
+                borderRadius: 20, padding: '3px 10px', letterSpacing: '0.06em', textTransform: 'uppercase',
+              }}>
+                {bm.label} — {bm.desc}
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 7 }}>
+              Was {data.preLiveDSO}d before LunarLogic &nbsp;·&nbsp; Go-live {data.goLiveDate}
+            </div>
           </div>
-          {!isMobile && (
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <DSOMiniChart trend={data.dsoTrend} goLiveDate={data.goLiveDate} />
-            </div>
-          )}
-          <ProjectedDSO invoices={data.invoices} currentDSO={currentDSO} isMobile={isMobile}
-            onDrill={() => setDrill({
-              title: 'Overdue Invoices — DSO Impact',
-              subtitle: 'Resolving these would improve your DSO this week',
-              source: 'Expected receipt dates adjusted for each customer\'s historical avg days-to-pay.',
-              filename: `overdue_dso_impact_${data.name.replace(/\s/g,'_')}`,
-              columns: INV_COLS,
-              rows: data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0),
-            })}
-          />
-          <BPDSOTile bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} isMobile={isMobile} />
+
+          {/* Divider */}
+          {!isMobile && <div style={{ width: 1, height: 80, background: 'var(--border)', flexShrink: 0 }} />}
+
+          {/* Right — stat grid */}
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: isMobile ? 10 : 12 }}>
+
+            {/* Improvement since go-live */}
+            <StatCard
+              label="Since go-live"
+              value={`↓ ${Math.abs(dsoChange)}d`}
+              sub={`${data.preLiveDSO}d → ${Math.round(currentDSO)}d`}
+              color="#22c55e"
+            />
+
+            {/* Projected if overdue cleared */}
+            {overdueInvs.length > 0 ? (
+              <StatCard
+                label="If overdue resolved"
+                value={`${projectedDSO}d`}
+                sub={`↓ ${projectedImprove} more days possible`}
+                color="#22c55e"
+                onClick={() => setDrill({
+                  title: 'Overdue Invoices — DSO Impact',
+                  subtitle: 'Resolving these would improve your DSO this week',
+                  source: "Expected receipt dates adjusted for each customer's historical avg days-to-pay.",
+                  filename: `overdue_dso_impact_${data.name.replace(/\s/g,'_')}`,
+                  columns: INV_COLS,
+                  rows: overdueInvs,
+                })}
+                clickable
+              />
+            ) : (
+              <StatCard label="Overdue" value="None" sub="All invoices current" color="#22c55e" />
+            )}
+
+            {/* Best possible DSO */}
+            {dsoGapDays > 0 ? (
+              <StatCard
+                label="Best possible DSO"
+                value={`${bpdso}d`}
+                sub={`${dsoGapDays}d gap = ${fmtK(dsoGapDollars)} recoverable`}
+                color="var(--teal)"
+                span={isMobile}
+              />
+            ) : (
+              <StatCard label="Best possible DSO" value={`${bpdso}d`} sub="At optimal efficiency" color="var(--teal)" />
+            )}
+
+          </div>
         </div>
       </div>
 
@@ -155,6 +206,30 @@ export default function ClientDashboardPage({ session, onLogout }) {
   );
 }
 
+function StatCard({ label, value, sub, color, onClick, clickable, span }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: 'var(--bg)',
+        border: '1px solid var(--border)',
+        borderRadius: 10,
+        padding: '12px 14px',
+        cursor: clickable ? 'pointer' : 'default',
+        transition: 'border-color 0.12s, background 0.12s',
+        gridColumn: span ? '1 / -1' : undefined,
+      }}
+      onMouseEnter={e => { if (clickable) { e.currentTarget.style.borderColor = `${color}50`; e.currentTarget.style.background = `${color}08`; } }}
+      onMouseLeave={e => { if (clickable) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg)'; } }}
+    >
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 900, color, letterSpacing: -0.5, lineHeight: 1, marginBottom: 4 }}>{value}</div>
+      <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{sub}</div>
+      {clickable && <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 4 }}>tap to view invoices</div>}
+    </div>
+  );
+}
+
 // Shared column definitions used across all drill views
 export const INV_COLS = [
   { key: 'id',          label: 'Invoice' },
@@ -165,117 +240,3 @@ export const INV_COLS = [
   { key: 'status',      label: 'Status' },
   { key: 'daysOverdue', label: 'Days Overdue',  render: v => v > 0 ? `${v}d` : '—',  csvVal: row => row.daysOverdue > 0 ? row.daysOverdue : '' },
 ];
-
-function DSOMiniChart({ trend, goLiveDate }) {
-  if (!trend?.length) return null;
-
-  // Build two series: pre-go-live (muted) and post-go-live (teal), overlapping at the boundary
-  const data = trend.map(p => ({
-    date: p.date,
-    dso: p.dso,
-    pre:  p.date <= goLiveDate ? p.dso : null,
-    post: p.date >= goLiveDate ? p.dso : null,
-  }));
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0]?.payload;
-    return (
-      <div style={{ background: '#141824', border: '1px solid rgba(0,212,232,0.3)', borderRadius: 6, padding: '5px 10px', fontSize: 11, pointerEvents: 'none' }}>
-        <div style={{ color: '#6b7280', marginBottom: 1 }}>{d.date}</div>
-        <div style={{ color: '#00d4e8', fontWeight: 700 }}>{d.dso.toFixed(1)}d DSO</div>
-        {d.date >= goLiveDate
-          ? <div style={{ color: '#22c55e', fontSize: 10 }}>Post go-live</div>
-          : <div style={{ color: '#6b7280', fontSize: 10 }}>Pre go-live</div>
-        }
-      </div>
-    );
-  };
-
-  return (
-    <div style={{ width: '100%', height: 80 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id="preFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor="#4b5563" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="#4b5563" stopOpacity={0.02} />
-            </linearGradient>
-            <linearGradient id="postFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor="#00d4e8" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#00d4e8" stopOpacity={0.03} />
-            </linearGradient>
-          </defs>
-          <ReferenceLine
-            x={goLiveDate}
-            stroke="rgba(0,212,232,0.5)"
-            strokeWidth={1}
-            strokeDasharray="4 3"
-            label={{ value: 'Go-live', position: 'insideTopRight', fill: 'rgba(0,212,232,0.65)', fontSize: 8, fontWeight: 700 }}
-          />
-          <Area
-            type="monotone"
-            dataKey="pre"
-            stroke="#4b5563"
-            strokeWidth={1.5}
-            fill="url(#preFill)"
-            dot={false}
-            isAnimationActive={false}
-            connectNulls={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="post"
-            stroke="#00d4e8"
-            strokeWidth={2}
-            fill="url(#postFill)"
-            dot={false}
-            isAnimationActive={false}
-            connectNulls={false}
-          />
-          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,212,232,0.2)', strokeWidth: 1 }} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function BPDSOTile({ bpdso, dsoGapDays, dsoGapDollars, isMobile }) {
-  if (dsoGapDays <= 0) return null;
-  function fmtK(v) { return v >= 1000 ? `$${Math.round(v/1000)}k` : `$${v}`; }
-  return (
-    <div style={{ background: 'rgba(0,212,232,0.06)', border: '1px solid rgba(0,212,232,0.2)', borderRadius: 10, padding: '12px 16px', minWidth: isMobile ? '100%' : 180, boxSizing: 'border-box' }}>
-      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Best Possible DSO</div>
-      <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -1 }}>
-        {bpdso}<span style={{ fontSize: 12, fontWeight: 400, color: 'var(--muted)', marginLeft: 4 }}>days</span>
-      </div>
-      <div style={{ fontSize: 10, color: 'var(--teal)', marginTop: 4 }}>↑ {dsoGapDays}-day gap = {fmtK(dsoGapDollars)} recoverable</div>
-      <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 6 }}>Working capital locked in overdue AR</div>
-    </div>
-  );
-}
-
-function ProjectedDSO({ invoices, currentDSO, isMobile, onDrill }) {
-  const overdue   = invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
-  const totalAR   = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
-  const overdueAR = overdue.reduce((s, i) => s + i.amount, 0);
-  const pct       = totalAR > 0 ? overdueAR / totalAR : 0;
-  const projected = Math.max(Math.round(currentDSO * (1 - pct * 0.6)), Math.round(currentDSO * 0.75));
-  const improvement = Math.round(currentDSO - projected);
-  if (overdue.length === 0) return null;
-  return (
-    <div
-      onClick={onDrill}
-      style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '12px 16px', minWidth: isMobile ? '100%' : 180, boxSizing: 'border-box', cursor: 'pointer' }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(34,197,94,0.14)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'rgba(34,197,94,0.08)'}
-    >
-      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>If overdue resolved this week</div>
-      <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--green)', lineHeight: 1, letterSpacing: -1 }}>
-        {projected}<span style={{ fontSize: 12, fontWeight: 400, color: 'var(--muted)', marginLeft: 4 }}>days</span>
-      </div>
-      <div style={{ fontSize: 10, color: 'var(--green)', marginTop: 4 }}>↓ {improvement} day{improvement !== 1 ? 's' : ''} additional improvement</div>
-      <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 6 }}>tap to view invoices</div>
-    </div>
-  );
-}

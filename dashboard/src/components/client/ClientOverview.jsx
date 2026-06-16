@@ -1,3 +1,5 @@
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
+
 function fmtM(v) {
   if (!v) return '$0';
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
@@ -196,6 +198,9 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* DSO Trend Chart */}
+      <DSOTrendChart trend={data.dsoTrend} goLiveDate={data.goLiveDate} preLiveDSO={data.preLiveDSO} currentDSO={currentDSO} dsoChange={dsoChange} isMobile={isMobile} onDrill={onDrill} />
 
       {/* 3 hero tiles */}
       <div>
@@ -651,6 +656,126 @@ function RiskDot({ level }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color }}>
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
       {label}
+    </div>
+  );
+}
+
+function DSOTrendChart({ trend, goLiveDate, preLiveDSO, currentDSO, dsoChange, isMobile, onDrill }) {
+  if (!trend?.length) return null;
+
+  const data = trend.map(p => ({
+    date: p.date,
+    dso: p.dso,
+    pre:  p.date <= goLiveDate ? p.dso : null,
+    post: p.date >= goLiveDate ? p.dso : null,
+  }));
+
+  // Show every ~15th label to avoid crowding
+  const step = Math.max(1, Math.floor(trend.length / 5));
+  const tickDates = trend.filter((_, i) => i % step === 0 || i === trend.length - 1).map(p => p.date);
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0]?.payload;
+    if (!d) return null;
+    return (
+      <div style={{ background: '#141824', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 7, padding: '7px 11px', fontSize: 11, pointerEvents: 'none' }}>
+        <div style={{ color: '#6b7280', marginBottom: 2 }}>{d.date}</div>
+        <div style={{ color: '#00d4e8', fontWeight: 700, fontSize: 13 }}>{d.dso.toFixed(1)}d DSO</div>
+        <div style={{ color: d.date >= goLiveDate ? '#22c55e' : '#6b7280', fontSize: 10, marginTop: 1 }}>
+          {d.date >= goLiveDate ? 'Post go-live' : 'Pre go-live'}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 16px 10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+        <div>
+          <SectionLabel>DSO trend — last 90 days</SectionLabel>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: -4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 24, height: 2, background: '#4b5563', borderRadius: 1 }} />
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>Before LunarLogic ({preLiveDSO}d avg)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 24, height: 2, background: '#00d4e8', borderRadius: 1 }} />
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>After go-live ({Math.round(currentDSO)}d now)</span>
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={() => onDrill({
+            title: 'DSO Trend — Last 90 Days',
+            subtitle: `${preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today · ${dsoChange < 0 ? `↓ ${Math.abs(dsoChange)}d improvement` : ''}`,
+            source: '30-day rolling DSO calculated daily from QuickBooks invoice data.',
+            filename: 'dso_trend_90d',
+            columns: [
+              { key: 'date', label: 'Date' },
+              { key: 'dso',  label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso },
+            ],
+            rows: trend,
+          })}
+          style={{ fontSize: 10, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 10px', cursor: 'pointer' }}
+        >
+          Export data
+        </button>
+      </div>
+
+      <ResponsiveContainer width="100%" height={isMobile ? 120 : 150}>
+        <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+          <defs>
+            <linearGradient id="ovPreFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#4b5563" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#4b5563" stopOpacity={0.01} />
+            </linearGradient>
+            <linearGradient id="ovPostFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#00d4e8" stopOpacity={0.25} />
+              <stop offset="95%" stopColor="#00d4e8" stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <XAxis
+            dataKey="date"
+            ticks={tickDates}
+            tick={{ fontSize: 9, fill: '#4b5563' }}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={v => { const d = new Date(v + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }}
+          />
+          <YAxis
+            tick={{ fontSize: 9, fill: '#4b5563' }}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={v => `${v}d`}
+            domain={['auto', 'auto']}
+            width={36}
+          />
+          <ReferenceLine
+            x={goLiveDate}
+            stroke="rgba(0,212,232,0.5)"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+            label={{ value: 'Go-live', position: 'insideTopRight', fill: 'rgba(0,212,232,0.65)', fontSize: 9, fontWeight: 700 }}
+          />
+          <Area type="monotone" dataKey="pre"  stroke="#4b5563" strokeWidth={1.5} fill="url(#ovPreFill)"  dot={false} isAnimationActive={false} connectNulls={false} />
+          <Area type="monotone" dataKey="post" stroke="#00d4e8" strokeWidth={2}   fill="url(#ovPostFill)" dot={false} isAnimationActive={false} connectNulls={false} />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,212,232,0.15)', strokeWidth: 1 }} />
+        </AreaChart>
+      </ResponsiveContainer>
+
+      {/* Improvement callout */}
+      <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+          <span style={{ fontWeight: 700, color: '#22c55e' }}>↓ {Math.abs(dsoChange)} days</span> improvement since go-live
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+          Go-live: <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>{goLiveDate}</span>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+          Revenue freed up: <span style={{ fontWeight: 700, color: 'var(--teal)' }}>~{Math.round(Math.abs(dsoChange) * (/* approx daily rate */ 2000))} days of cash flow</span>
+        </div>
+      </div>
     </div>
   );
 }
