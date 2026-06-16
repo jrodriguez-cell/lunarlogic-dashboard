@@ -74,7 +74,7 @@ export default function BPDSODrawer({ data, currentDSO, bpdso, dsoGapDays, dsoGa
           <button className="drawer-close" onClick={onClose} style={{ width: isMobile ? 40 : 28, height: isMobile ? 40 : 28, fontSize: isMobile ? 16 : 14 }}>✕</button>
         </div>
 
-        <div className="drill-body" style={{ padding: `0 ${p} ${p}` }}>
+        <div className="drill-body" style={{ padding: `0 ${p} ${p}`, overflowY: 'auto', overflowX: 'hidden' }}>
 
           {/* How it's calculated */}
           <div style={{ background: 'rgba(0,212,232,0.05)', border: '1px solid rgba(0,212,232,0.15)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
