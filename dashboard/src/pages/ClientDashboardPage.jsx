@@ -84,32 +84,32 @@ export default function ClientDashboardPage({ session, onLogout }) {
       </div>
 
       {/* Hero — DSO + stat grid */}
-      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: isMobile ? '20px 16px' : '24px 24px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 20 : 40 }}>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: isMobile ? '16px 16px' : '16px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'flex-start', gap: isMobile ? 16 : 24 }}>
 
           {/* Left — DSO number */}
           <div style={{ flexShrink: 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
               Days Sales Outstanding
               <SourceTag label="Days Sales Outstanding: average number of days to collect payment after invoice issue. Formula: (Total Open AR ÷ Annual Revenue) × 365. Calculated daily from QuickBooks data." />
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: isMobile ? 52 : 64, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -3 }}>{Math.round(currentDSO)}</span>
-              <span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 400 }}>days</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: isMobile ? 48 : 56, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -3 }}>{Math.round(currentDSO)}</span>
+              <span style={{ fontSize: 14, color: 'var(--muted)', fontWeight: 400 }}>days</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 5 }}>
               <span style={{
-                fontSize: 10, fontWeight: 700, color: bm.color,
+                fontSize: 9, fontWeight: 700, color: bm.color,
                 background: `${bm.color}18`, border: `1px solid ${bm.color}35`,
-                borderRadius: 20, padding: '3px 10px', letterSpacing: '0.06em', textTransform: 'uppercase',
+                borderRadius: 20, padding: '2px 9px', letterSpacing: '0.06em', textTransform: 'uppercase',
               }}>
                 {bm.label} — {bm.desc}
               </span>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 7 }}>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 5 }}>
               Was {data.preLiveDSO}d before LunarLogic &nbsp;·&nbsp; Go-live {data.goLiveDate}
             </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 <span style={{ color: '#f59e0b', fontWeight: 700 }}>45d</span> industry avg
                 <SourceTag label="Industry average DSO for professional services firms per APQC Process & Performance Management benchmarks (2024 report). Range: 40–60 days." />
@@ -120,24 +120,24 @@ export default function ClientDashboardPage({ session, onLogout }) {
                 <SourceTag label="Best-in-class DSO for professional services per APQC benchmarks. Top quartile performers sustain 25–35 day DSO through systematic AR automation." />
               </span>
               {Math.round(currentDSO) <= 45 && (
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '1px 8px' }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '1px 7px' }}>
                   {45 - Math.round(currentDSO)}d ahead of industry avg
                 </span>
               )}
+              {dsoChange < 0 && (
+                <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  · ↓ {Math.abs(dsoChange)}d = {fmtK(Math.abs(dsoChange) * Math.round(data.annualRevenue / 365))} freed
+                  <SourceTag label="Working capital freed = DSO improvement (days) × (Annual Revenue ÷ 365). Represents cash that was previously tied up in the collection cycle and is now available sooner." />
+                </span>
+              )}
             </div>
-            {dsoChange < 0 && (
-              <div style={{ marginTop: 6, fontSize: 11, color: 'var(--green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                ↓ {Math.abs(dsoChange)}d improvement = {fmtK(Math.abs(dsoChange) * Math.round(data.annualRevenue / 365))} in freed working capital
-                <SourceTag label="Working capital freed = DSO improvement (days) × (Annual Revenue ÷ 365). Represents cash that was previously tied up in the collection cycle and is now available sooner." />
-              </div>
-            )}
           </div>
 
           {/* Divider */}
-          {!isMobile && <div style={{ width: 1, height: 80, background: 'var(--border)', flexShrink: 0 }} />}
+          {!isMobile && <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--border)', flexShrink: 0 }} />}
 
           {/* Right — stat grid */}
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 10 : 12 }}>
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 8 : 10, alignContent: 'start' }}>
 
             {/* Projected if overdue cleared */}
             {overdueInvs.length > 0 ? (
@@ -264,7 +264,7 @@ function StatCard({ label, value, sub, color, onClick, clickable, span }) {
         background: 'var(--bg)',
         border: '1px solid var(--border)',
         borderRadius: 10,
-        padding: '12px 14px',
+        padding: '10px 12px',
         cursor: clickable ? 'pointer' : 'default',
         transition: 'border-color 0.12s, background 0.12s',
         gridColumn: span ? '1 / -1' : undefined,
@@ -272,8 +272,8 @@ function StatCard({ label, value, sub, color, onClick, clickable, span }) {
       onMouseEnter={e => { if (clickable) { e.currentTarget.style.borderColor = `${color}50`; e.currentTarget.style.background = `${color}08`; } }}
       onMouseLeave={e => { if (clickable) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg)'; } }}
     >
-      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 900, color, letterSpacing: -0.5, lineHeight: 1, marginBottom: 4 }}>{value}</div>
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 900, color, letterSpacing: -0.5, lineHeight: 1, marginBottom: 3 }}>{value}</div>
       <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{sub}</div>
       {clickable && <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 4 }}>tap to view invoices</div>}
     </div>
