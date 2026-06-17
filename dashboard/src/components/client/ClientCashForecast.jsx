@@ -93,8 +93,9 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
   const allPayments   = payments ?? [];
   const pendingPmts   = allPayments.filter(p => p.status === 'Pending Review');
   const autoPmts      = allPayments.filter(p => p.status !== 'Pending Review').slice(-6);
-  // WF3 (Plaid bank feed payment matching) isn't built yet — an empty payments
-  // list for a live client means "no data," not "everything's been matched."
+  // For live clients, an empty payments list only means "everything's been
+  // matched" when WF3 telemetry is actually connected — otherwise it means
+  // "no data reported yet."
   const paymentDataAvailable = isLive ? wf3Connected : true;
 
   const weeks = Array.from({ length: 13 }, (_, i) => {
@@ -339,7 +340,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         <div style={{ background: 'var(--bg-card)', border: `1px solid ${pendingPmts.length > 0 ? 'rgba(245,158,11,0.35)' : 'var(--border)'}`, borderRadius: 12, padding: '16px' }}>
           <SectionLabel>Payment confirmations needed</SectionLabel>
           {!paymentDataAvailable ? (
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10, fontStyle: 'italic' }}>WF3 payment matching isn't built yet — no payment data to review.</div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10, fontStyle: 'italic' }}>WF3 payment matching isn't connected for this client yet — no payment data to review.</div>
           ) : pendingPmts.length === 0 ? (
             <div style={{ fontSize: 12, color: 'var(--green)', marginTop: 10, fontStyle: 'italic' }}>All payments matched automatically — nothing needs your review.</div>
           ) : (

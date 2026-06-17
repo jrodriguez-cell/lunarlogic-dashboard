@@ -71,6 +71,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
       collectionEfficiency: liveData.collectionEfficiency,
       preLiveDSO: liveData.preLiveDSO,
       automationStats: liveData.automationStats,
+      automationStatus: liveData.automationStatus,
       payments: liveData.payments,
       isLive: liveData.isLive,
     };
