@@ -18,17 +18,20 @@ export default async function handler(req, res) {
   const clientId = req.query.clientId || 'default';
 
   try {
-    // Fetch unpaid invoices and last 90 days of invoices from QuickBooks
-    const [unpaidInvoices, allInvoices] = await Promise.all([
+    // Fetch unpaid invoices (any age) and last 365 days of invoices for
+    // trend/revenue/collection calculations
+    const [unpaidInvoices, historicalInvoices] = await Promise.all([
       fetchUnpaidInvoices(clientId),
-      fetchLast90DaysInvoices(clientId),
+      fetchLast365DaysInvoices(clientId),
     ]);
 
     // Calculate dashboard metrics
-    const dsoTrend = calculateDSOTrend(allInvoices);
+    const dsoTrend = calculateDSOTrend(historicalInvoices);
     const arAging = calculateARAgingBuckets(unpaidInvoices);
     const invoices = formatInvoicesForBoard(unpaidInvoices);
-    const paymentBehavior = calculatePaymentBehavior(allInvoices);
+    const paymentBehavior = calculatePaymentBehavior(historicalInvoices);
+    const annualRevenue = calculateAnnualRevenue(historicalInvoices);
+    const collectionEfficiency = calculateCollectionEfficiency(historicalInvoices);
 
     // Return data in the format the dashboard expects
     res.status(200).json({
@@ -36,6 +39,8 @@ export default async function handler(req, res) {
       arAging,
       invoices,
       paymentBehavior,
+      annualRevenue,
+      collectionEfficiency,
       goLiveDate: GO_LIVE_DATE,
     });
   } catch (error) {
@@ -57,12 +62,14 @@ async function fetchUnpaidInvoices(clientId) {
 }
 
 /**
- * Fetch last 90 days of invoices for DSO calculation
+ * Fetch last 365 days of invoices — used for DSO trend (needs lookback
+ * beyond 90 days for the rolling window), annual revenue, payment
+ * behavior, and collection efficiency calculations.
  */
-async function fetchLast90DaysInvoices(clientId) {
-  const date90DaysAgo = new Date();
-  date90DaysAgo.setDate(date90DaysAgo.getDate() - 90);
-  const dateStr = date90DaysAgo.toISOString().split('T')[0];
+async function fetchLast365DaysInvoices(clientId) {
+  const date365DaysAgo = new Date();
+  date365DaysAgo.setDate(date365DaysAgo.getDate() - 365);
+  const dateStr = date365DaysAgo.toISOString().split('T')[0];
 
   const query = encodeURIComponent(`SELECT * FROM Invoice WHERE TxnDate >= '${dateStr}'`);
   const response = await qbApiRequest(`/query?query=${query}`, {}, clientId);
@@ -249,4 +256,34 @@ function calculatePaymentBehavior(allInvoices) {
     .sort((a, b) => b.avgDays - a.avgDays); // Sort by slowest payers first
 
   return behaviorData.slice(0, 6); // Top 6 customers like mockData
+}
+
+/**
+ * Calculate trailing-12-month revenue from invoiced amounts.
+ * Used as the denominator for DSO/recoverable-cash projections instead of
+ * a hardcoded estimate.
+ */
+function calculateAnnualRevenue(allInvoices) {
+  return Math.round(allInvoices.reduce((sum, inv) => sum + parseFloat(inv.TotalAmt || 0), 0));
+}
+
+/**
+ * Calculate % of invoices paid within 90 days of issue, among invoices
+ * that have actually been paid (Balance === 0) in the trailing 12 months.
+ * Uses MetaData.LastUpdatedTime as a proxy for payment date — QuickBooks
+ * doesn't expose a dedicated "paid on" field via this API, so this is an
+ * approximation and can be skewed by unrelated invoice edits.
+ */
+function calculateCollectionEfficiency(allInvoices) {
+  const paidInvoices = allInvoices.filter((inv) => parseFloat(inv.Balance || 0) === 0);
+  if (paidInvoices.length === 0) return null;
+
+  const paidWithin90 = paidInvoices.filter((inv) => {
+    const invoiceDate = new Date(inv.TxnDate);
+    const paidDate = new Date(inv.MetaData?.LastUpdatedTime || inv.TxnDate);
+    const daysToPay = Math.floor((paidDate - invoiceDate) / (1000 * 60 * 60 * 24));
+    return daysToPay <= 90;
+  });
+
+  return Math.round((paidWithin90.length / paidInvoices.length) * 100);
 }

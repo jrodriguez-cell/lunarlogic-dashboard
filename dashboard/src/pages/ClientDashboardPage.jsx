@@ -55,7 +55,9 @@ export default function ClientDashboardPage({ session, onLogout }) {
   }, [session.clientId]);
 
   // Live-connected clients (e.g. qbsandbox) overlay real QB numbers onto the
-  // static metadata (name, industry, annualRevenue) mock data still provides.
+  // static metadata (name, industry) mock data still provides. preLiveDSO,
+  // automationStats, and payments have no real source for live clients yet,
+  // so they're nulled out rather than falling back to fabricated mock values.
   const data = useMemo(() => {
     if (!liveData) return base;
     return {
@@ -65,6 +67,12 @@ export default function ClientDashboardPage({ session, onLogout }) {
       invoices: liveData.invoices,
       paymentBehavior: liveData.paymentBehavior,
       goLiveDate: liveData.goLiveDate,
+      annualRevenue: liveData.annualRevenue,
+      collectionEfficiency: liveData.collectionEfficiency,
+      preLiveDSO: liveData.preLiveDSO,
+      automationStats: liveData.automationStats,
+      payments: liveData.payments,
+      isLive: liveData.isLive,
     };
   }, [base, liveData]);
 
@@ -72,7 +80,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
   const currentDSOEntry = data.dsoTrend[data.dsoTrend.length - 1];
   const currentDSO  = currentDSOEntry?.dso ?? 0;
-  const dsoChange   = Math.round(currentDSO - data.preLiveDSO);
+  const dsoChange   = data.preLiveDSO != null ? Math.round(currentDSO - data.preLiveDSO) : null;
   const urgentCount = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0).length;
 
   const nonOverdueAR   = data.invoices.filter(i => i.status !== 'Paid' && i.daysOverdue <= 0).reduce((s, i) => s + i.amount, 0);
@@ -131,8 +139,12 @@ export default function ClientDashboardPage({ session, onLogout }) {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: 10, color: 'var(--muted)' }}>Was {data.preLiveDSO}d</span>
-              <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
+              {data.preLiveDSO != null && (
+                <>
+                  <span style={{ fontSize: 10, color: 'var(--muted)' }}>Was {data.preLiveDSO}d</span>
+                  <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
+                </>
+              )}
               <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 <span style={{ color: '#f59e0b', fontWeight: 700 }}>45d</span> avg
                 <SourceTag label="Industry average DSO for professional services firms per APQC Process & Performance Management benchmarks (2024 report). Range: 40–60 days." />

@@ -29,9 +29,16 @@ export async function fetchDashboardData(clientId) {
       })),
       paymentBehavior:      live.paymentBehavior,
       goLiveDate:           live.goLiveDate,
-      preLiveDSO:           client.preLiveDSO,
-      collectionEfficiency: client.collectionEfficiency,
-      payments:             client.payments,
+      annualRevenue:        live.annualRevenue,
+      collectionEfficiency: live.collectionEfficiency,
+      // No real source yet for these — don't fabricate them for a live client.
+      // preLiveDSO has no real baseline (sandbox never had an actual go-live
+      // transition); automationStats/payments require WF1/2/3 telemetry that
+      // isn't wired into this dashboard yet.
+      preLiveDSO:           null,
+      automationStats:      null,
+      payments:             [],
+      isLive:               true,
     };
   } catch (err) {
     console.error(`Live QB fetch failed for client "${clientId}", falling back to mock data:`, err);
@@ -48,8 +55,11 @@ function mockShape(client) {
     invoices:             client.invoices,
     paymentBehavior:      client.paymentBehavior,
     goLiveDate:           client.goLiveDate,
+    annualRevenue:        client.annualRevenue,
     preLiveDSO:           client.preLiveDSO,
     collectionEfficiency: client.collectionEfficiency,
+    automationStats:      client.automationStats,
     payments:             client.payments,
+    isLive:               false,
   };
 }

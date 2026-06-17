@@ -83,6 +83,9 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
   const autoApplied = payments.filter(p => p.status === 'Auto-Applied');
   const pending     = payments.filter(p => p.status === 'Pending Review');
 
+  // Per-invoice reminder tracking only exists in mock data today — live QB
+  // invoices have no `reminders`/`nextReminder` field, so don't claim a false 0%.
+  const reminderDataAvailable = open.some(i => i.reminders !== undefined || i.nextReminder !== undefined);
   const coveredInvs     = open.filter(i => (i.reminders?.length > 0) || i.nextReminder);
   const uncoveredInvs   = open.filter(i => !(i.reminders?.length > 0) && !i.nextReminder);
   const coveragePct     = open.length > 0 ? Math.round(coveredInvs.length / open.length * 100) : 100;
@@ -454,7 +457,7 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             sub="LunarLogic is your windshield, not a rearview mirror"
             onClick={() => onDrill({
               title: 'DSO Trend — Last 90 Days',
-              subtitle: `${data.preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today · go-live ${data.goLiveDate}`,
+              subtitle: data.preLiveDSO != null ? `${data.preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today · go-live ${data.goLiveDate}` : `${Math.round(currentDSO)}d today · go-live ${data.goLiveDate}`,
               source: '30-day rolling DSO calculated daily from QuickBooks invoice data. Go-live date marks LunarLogic activation.',
               filename: 'dso_trend_90d',
               columns: [
@@ -470,39 +473,47 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
       {/* Automation Coverage Report */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
         <SectionLabel>Automation coverage — which invoices LunarLogic is handling</SectionLabel>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 10, flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: 36, fontWeight: 900, color: coveragePct >= 80 ? 'var(--green)' : '#f59e0b', lineHeight: 1, letterSpacing: -1 }}>{coveragePct}%</div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 3 }}>of open invoices in reminder sequence</div>
-          </div>
-          <div style={{ flex: 1, minWidth: 160 }}>
-            <div style={{ height: 8, background: 'var(--bg-hover)', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
-              <div style={{ width: `${coveragePct}%`, height: '100%', background: coveragePct >= 80 ? '#22c55e' : '#f59e0b', borderRadius: 4 }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
-              <span>{coveredInvs.length} handled by LunarLogic</span>
-              <span>{uncoveredInvs.length} need manual attention</span>
-            </div>
-          </div>
-        </div>
-        {uncoveredInvs.length > 0 && (
-          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Outside automation coverage</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {uncoveredInvs.map(inv => (
-                <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, padding: '4px 0' }}>
-                  <span style={{ color: 'var(--text-dim)' }}>{inv.customer} — {inv.id}</span>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', borderRadius: 8, padding: '1px 7px' }}>Needs you</span>
-                  </div>
+        {reminderDataAvailable ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 10, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 36, fontWeight: 900, color: coveragePct >= 80 ? 'var(--green)' : '#f59e0b', lineHeight: 1, letterSpacing: -1 }}>{coveragePct}%</div>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 3 }}>of open invoices in reminder sequence</div>
+              </div>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <div style={{ height: 8, background: 'var(--bg-hover)', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+                  <div style={{ width: `${coveragePct}%`, height: '100%', background: coveragePct >= 80 ? '#22c55e' : '#f59e0b', borderRadius: 4 }} />
                 </div>
-              ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                  <span>{coveredInvs.length} handled by LunarLogic</span>
+                  <span>{uncoveredInvs.length} need manual attention</span>
+                </div>
+              </div>
             </div>
+            {uncoveredInvs.length > 0 && (
+              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Outside automation coverage</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {uncoveredInvs.map(inv => (
+                    <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, padding: '4px 0' }}>
+                      <span style={{ color: 'var(--text-dim)' }}>{inv.customer} — {inv.id}</span>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', borderRadius: 8, padding: '1px 7px' }}>Needs you</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {uncoveredInvs.length === 0 && (
+              <div style={{ marginTop: 8, fontSize: 11, color: 'var(--green)', fontStyle: 'italic' }}>All open invoices are in active automation sequences — no manual follow-up needed.</div>
+            )}
+          </>
+        ) : (
+          <div style={{ marginTop: 10, fontSize: 11, color: 'var(--muted)', fontStyle: 'italic' }}>
+            WF2 reminder logging isn't linked to this dashboard's invoice data yet, so per-invoice coverage can't be calculated.
           </div>
-        )}
-        {uncoveredInvs.length === 0 && (
-          <div style={{ marginTop: 8, fontSize: 11, color: 'var(--green)', fontStyle: 'italic' }}>All open invoices are in active automation sequences — no manual follow-up needed.</div>
         )}
       </div>
 
@@ -573,9 +584,9 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
           <SectionLabel>What LunarLogic handled for you</SectionLabel>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10, marginBottom: 12 }}>
-            <MiniStat label="Invoices auto-sent" value={data.automationStats?.invoicesProcessedTotal ?? 0} sub="since go-live" color="var(--teal)" source="Total invoices created via WF1 Slack-to-QuickBooks AI workflow since your go-live date. Each represents a PDF upload or text command processed without manual data entry." />
-            <MiniStat label="Reminders sent" value={data.automationStats?.remindersSentTotal ?? 0} sub="hands-free" color="var(--teal)" source="Total outbound payment reminder emails sent via WF2 (Microsoft Outlook / Graph API) since go-live. Sent automatically — no calls or manual emails from your team." />
-            <MiniStat label="Payments matched" value={data.automationStats?.paymentsAutoMatched ?? 0} sub="automatically" color="var(--green)" source="Payments automatically matched to invoices by WF3 AI engine (Plaid bank feed). Matched at ≥90% confidence without manual reconciliation." />
+            <MiniStat label="Invoices auto-sent" value={data.automationStats ? (data.automationStats.invoicesProcessedTotal ?? 0) : 'Not yet tracked'} sub="since go-live" color="var(--teal)" source="Total invoices created via WF1 Slack-to-QuickBooks AI workflow since your go-live date. Each represents a PDF upload or text command processed without manual data entry." />
+            <MiniStat label="Reminders sent" value={data.automationStats ? (data.automationStats.remindersSentTotal ?? 0) : 'Not yet tracked'} sub="hands-free" color="var(--teal)" source="Total outbound payment reminder emails sent via WF2 (Microsoft Outlook / Graph API) since go-live. Sent automatically — no calls or manual emails from your team." />
+            <MiniStat label="Payments matched" value={data.automationStats ? (data.automationStats.paymentsAutoMatched ?? 0) : 'Not yet tracked'} sub="automatically" color="var(--green)" source="Payments automatically matched to invoices by WF3 AI engine (Plaid bank feed). Matched at ≥90% confidence without manual reconciliation." />
           </div>
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <ActivityRow icon="✓" label="Payments auto-matched this month" value={`${autoApplied.length}`} color="var(--green)"
@@ -583,8 +594,8 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             <ActivityRow icon="→" label="Awaiting your review" value={`${pending.length} payment${pending.length !== 1 ? 's' : ''}`} color={pending.length > 0 ? '#f59e0b' : 'var(--muted)'}
               onClick={pending.length > 0 ? drillUnapplied : null} />
             <ActivityRow icon="↑" label="Collection rate" value={`${data.collectionEfficiency}%`} color="var(--teal)" />
-            <ActivityRow icon="↓" label="DSO reduction since go-live" value={`${Math.abs(dsoChange)} days`} color="var(--green)"
-              onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: `${data.preLiveDSO}d → ${Math.round(currentDSO)}d · go-live ${data.goLiveDate}`, source: '30-day rolling DSO calculated from paid invoices.', filename: 'dso_trend', columns: [{ key: 'date', label: 'Date' }, { key: 'dso', label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso }], rows: data.dsoTrend })} />
+            <ActivityRow icon="↓" label="DSO reduction since go-live" value={dsoChange != null ? `${Math.abs(dsoChange)} days` : 'No baseline yet'} color="var(--green)"
+              onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: data.preLiveDSO != null ? `${data.preLiveDSO}d → ${Math.round(currentDSO)}d · go-live ${data.goLiveDate}` : `${Math.round(currentDSO)}d · go-live ${data.goLiveDate}`, source: '30-day rolling DSO calculated from paid invoices.', filename: 'dso_trend', columns: [{ key: 'date', label: 'Date' }, { key: 'dso', label: 'DSO (days)', render: v => v.toFixed(1), csvVal: row => row.dso }], rows: data.dsoTrend })} />
           </div>
           <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)', fontSize: 10, color: 'var(--muted)', fontStyle: 'italic' }}>
             Every reminder above was sent without you making a single call — your client relationships are intact.

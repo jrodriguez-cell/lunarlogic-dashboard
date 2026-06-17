@@ -22,9 +22,14 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
   const dsoLast  = avgDSO(lastMo);
   const dsoMoChg = dsoLast - dsoThis; // positive = improved
 
+  const isLive = !!data.isLive;
+
+  // WF3 payment-matching telemetry isn't wired into this dashboard yet —
+  // `payments` is empty for live clients, so don't claim a false 0%/0-of-0 stat.
   const payments    = data.payments ?? [];
   const pmtsPeriod  = payments.filter(p => p.received?.startsWith('2026-05'));
   const autoPeriod  = pmtsPeriod.filter(p => p.status === 'Auto-Applied');
+  const paymentDataAvailable = !isLive;
   const minutesSvd  = autoPeriod.length * 17;
   const hoursSaved  = Math.round(minutesSvd / 60 * 10) / 10;
 
@@ -44,10 +49,19 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
 
   const totalRemindersSent = openInvs.reduce((s, i) => s + (i.reminders?.length ?? 0), 0);
 
-  const dsoImprovement   = data.preLiveDSO - Math.round(currentDSO);
-  const recoveredCapital = Math.round(dsoImprovement * (data.annualRevenue / 365));
+  const dsoImprovement   = data.preLiveDSO != null ? data.preLiveDSO - Math.round(currentDSO) : null;
+  const recoveredCapital = dsoImprovement != null ? Math.round(dsoImprovement * (data.annualRevenue / 365)) : null;
 
   const collEff = data.collectionEfficiency;
+
+  // Bad debt rate IS derivable from real QuickBooks data (badDebtAmt / annualRevenue)
+  // even when automationStats (which requires WF1/2/3 telemetry) is unavailable.
+  const badDebtRatePct = isLive
+    ? (data.annualRevenue ? Math.round((badDebtAmt / data.annualRevenue) * 1000) / 10 : null)
+    : (data.automationStats?.badDebtRateAfter ?? 0.7);
+  // No real source yet for processing time / close time / before-baselines on a
+  // live client — those require WF1/2/3 telemetry not wired into this dashboard.
+  const automationTelemetryAvailable = !isLive;
 
   const [aiSummary, setAiSummary] = useState(null);
   const [aiLoading, setAiLoading] = useState(true);
@@ -131,7 +145,7 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
           sub={dsoMoChg >= 0 ? `${dsoMoChg}d better than May` : `${Math.abs(dsoMoChg)}d above May`}
           detail={`May avg: ${dsoLast}d`}
           color={dsoMoChg >= 0 ? 'var(--green)' : 'var(--red)'}
-          onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: `${data.preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today`, source: '30-day rolling DSO. Go-live marks LunarLogic activation.', filename: 'dso_trend', columns: DSO_COLS, rows: data.dsoTrend })}
+          onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: data.preLiveDSO != null ? `${data.preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today` : `${Math.round(currentDSO)}d today`, source: '30-day rolling DSO. Go-live marks LunarLogic activation.', filename: 'dso_trend', columns: DSO_COLS, rows: data.dsoTrend })}
           source="30-day rolling average DSO from QuickBooks Online invoice data. Formula: (Outstanding AR ÷ Annual Revenue) × 365. Go-live annotation marks LunarLogic activation date."
         />
         <MetricTile
@@ -144,34 +158,34 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
         />
         <MetricTile
           label="Auto-Matched Payments"
-          value={autoPeriod.length}
-          sub={`of ${pmtsPeriod.length} received this period`}
-          detail={`${Math.round(autoPeriod.length / Math.max(pmtsPeriod.length, 1) * 100)}% automation rate`}
-          color="var(--teal)"
+          value={paymentDataAvailable ? autoPeriod.length : 'Not yet tracked'}
+          sub={paymentDataAvailable ? `of ${pmtsPeriod.length} received this period` : 'WF3 payment matching isn\'t wired in yet'}
+          detail={paymentDataAvailable ? `${Math.round(autoPeriod.length / Math.max(pmtsPeriod.length, 1) * 100)}% automation rate` : undefined}
+          color={paymentDataAvailable ? 'var(--teal)' : 'var(--muted)'}
           source="Payments automatically applied to invoices by LunarLogic's WF3 AI matching engine (Plaid bank feed). Confidence threshold: 90%. Below-threshold payments require manual confirmation."
         />
         <MetricTile
           label="Bad Debt Rate"
-          value={`${data.automationStats?.badDebtRateAfter ?? 0.7}%`}
-          sub={`Was ${data.automationStats?.badDebtRateBefore ?? 1.9}% before LunarLogic`}
-          detail={`${Math.round((1 - (data.automationStats?.badDebtRateAfter ?? 0.7) / (data.automationStats?.badDebtRateBefore ?? 1.9)) * 100)}% improvement`}
+          value={badDebtRatePct != null ? `${badDebtRatePct}%` : 'Not yet tracked'}
+          sub={automationTelemetryAvailable ? `Was ${data.automationStats?.badDebtRateBefore ?? 1.9}% before LunarLogic` : 'No pre-LunarLogic baseline for this account'}
+          detail={automationTelemetryAvailable ? `${Math.round((1 - (data.automationStats?.badDebtRateAfter ?? 0.7) / (data.automationStats?.badDebtRateBefore ?? 1.9)) * 100)}% improvement` : 'Calculated from live QuickBooks data'}
           color="var(--green)"
           source="Bad debt expense as % of revenue. Calculated from invoices written off or >180 days overdue. Compared to pre-LunarLogic baseline measured over the same period."
         />
         <MetricTile
           label="Invoice Processing"
-          value={`${data.automationStats?.avgProcessingMinutes ?? 3} min`}
-          sub="Was 19 min before LunarLogic"
-          detail={`${data.automationStats?.invoicesProcessedTotal ?? 0} invoices processed since go-live`}
-          color="var(--teal)"
+          value={automationTelemetryAvailable ? `${data.automationStats?.avgProcessingMinutes ?? 3} min` : 'Not yet tracked'}
+          sub={automationTelemetryAvailable ? 'Was 19 min before LunarLogic' : 'WF1 processing telemetry isn\'t wired in yet'}
+          detail={automationTelemetryAvailable ? `${data.automationStats?.invoicesProcessedTotal ?? 0} invoices processed since go-live` : undefined}
+          color={automationTelemetryAvailable ? 'var(--teal)' : 'var(--muted)'}
           source="Average time from Slack PDF upload to invoice sent in QuickBooks via WF1 automation. Pre-LunarLogic baseline: 19 min manual data entry per invoice."
         />
         <MetricTile
           label="Month-End Close"
-          value={`${data.automationStats?.monthEndCloseDaysAfter ?? 3}d`}
-          sub={`Was ${data.automationStats?.monthEndCloseDaysBefore ?? 12}d before LunarLogic`}
-          detail={`${Math.round((1 - (data.automationStats?.monthEndCloseDaysAfter ?? 3) / (data.automationStats?.monthEndCloseDaysBefore ?? 12)) * 100)}% faster close`}
-          color="var(--green)"
+          value={automationTelemetryAvailable ? `${data.automationStats?.monthEndCloseDaysAfter ?? 3}d` : 'Not yet tracked'}
+          sub={automationTelemetryAvailable ? `Was ${data.automationStats?.monthEndCloseDaysBefore ?? 12}d before LunarLogic` : 'Close-timestamp telemetry isn\'t wired in yet'}
+          detail={automationTelemetryAvailable ? `${Math.round((1 - (data.automationStats?.monthEndCloseDaysAfter ?? 3) / (data.automationStats?.monthEndCloseDaysBefore ?? 12)) * 100)}% faster close` : undefined}
+          color={automationTelemetryAvailable ? 'var(--green)' : 'var(--muted)'}
           source="Days from period end to finalized books. Tracked via LunarLogic workflow completion timestamps vs. prior manual close process baseline."
         />
       </div>
@@ -183,16 +197,26 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
         <SectionLabel>DSO journey since go-live</SectionLabel>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 20, flexWrap: 'wrap', marginTop: 10 }}>
-          <JourneyStop label="Before LunarLogic" value={`${data.preLiveDSO}d`} color="#ef4444" />
-          <div style={{ fontSize: 16, color: 'var(--muted)' }}>→</div>
+          {data.preLiveDSO != null && (
+            <>
+              <JourneyStop label="Before LunarLogic" value={`${data.preLiveDSO}d`} color="#ef4444" />
+              <div style={{ fontSize: 16, color: 'var(--muted)' }}>→</div>
+            </>
+          )}
           <JourneyStop label="Go-live" value={data.goLiveDate} color="var(--muted)" small />
           <div style={{ fontSize: 16, color: 'var(--muted)' }}>→</div>
           <JourneyStop label="Today" value={`${Math.round(currentDSO)}d`} color="var(--teal)" />
           <div style={{ flex: 1, minWidth: 20 }} />
           <div style={{ textAlign: isMobile ? 'left' : 'right', paddingTop: isMobile ? 8 : 0 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 3 }}>Total improvement</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--green)', lineHeight: 1 }}>↓ {dsoImprovement} days</div>
-            <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>= {fmtM(recoveredCapital)} in recovered working capital</div>
+            {dsoImprovement != null ? (
+              <>
+                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 3 }}>Total improvement</div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--green)', lineHeight: 1 }}>↓ {dsoImprovement} days</div>
+                <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>= {fmtM(recoveredCapital)} in recovered working capital</div>
+              </>
+            ) : (
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>No pre-LunarLogic baseline for this account</div>
+            )}
           </div>
         </div>
       </div>
@@ -203,8 +227,8 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 10 }}>
           <ImpactRow label="Invoices sent automatically" value={`${totalSent} this period`} color="var(--teal)" source="Invoices created via WF1 (Slack → QuickBooks AI workflow). Count reflects invoices issued this period originating from WF1 automation runs." />
           <ImpactRow label="Payment reminders sent by LunarLogic" value={`${totalRemindersSent} total`} color="var(--teal)" source="Outbound reminder emails sent via WF2 (Microsoft Outlook / Graph API). Triggered automatically on schedule — no manual action required from your team." />
-          <ImpactRow label="Payments auto-matched and applied" value={`${autoPeriod.length} this period`} color="var(--green)" source="Payments matched to invoices automatically by WF3 AI engine using Plaid bank feed. Exact and fuzzy name + amount matching at ≥90% confidence." />
-          <ImpactRow label="Hours saved vs manual process" value={`~${hoursSaved}h this period`} color="var(--green)" source="Estimated based on 17 min per payment for manual reconciliation. Applied to all auto-matched payments this period." />
+          <ImpactRow label="Payments auto-matched and applied" value={paymentDataAvailable ? `${autoPeriod.length} this period` : 'Not yet tracked'} color={paymentDataAvailable ? 'var(--green)' : 'var(--muted)'} source="Payments matched to invoices automatically by WF3 AI engine using Plaid bank feed. Exact and fuzzy name + amount matching at ≥90% confidence." />
+          <ImpactRow label="Hours saved vs manual process" value={paymentDataAvailable ? `~${hoursSaved}h this period` : 'Not yet tracked'} color={paymentDataAvailable ? 'var(--green)' : 'var(--muted)'} source="Estimated based on 17 min per payment for manual reconciliation. Applied to all auto-matched payments this period." />
           <ImpactRow
             label="Automation coverage of open AR"
             value={reminderDataAvailable ? `${coveragePct}% of invoices in sequence` : 'Not yet tracked'}
@@ -213,9 +237,9 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
               ? '% of open (unpaid) invoices currently enrolled in WF2 reminder sequence. Calculated from invoices with at least one scheduled or sent reminder.'
               : 'WF2 reminder logging is not yet linked to this dashboard\'s invoice data, so per-invoice coverage can\'t be calculated yet.'}
           />
-          <ImpactRow label="Bad debt rate since go-live" value={`${data.automationStats?.badDebtRateAfter ?? 0.7}% (was ${data.automationStats?.badDebtRateBefore ?? 1.9}%)`} color="var(--green)" source="Bad debt expense as % of revenue. Invoices written off or >180 days overdue. Compared to client's pre-LunarLogic baseline." />
-          <ImpactRow label="Invoice processing time" value={`${data.automationStats?.avgProcessingMinutes ?? 3} min avg (was 19 min)`} color="var(--teal)" source="Avg time from Slack upload to QB invoice creation via WF1. Pre-LunarLogic: manual data entry avg 19 min per invoice." />
-          <ImpactRow label="Admin hours saved annually" value={`~${(data.automationStats?.adminHoursPerYearBefore ?? 480) - (data.automationStats?.adminHoursPerYearAfter ?? 88)} hrs/yr (was ${data.automationStats?.adminHoursPerYearBefore ?? 480} hrs)`} color="var(--green)" last source="Projected annual savings based on WF1 + WF2 time displacement. Measured against pre-automation baseline hours for invoice entry and follow-up." />
+          <ImpactRow label="Bad debt rate since go-live" value={badDebtRatePct != null ? (automationTelemetryAvailable ? `${badDebtRatePct}% (was ${data.automationStats?.badDebtRateBefore ?? 1.9}%)` : `${badDebtRatePct}% (no pre-LunarLogic baseline)`) : 'Not yet tracked'} color={badDebtRatePct != null ? 'var(--green)' : 'var(--muted)'} source="Bad debt expense as % of revenue. Invoices written off or >180 days overdue. Compared to client's pre-LunarLogic baseline." />
+          <ImpactRow label="Invoice processing time" value={automationTelemetryAvailable ? `${data.automationStats?.avgProcessingMinutes ?? 3} min avg (was 19 min)` : 'Not yet tracked'} color={automationTelemetryAvailable ? 'var(--teal)' : 'var(--muted)'} source="Avg time from Slack upload to QB invoice creation via WF1. Pre-LunarLogic: manual data entry avg 19 min per invoice." />
+          <ImpactRow label="Admin hours saved annually" value={automationTelemetryAvailable ? `~${(data.automationStats?.adminHoursPerYearBefore ?? 480) - (data.automationStats?.adminHoursPerYearAfter ?? 88)} hrs/yr (was ${data.automationStats?.adminHoursPerYearBefore ?? 480} hrs)` : 'Not yet tracked'} color={automationTelemetryAvailable ? 'var(--green)' : 'var(--muted)'} last source="Projected annual savings based on WF1 + WF2 time displacement. Measured against pre-automation baseline hours for invoice entry and follow-up." />
         </div>
       </div>
 
@@ -266,17 +290,19 @@ function DSOTrendChart({ trend, goLiveDate, preLiveDSO, currentDSO, isMobile, on
         <div>
           <SectionLabel>DSO trend — last 90 days</SectionLabel>
           <div style={{ display: 'flex', gap: 16, marginTop: 6, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 20, height: 2, background: '#4b5563', borderRadius: 1 }} />
-              <span style={{ fontSize: 10, color: 'var(--muted)' }}>Before LunarLogic ({preLiveDSO}d)</span>
-            </div>
+            {preLiveDSO != null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 20, height: 2, background: '#4b5563', borderRadius: 1 }} />
+                <span style={{ fontSize: 10, color: 'var(--muted)' }}>Before LunarLogic ({preLiveDSO}d)</span>
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 20, height: 2, background: '#00d4e8', borderRadius: 1 }} />
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>After go-live ({Math.round(currentDSO)}d now)</span>
             </div>
           </div>
         </div>
-        <button onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: `${preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today`, source: '30-day rolling DSO from QuickBooks.', filename: 'dso_trend_90d', columns: DSO_COLS, rows: trend })}
+        <button onClick={() => onDrill({ title: 'DSO Trend — Last 90 Days', subtitle: preLiveDSO != null ? `${preLiveDSO}d pre-live → ${Math.round(currentDSO)}d today` : `${Math.round(currentDSO)}d today`, source: '30-day rolling DSO from QuickBooks.', filename: 'dso_trend_90d', columns: DSO_COLS, rows: trend })}
           style={{ fontSize: 10, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 10px', cursor: 'pointer' }}>
           Export data
         </button>
