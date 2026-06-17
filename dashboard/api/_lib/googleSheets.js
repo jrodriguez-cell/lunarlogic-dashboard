@@ -5,16 +5,23 @@
  * QB OAuth tokens are NOT stored here — they live encrypted in Vercel KV
  * via ./tokenStore.js. Plaintext credentials in a shared spreadsheet are
  * not an acceptable storage pattern for client onboarding.
+ *
+ * Uses OAuth2 (same pattern n8n's Sheets nodes use) rather than a service
+ * account key — the GCP project this runs under has an org policy blocking
+ * service account key creation that we don't have permission to override.
+ * The googleapis client auto-refreshes the access token from the stored
+ * refresh token on every call, so no token caching/storage layer is needed.
  */
 
 import { google } from 'googleapis';
 
 // Initialize Google Sheets client
 function getSheets() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: JSON.parse(process.env.GOOGLE_SHEETS_CREDENTIALS),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
+  const auth = new google.auth.OAuth2(
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET
+  );
+  auth.setCredentials({ refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN });
 
   return google.sheets({ version: 'v4', auth });
 }
