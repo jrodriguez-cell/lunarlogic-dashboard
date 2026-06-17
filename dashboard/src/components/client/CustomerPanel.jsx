@@ -76,7 +76,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
         body: JSON.stringify({ invoice_id: inv.qbId, client_id: clientId }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || result.message || 'Send failed');
+      if (!res.ok) throw new Error(result.message || result.error || 'Send failed');
       toast(`Reminder sent for ${inv.id}`);
       setAction(null);
     } catch (err) {
@@ -92,7 +92,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
       body: JSON.stringify({ client_id: clientId, customer_name: inv.customer, invoice_number: inv.id, ...payload }),
     });
     const result = await res.json();
-    if (!res.ok) throw new Error(result.error || result.message || 'Save failed');
+    if (!res.ok) throw new Error(result.message || result.error || 'Save failed');
   }
 
   async function submitLog(e) {
