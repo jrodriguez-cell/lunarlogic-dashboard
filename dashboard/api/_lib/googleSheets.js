@@ -67,6 +67,46 @@ export async function logReminderToSheets(data) {
 }
 
 /**
+ * Log a manual CRM activity (contact logged, task assigned, invoice
+ * snoozed) to the "CRM Activity" tab. These actions have no n8n workflow
+ * counterpart — they only exist on the dashboard — so this is the sole
+ * place they're persisted. Same spreadsheet as the other logs, so it's
+ * one place to look for all client-facing activity.
+ */
+export async function logActivityToSheets(data) {
+  const sheets = getSheets();
+  const now = new Date();
+
+  const row = [
+    now.toISOString(),       // timestamp
+    data.activity_type,      // 'contact' | 'task' | 'snooze'
+    data.client_id,
+    data.customer_name,
+    data.invoice_number || '',
+    data.detail_1 || '',     // method / assignee / snooze date
+    data.detail_2 || '',     // outcome / due date
+    data.detail_3 || '',     // promised-payment date
+    data.notes || '',
+  ];
+
+  try {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: "'CRM Activity'",
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [row],
+      },
+    });
+
+    console.log('Activity logged to Google Sheets');
+  } catch (error) {
+    console.error('Error logging activity to Sheets:', error);
+    throw new Error(`Failed to log activity: ${error.message}`);
+  }
+}
+
+/**
  * Read invoice data from Execution_Log sheet
  * (Optional - if you want to fall back to sheets instead of QB API)
  */

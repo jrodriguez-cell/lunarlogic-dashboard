@@ -85,9 +85,55 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
       setSending(false);
     }
   }
-  function submitLog(e) { e.preventDefault(); toast(`Contact logged — ${logForm.method} with ${inv.customer}`); setAction(null); }
-  function submitTask(e) { e.preventDefault(); toast(`Task assigned to ${taskForm.assignee}`); setAction(null); }
-  function submitSnooze(e) { e.preventDefault(); toast(`Snoozed until ${snoozeDate}`); setAction(null); }
+  async function logActivity(payload) {
+    const res = await fetch('/api/log-activity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: clientId, customer_name: inv.customer, invoice_number: inv.id, ...payload }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || result.message || 'Save failed');
+  }
+
+  async function submitLog(e) {
+    e.preventDefault();
+    setSending(true);
+    try {
+      await logActivity({ activity_type: 'contact', detail_1: logForm.method, detail_2: logForm.outcome, detail_3: logForm.promisedDate, notes: logForm.notes });
+      toast(`Contact logged — ${logForm.method} with ${inv.customer}`);
+      setAction(null);
+    } catch (err) {
+      toast(`Failed to save log: ${err.message}`);
+    } finally {
+      setSending(false);
+    }
+  }
+  async function submitTask(e) {
+    e.preventDefault();
+    setSending(true);
+    try {
+      await logActivity({ activity_type: 'task', detail_1: taskForm.assignee, detail_2: taskForm.dueDate, notes: taskForm.description });
+      toast(`Task assigned to ${taskForm.assignee}`);
+      setAction(null);
+    } catch (err) {
+      toast(`Failed to assign task: ${err.message}`);
+    } finally {
+      setSending(false);
+    }
+  }
+  async function submitSnooze(e) {
+    e.preventDefault();
+    setSending(true);
+    try {
+      await logActivity({ activity_type: 'snooze', detail_1: snoozeDate });
+      toast(`Snoozed until ${snoozeDate}`);
+      setAction(null);
+    } catch (err) {
+      toast(`Failed to snooze: ${err.message}`);
+    } finally {
+      setSending(false);
+    }
+  }
 
   const urgColor = inv.daysOverdue > 60 ? '#ef4444' : inv.daysOverdue > 30 ? '#f97316' : inv.daysOverdue > 0 ? '#f59e0b' : '#22c55e';
 
@@ -236,7 +282,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                 <textarea value={logForm.notes} onChange={e => setLog(l => ({...l, notes: e.target.value}))} rows={3} placeholder="What was discussed..."
                   style={{ width: '100%', padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 12, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
               </div>
-              <button type="submit" style={{ padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Save log</button>
+              <button type="submit" disabled={sending} style={{ padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: sending ? 'default' : 'pointer', opacity: sending ? 0.6 : 1 }}>{sending ? 'Saving…' : 'Save log'}</button>
             </form>
           )}
 
@@ -259,7 +305,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                   placeholder={`Follow up with ${inv.customer} on ${inv.id}...`} required
                   style={{ width: '100%', padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 12, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
               </div>
-              <button type="submit" style={{ padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Create task</button>
+              <button type="submit" disabled={sending} style={{ padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: sending ? 'default' : 'pointer', opacity: sending ? 0.6 : 1 }}>{sending ? 'Saving…' : 'Create task'}</button>
             </form>
           )}
 
@@ -290,7 +336,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                 <input type="date" value={snoozeDate} onChange={e => setSnooze(e.target.value)} required
                   style={{ width: '100%', padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 12, boxSizing: 'border-box', colorScheme: 'dark' }} />
               </div>
-              <button type="submit" style={{ padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Snooze invoice</button>
+              <button type="submit" disabled={sending} style={{ padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: sending ? 'default' : 'pointer', opacity: sending ? 0.6 : 1 }}>{sending ? 'Saving…' : 'Snooze invoice'}</button>
             </form>
           )}
 
