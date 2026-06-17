@@ -62,7 +62,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isMobile, onDrill, onAction }) {
+export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isLive, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
   const TODAY = new Date();
@@ -93,6 +93,9 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
   const allPayments   = payments ?? [];
   const pendingPmts   = allPayments.filter(p => p.status === 'Pending Review');
   const autoPmts      = allPayments.filter(p => p.status !== 'Pending Review').slice(-6);
+  // WF3 (Plaid bank feed payment matching) isn't built yet — an empty payments
+  // list for a live client means "no data," not "everything's been matched."
+  const paymentDataAvailable = !isLive;
 
   const weeks = Array.from({ length: 13 }, (_, i) => {
     const start = addDays(TODAY, i * 7);
@@ -335,7 +338,9 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         {/* Pending confirmations */}
         <div style={{ background: 'var(--bg-card)', border: `1px solid ${pendingPmts.length > 0 ? 'rgba(245,158,11,0.35)' : 'var(--border)'}`, borderRadius: 12, padding: '16px' }}>
           <SectionLabel>Payment confirmations needed</SectionLabel>
-          {pendingPmts.length === 0 ? (
+          {!paymentDataAvailable ? (
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10, fontStyle: 'italic' }}>WF3 payment matching isn't built yet — no payment data to review.</div>
+          ) : pendingPmts.length === 0 ? (
             <div style={{ fontSize: 12, color: 'var(--green)', marginTop: 10, fontStyle: 'italic' }}>All payments matched automatically — nothing needs your review.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>

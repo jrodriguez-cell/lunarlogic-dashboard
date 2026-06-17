@@ -47,14 +47,20 @@ function getPaymentPrediction(inv, pb) {
   return { label: 'Critical', color: '#ef4444', pct: 11 };
 }
 
-function nextAction(inv, pb) {
+function nextAction(inv, pb, reminderDataAvailable) {
   const d    = inv.daysOverdue;
   const risk = pb?.riskLevel ?? 'medium';
   if (d > 90)  return { action: 'Escalate to collections',        urgency: 'critical', daysLabel: `${d}d overdue` };
   if (d > 60)  return { action: 'Personal call — senior contact', urgency: 'high',     daysLabel: `${d}d overdue` };
   if (d > 30)  return { action: 'Phone call + formal notice',     urgency: 'high',     daysLabel: `${d}d overdue` };
   if (d > 14)  return { action: 'Follow-up call recommended',     urgency: 'medium',   daysLabel: `${d}d overdue` };
-  if (d > 0)   return { action: 'WF2 reminder sequence active',   urgency: 'low',      daysLabel: `${d}d overdue` };
+  if (d > 0) {
+    // Only claim WF2 is handling it if we actually have reminder telemetry —
+    // otherwise this would silently suppress a real overdue invoice from the action queue.
+    return reminderDataAvailable
+      ? { action: 'WF2 reminder sequence active', urgency: 'low', daysLabel: `${d}d overdue` }
+      : { action: 'Follow-up recommended — reminder status not tracked', urgency: 'medium', daysLabel: `${d}d overdue` };
+  }
   if (risk === 'high') return { action: 'Monitor — high-risk payer', urgency: 'watch', daysLabel: 'Not yet due' };
   return { action: 'On track', urgency: 'ok', daysLabel: 'Not yet due' };
 }
@@ -204,12 +210,17 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
   const totalAR = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
   const pbMap   = Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p]));
   const dailyRev = (annualRevenue ?? 0) / 365;
+  // No WF2 logging wired into this dashboard for live clients yet — don't
+  // claim reminders are running unless there's real reminder data to show.
+  const reminderDataAvailable = invoices
+    .filter(i => i.status !== 'Paid')
+    .some(i => i.reminders !== undefined || i.nextReminder !== undefined);
 
   const allOpen = invoices
     .filter(i => i.status !== 'Paid')
     .map(inv => {
       const pb      = pbMap[inv.customer];
-      const na      = nextAction(inv, pb);
+      const na      = nextAction(inv, pb, reminderDataAvailable);
       const impact  = dsoImpact(inv, totalAR);
       const dispute = detectDispute(inv, pb);
       const seq     = getSequenceStatus(inv);
@@ -257,7 +268,7 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
       { key: 'matchedInvoice', label: 'Invoice',  render: v => v ?? '—' },
       { key: 'confidence',     label: 'Match %',  render: v => `${v}%` },
     ];
-    const invRow = [{ ...inv, action: inv.action ?? nextAction(inv, pbMap[inv.customer]).action }];
+    const invRow = [{ ...inv, action: inv.action ?? nextAction(inv, pbMap[inv.customer], reminderDataAvailable).action }];
     onDrill({
       title: `Invoice ${inv.id} — ${inv.customer}`,
       subtitle: `$${inv.amount.toLocaleString()} · Due ${inv.due} · ${inv.daysOverdue > 0 ? `${inv.daysOverdue}d overdue` : 'current'}`,
@@ -412,7 +423,9 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
       )}
 
       <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-        Click any row to drill into invoice detail and payment history — CSV and Excel export available. Items in "Handled by LunarLogic" are in the WF2 automated reminder sequence — no manual action needed unless escalated.
+        Click any row to drill into invoice detail and payment history — CSV and Excel export available. {reminderDataAvailable
+          ? 'Items in "Handled by LunarLogic" are in the WF2 automated reminder sequence — no manual action needed unless escalated.'
+          : 'Items in "Handled by LunarLogic" are not yet overdue or are below the priority threshold — WF2 reminder telemetry isn\'t connected to this dashboard yet.'}
       </div>
     </div>
   );
