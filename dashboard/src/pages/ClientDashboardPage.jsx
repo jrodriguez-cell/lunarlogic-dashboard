@@ -226,7 +226,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
         {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} payments={data.payments} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'invoices' && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'report'   && <ClientReportCard data={data} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
+        {activeTab === 'report'   && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
       </div>
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />

@@ -13,7 +13,7 @@ function fmtM(v) {
   return `$${v}`;
 }
 
-export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }) {
+export default function ClientReportCard({ data, clientId, currentDSO, isMobile, onDrill }) {
   const trend    = data.dsoTrend ?? [];
   const thisMo   = trend.filter(p => p.date.startsWith('2026-06'));
   const lastMo   = trend.filter(p => p.date.startsWith('2026-05'));
@@ -76,7 +76,7 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
     fetch('/api/ar-insights', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientName: data.name, metrics }),
+      body: JSON.stringify({ clientId, clientName: data.name, metrics }),
     })
       .then(res => { if (!res.ok) throw new Error(`status ${res.status}`); return res.json(); })
       .then(json => { if (!cancelled) setAiSummary(json.insight); })
@@ -84,8 +84,10 @@ export default function ClientReportCard({ data, currentDSO, isMobile, onDrill }
       .finally(() => { if (!cancelled) setAiLoading(false); });
 
     return () => { cancelled = true; };
+    // Re-fetch only when the client changes — the endpoint itself caches per
+    // clientId for 24h, so this isn't refired by the dashboard's 15-min poll.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.name, dsoThis, dsoLast, currentDSO, badDebtAmt]);
+  }, [clientId]);
 
   const DSO_COLS = [
     { key: 'date', label: 'Date' },
