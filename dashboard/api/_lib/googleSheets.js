@@ -103,3 +103,100 @@ export async function getInvoicesFromSheets() {
     throw new Error(`Failed to get invoices: ${error.message}`);
   }
 }
+
+/**
+ * Read WF1's Execution_Log tab — one row per invoice WF1 created in QuickBooks.
+ * Used to derive WF1's real "last run" / activity status for the dashboard,
+ * instead of fabricating an "Operational" badge with no backing data.
+ */
+export async function getWF1ExecutionLog() {
+  const sheets = getSheets();
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Execution_Log!A2:S',
+  });
+
+  const rows = response.data.values || [];
+
+  return rows
+    .filter((row) => row[0]) // must have a timestamp
+    .map((row) => ({
+      timestamp: row[0],
+      invoiceId: row[1],
+      invoiceNumber: row[2],
+      customerName: row[7],
+      totalAmount: parseFloat(row[5]) || 0,
+    }));
+}
+
+/**
+ * Read WF2's AR_Reminder_Log tab — one row per reminder send/skip decision.
+ * Used to derive WF2's real "last run" status and reminder counts.
+ */
+export async function getWF2ReminderLog() {
+  const sheets = getSheets();
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: "'AR Reminder Log'!A2:Q",
+  });
+
+  const rows = response.data.values || [];
+
+  return rows
+    .filter((row) => row[1]) // must have event_timestamp
+    .map((row) => ({
+      eventDate: row[0],
+      eventTimestamp: row[1],
+      customerName: row[2],
+      customerEmail: row[3],
+      invoiceNumber: row[4],
+      dueDate: row[5],
+      invoiceDate: row[6],
+      amountOutstanding: parseFloat(row[7]) || 0,
+      daysOverdue: parseInt(row[8], 10) || 0,
+      paymentStatus: row[9],
+      isPaid: row[10] === 'TRUE' || row[10] === true,
+      paidDate: row[11],
+      reminderTier: row[12],
+      skipReason: row[13],
+      emailStatus: row[14],
+    }));
+}
+
+/**
+ * Read WF3's Payment Tracking tab — one row per QB payment link sent /
+ * payment matched. Used to derive WF3's real status. Returns an empty
+ * array (not an error) if the tab doesn't exist yet, since WF3 may not
+ * be activated for every client.
+ */
+export async function getWF3PaymentTracking() {
+  const sheets = getSheets();
+
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: 'Payment Tracking!A2:W',
+    });
+
+    const rows = response.data.values || [];
+
+    return rows
+      .filter((row) => row[1]) // must have invoice_id
+      .map((row) => ({
+        invoiceId: row[1],
+        invoiceNumber: row[2],
+        customerName: row[3],
+        amount: parseFloat(row[5]) || 0,
+        status: row[8],
+        paymentLink: row[9],
+        paidAt: row[12],
+        qbPaymentApplied: row[13] === 'TRUE' || row[13] === true,
+        timestamp: row[18],
+      }));
+  } catch (error) {
+    console.error('Payment Tracking tab not readable (may not exist yet):', error.message);
+    return [];
+  }
+}

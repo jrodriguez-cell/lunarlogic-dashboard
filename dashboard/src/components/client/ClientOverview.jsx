@@ -79,10 +79,10 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
   const totalOverdue = overdue.reduce((s, i) => s + i.amount, 0);
   const totalNext30  = next30.reduce((s, i) => s + i.amount, 0);
 
-  // WF3 (Plaid bank feed payment matching) isn't built yet — `payments` is
-  // empty for live clients, so an empty `pending` list isn't proof everything's matched.
+  // An empty `payments` array isn't proof everything's matched — check WF3's
+  // real connection status for live clients instead of inferring from array length.
   const payments    = data.payments ?? [];
-  const paymentDataAvailable = !data.isLive;
+  const paymentDataAvailable = data.isLive ? data.automationStatus?.wf3?.connected === true : true;
   const autoApplied = payments.filter(p => p.status === 'Auto-Applied');
   const pending     = payments.filter(p => p.status === 'Pending Review');
 
@@ -244,24 +244,30 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             <>
               <StatusItem
                 label="WF1 — Invoice AI"
-                status="Not connected"
-                detail="No run telemetry reported to this dashboard yet"
+                status={data.automationStatus?.wf1?.connected ? (data.automationStatus.wf1.stale ? 'Stale' : 'Operational') : 'Not connected'}
+                detail={data.automationStatus?.wf1?.connected
+                  ? `Last run: ${fmtRunTime(data.automationStatus.wf1.lastRun)} · ${data.automationStatus.wf1.invoicesCreated7d} invoices created (7d)`
+                  : (data.automationStatus?.wf1?.reason ?? 'No run telemetry reported to this dashboard yet')}
                 sub="Slack → QuickBooks · AI invoice creation"
-                color="var(--muted)"
+                color={data.automationStatus?.wf1?.connected ? (data.automationStatus.wf1.stale ? '#f59e0b' : 'var(--green)') : 'var(--muted)'}
               />
               <StatusItem
                 label="WF2 — Payment Reminders"
-                status="Not connected"
-                detail="No run telemetry reported to this dashboard yet"
+                status={data.automationStatus?.wf2?.connected ? (data.automationStatus.wf2.stale ? 'Stale' : 'Operational') : 'Not connected'}
+                detail={data.automationStatus?.wf2?.connected
+                  ? `Last run: ${fmtRunTime(data.automationStatus.wf2.lastRun)} · ${data.automationStatus.wf2.remindersSent7d} reminders sent (7d)`
+                  : (data.automationStatus?.wf2?.reason ?? 'No run telemetry reported to this dashboard yet')}
                 sub="Daily 9AM M–F · Outlook email sequences"
-                color="var(--muted)"
+                color={data.automationStatus?.wf2?.connected ? (data.automationStatus.wf2.stale ? '#f59e0b' : 'var(--green)') : 'var(--muted)'}
               />
               <StatusItem
                 label="WF3 — Cash Application"
-                status="Not built"
-                detail="Plaid bank feed integration not yet implemented"
-                sub="Planned — payment auto-matching via bank feed"
-                color="var(--muted)"
+                status={data.automationStatus?.wf3?.connected ? (data.automationStatus.wf3.stale ? 'Stale' : 'Active') : 'Not connected'}
+                detail={data.automationStatus?.wf3?.connected
+                  ? `${data.automationStatus.wf3.paymentsApplied} applied · ${data.automationStatus.wf3.pending} pending of ${data.automationStatus.wf3.linksSent} links sent`
+                  : (data.automationStatus?.wf3?.reason ?? 'No run telemetry reported to this dashboard yet')}
+                sub="QuickBooks payment links · auto-reconciled by QuickBooks"
+                color={data.automationStatus?.wf3?.connected ? (data.automationStatus.wf3.stale ? '#f59e0b' : 'var(--teal)') : 'var(--muted)'}
               />
             </>
           ) : (
@@ -329,10 +335,17 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
         <SectionLabel>DSO root cause diagnostic — click any driver to see source data</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
           <RootCause
-            status={data.isLive ? 'unknown' : 'resolved'} color={data.isLive ? 'var(--muted)' : '#22c55e'}
+            status={data.isLive ? (data.automationStatus?.wf1?.connected ? 'resolved' : 'unknown') : 'resolved'}
+            color={data.isLive ? (data.automationStatus?.wf1?.connected ? '#22c55e' : 'var(--muted)') : '#22c55e'}
             title="Invoice Lag"
-            detail={data.isLive ? 'No WF1 send-timestamp telemetry reported to this dashboard yet' : 'Invoices auto-sent within minutes of job approval via LunarLogic'}
-            sub={data.isLive ? 'Can\'t yet confirm automated vs. manual invoice creation' : 'Was adding 3–8 days to DSO before go-live'}
+            detail={data.isLive
+              ? (data.automationStatus?.wf1?.connected
+                ? `WF1 active — ${data.automationStatus.wf1.invoicesCreated7d} invoices auto-created in the last 7 days`
+                : 'No WF1 send-timestamp telemetry reported to this dashboard yet')
+              : 'Invoices auto-sent within minutes of job approval via LunarLogic'}
+            sub={data.isLive
+              ? (data.automationStatus?.wf1?.connected ? 'Invoices created automatically via Slack → QuickBooks' : 'Can\'t yet confirm automated vs. manual invoice creation')
+              : 'Was adding 3–8 days to DSO before go-live'}
             onClick={() => onDrill({
               title: 'Invoice Lag — Send Time Log',
               subtitle: 'All invoices are created and sent automatically — was 3–8 days manual lag before LunarLogic',

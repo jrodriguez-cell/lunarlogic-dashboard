@@ -62,7 +62,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isLive, isMobile, onDrill, onAction }) {
+export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isLive, wf3Connected, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
   const TODAY = new Date();
@@ -95,7 +95,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
   const autoPmts      = allPayments.filter(p => p.status !== 'Pending Review').slice(-6);
   // WF3 (Plaid bank feed payment matching) isn't built yet — an empty payments
   // list for a live client means "no data," not "everything's been matched."
-  const paymentDataAvailable = !isLive;
+  const paymentDataAvailable = isLive ? wf3Connected : true;
 
   const weeks = Array.from({ length: 13 }, (_, i) => {
     const start = addDays(TODAY, i * 7);
