@@ -46,7 +46,8 @@ export default async function handler(req, res) {
     const today = new Date();
     const daysOverdue = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
 
-    // Step 4: Log to AR_Reminder_Log sheet (same format as WF2)
+    // Step 4: Log to AR Reminder Log sheet (same format as WF2)
+    const tierName = calculateReminderTier(daysOverdue);
     await logReminderToSheets({
       customer_name: invoice.CustomerRef.name,
       customer_email: customerEmail,
@@ -56,7 +57,7 @@ export default async function handler(req, res) {
       amount_outstanding: parseFloat(invoice.Balance),
       days_overdue: Math.max(0, daysOverdue),
       email_status: 'EmailSent',
-      reminder_tier: calculateReminderTier(daysOverdue),
+      reminder_tier: tierName,
     });
 
     // Step 5: Return success
@@ -69,7 +70,7 @@ export default async function handler(req, res) {
         customer: invoice.CustomerRef.name,
         email: customerEmail,
         amount: parseFloat(invoice.Balance),
-        tier: calculateReminderTier(daysOverdue),
+        tier: tierName,
         timestamp: new Date().toISOString(),
       },
     });
@@ -83,18 +84,16 @@ export default async function handler(req, res) {
 }
 
 /**
- * Calculate reminder tier based on days overdue
- * Matches WF2 logic:
- * Tier 1: Due Soon (3 days before due date)
- * Tier 2: Gentle (day of due date)
- * Tier 3: Firm (1-7 days overdue)
- * Tier 4: Urgent (8-14 days overdue)
- * Tier 5: Collections (30+ days overdue)
+ * Calculate reminder tier name based on days overdue.
+ * Must exactly match WF2's "Process Invoice Data" node thresholds —
+ * this is the only other place tier boundaries are defined, and the
+ * dashboard's manual sends write into the same Sheets log WF2 reads/writes,
+ * using the same string tier name (not a number) in that column.
  */
 function calculateReminderTier(daysOverdue) {
-  if (daysOverdue < 0) return 1; // Due Soon
-  if (daysOverdue === 0) return 2; // Gentle
-  if (daysOverdue <= 7) return 3; // Firm
-  if (daysOverdue <= 14) return 4; // Urgent
-  return 5; // Collections
+  if (daysOverdue <= 0 && daysOverdue >= -3) return 'Due Soon';
+  if (daysOverdue >= 1 && daysOverdue <= 7) return 'Gentle Reminder';
+  if (daysOverdue >= 8 && daysOverdue <= 14) return 'Firm Reminder';
+  if (daysOverdue >= 15 && daysOverdue <= 30) return 'Urgent';
+  return 'Collections';
 }
