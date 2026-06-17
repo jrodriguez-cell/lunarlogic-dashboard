@@ -34,13 +34,14 @@ function emailDraft(inv, companyName) {
   };
 }
 
-export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payments, companyName, onClose }) {
+export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payments, companyName, clientId, isLive, onClose }) {
   const toast = useToast();
   const [action, setAction] = useState(null); // null | 'reminder' | 'log' | 'task' | 'snooze'
   const [logForm, setLog]   = useState({ method: 'Phone call', outcome: '', promisedDate: '', notes: '' });
   const [taskForm, setTask] = useState({ assignee: TEAM[0], dueDate: '', description: '' });
   const [snoozeDate, setSnooze] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const pb = paymentBehavior?.find(p => p.customer === inv.customer);
   const risk = RISK_CONFIG[pb?.riskLevel ?? 'medium'];
@@ -61,6 +62,28 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
     navigator.clipboard.writeText(`Subject: ${draft.subject}\n\n${draft.body}`);
     setCopied(true); setTimeout(() => setCopied(false), 2000);
     toast('Email draft copied to clipboard');
+  }
+  async function sendReminder() {
+    if (!isLive || !inv.qbId) {
+      toast(`Can't send — ${inv.customer} isn't connected to QuickBooks for this client yet`);
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch('/api/send-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_id: inv.qbId, client_id: clientId }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || result.message || 'Send failed');
+      toast(`Reminder sent for ${inv.id}`);
+      setAction(null);
+    } catch (err) {
+      toast(`Failed to send reminder: ${err.message}`);
+    } finally {
+      setSending(false);
+    }
   }
   function submitLog(e) { e.preventDefault(); toast(`Contact logged — ${logForm.method} with ${inv.customer}`); setAction(null); }
   function submitTask(e) { e.preventDefault(); toast(`Task assigned to ${taskForm.assignee}`); setAction(null); }
@@ -182,10 +205,13 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                 <button onClick={copyEmail} style={{ flex: 1, padding: '9px', background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(0,212,232,0.1)', border: `1px solid ${copied ? '#22c55e' : 'var(--teal)'}`, borderRadius: 7, color: copied ? '#22c55e' : 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
                   {copied ? 'Copied!' : 'Copy email'}
                 </button>
-                <button onClick={() => { toast(`Reminder sent for ${inv.id}`); setAction(null); }} style={{ padding: '9px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--muted)', fontSize: 12, cursor: 'pointer' }}>
-                  Mark sent
+                <button onClick={sendReminder} disabled={sending} style={{ padding: '9px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--muted)', fontSize: 12, cursor: sending ? 'default' : 'pointer', opacity: sending ? 0.6 : 1 }}>
+                  {sending ? 'Sending…' : 'Send via QuickBooks'}
                 </button>
               </div>
+              {!isLive && (
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8, fontStyle: 'italic' }}>This client isn't connected to live QuickBooks yet — sending is disabled.</div>
+              )}
             </div>
           )}
 

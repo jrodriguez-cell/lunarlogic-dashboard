@@ -250,6 +250,8 @@ export default function ClientDashboardPage({ session, onLogout }) {
           paymentBehavior={data.paymentBehavior}
           payments={data.payments}
           companyName={data.name}
+          clientId={session.clientId}
+          isLive={data.isLive}
           onClose={() => setActionInv(null)}
         />
       )}

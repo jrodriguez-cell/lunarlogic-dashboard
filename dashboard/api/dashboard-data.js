@@ -197,6 +197,9 @@ function formatInvoicesForBoard(unpaidInvoices) {
 
       return {
         id: inv.DocNumber || inv.Id,
+        // QuickBooks API calls (send reminder, fetch invoice) require the
+        // internal Id, not the customer-facing DocNumber shown as `id`.
+        qbId: inv.Id,
         customer: inv.CustomerRef?.name || 'Unknown',
         amount: parseFloat(inv.Balance || 0),
         due: inv.DueDate,
