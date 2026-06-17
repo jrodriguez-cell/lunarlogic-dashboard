@@ -52,7 +52,7 @@ export async function logReminderToSheets(data) {
   try {
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: 'AR_Reminder_Log', // Appends to next empty row
+      range: "'AR Reminder Log'", // Appends to next empty row — must match the tab WF2 and getWF2ReminderLog() read from
       valueInputOption: 'RAW',
       requestBody: {
         values: [row],
