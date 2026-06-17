@@ -29,6 +29,9 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
   const hoursSaved  = Math.round(minutesSvd / 60 * 10) / 10;
 
   const openInvs     = data.invoices.filter(i => i.status !== 'Paid');
+  // Per-invoice reminder tracking only exists in mock data today — live QB
+  // invoices have no `reminders` field, so don't claim a (false) 0% coverage.
+  const reminderDataAvailable = openInvs.some(i => i.reminders !== undefined);
   const withReminders = openInvs.filter(i => i.reminders?.length > 0);
   const coveragePct  = openInvs.length > 0 ? Math.round(withReminders.length / openInvs.length * 100) : 100;
 
@@ -202,7 +205,14 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
           <ImpactRow label="Payment reminders sent by LunarLogic" value={`${totalRemindersSent} total`} color="var(--teal)" source="Outbound reminder emails sent via WF2 (Microsoft Outlook / Graph API). Triggered automatically on schedule — no manual action required from your team." />
           <ImpactRow label="Payments auto-matched and applied" value={`${autoPeriod.length} this period`} color="var(--green)" source="Payments matched to invoices automatically by WF3 AI engine using Plaid bank feed. Exact and fuzzy name + amount matching at ≥90% confidence." />
           <ImpactRow label="Hours saved vs manual process" value={`~${hoursSaved}h this period`} color="var(--green)" source="Estimated based on 17 min per payment for manual reconciliation. Applied to all auto-matched payments this period." />
-          <ImpactRow label="Automation coverage of open AR" value={`${coveragePct}% of invoices in sequence`} color={coveragePct >= 80 ? 'var(--green)' : '#f59e0b'} source="% of open (unpaid) invoices currently enrolled in WF2 reminder sequence. Calculated from invoices with at least one scheduled or sent reminder." />
+          <ImpactRow
+            label="Automation coverage of open AR"
+            value={reminderDataAvailable ? `${coveragePct}% of invoices in sequence` : 'Not yet tracked'}
+            color={reminderDataAvailable ? (coveragePct >= 80 ? 'var(--green)' : '#f59e0b') : 'var(--muted)'}
+            source={reminderDataAvailable
+              ? '% of open (unpaid) invoices currently enrolled in WF2 reminder sequence. Calculated from invoices with at least one scheduled or sent reminder.'
+              : 'WF2 reminder logging is not yet linked to this dashboard\'s invoice data, so per-invoice coverage can\'t be calculated yet.'}
+          />
           <ImpactRow label="Bad debt rate since go-live" value={`${data.automationStats?.badDebtRateAfter ?? 0.7}% (was ${data.automationStats?.badDebtRateBefore ?? 1.9}%)`} color="var(--green)" source="Bad debt expense as % of revenue. Invoices written off or >180 days overdue. Compared to client's pre-LunarLogic baseline." />
           <ImpactRow label="Invoice processing time" value={`${data.automationStats?.avgProcessingMinutes ?? 3} min avg (was 19 min)`} color="var(--teal)" source="Avg time from Slack upload to QB invoice creation via WF1. Pre-LunarLogic: manual data entry avg 19 min per invoice." />
           <ImpactRow label="Admin hours saved annually" value={`~${(data.automationStats?.adminHoursPerYearBefore ?? 480) - (data.automationStats?.adminHoursPerYearAfter ?? 88)} hrs/yr (was ${data.automationStats?.adminHoursPerYearBefore ?? 480} hrs)`} color="var(--green)" last source="Projected annual savings based on WF1 + WF2 time displacement. Measured against pre-automation baseline hours for invoice entry and follow-up." />

@@ -193,6 +193,7 @@ function formatInvoicesForBoard(unpaidInvoices) {
         customer: inv.CustomerRef?.name || 'Unknown',
         amount: parseFloat(inv.Balance || 0),
         due: inv.DueDate,
+        issued: inv.TxnDate,
         status,
         daysOut: Math.max(0, daysOverdue),
       };
