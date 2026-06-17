@@ -79,7 +79,10 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
   const totalOverdue = overdue.reduce((s, i) => s + i.amount, 0);
   const totalNext30  = next30.reduce((s, i) => s + i.amount, 0);
 
+  // WF3 (Plaid bank feed payment matching) isn't built yet — `payments` is
+  // empty for live clients, so an empty `pending` list isn't proof everything's matched.
   const payments    = data.payments ?? [];
+  const paymentDataAvailable = !data.isLive;
   const autoApplied = payments.filter(p => p.status === 'Auto-Applied');
   const pending     = payments.filter(p => p.status === 'Pending Review');
 
@@ -237,27 +240,55 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>Automation Status</div>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 12 : 10 }}>
-          <StatusItem
-            label="WF1 — Invoice AI"
-            status="Operational"
-            detail={`Last run: ${fmtRunTime(data.wf1LastRun)}`}
-            sub="Slack → QuickBooks · AI invoice creation"
-            color="var(--green)"
-          />
-          <StatusItem
-            label="WF2 — Payment Reminders"
-            status="Operational"
-            detail={`Last: ${fmtRunTime(data.wf2LastRun)} · Next: ${fmtNextRun(data.wf2NextRun)}`}
-            sub="Daily 9AM M–F · Outlook email sequences"
-            color="var(--green)"
-          />
-          <StatusItem
-            label="WF3 — Cash Application"
-            status="Active"
-            detail="Plaid bank feed · Auto-matching payments"
-            sub={`Confidence threshold: 90% · ${autoApplied.length} matched`}
-            color="var(--teal)"
-          />
+          {data.isLive ? (
+            <>
+              <StatusItem
+                label="WF1 — Invoice AI"
+                status="Not connected"
+                detail="No run telemetry reported to this dashboard yet"
+                sub="Slack → QuickBooks · AI invoice creation"
+                color="var(--muted)"
+              />
+              <StatusItem
+                label="WF2 — Payment Reminders"
+                status="Not connected"
+                detail="No run telemetry reported to this dashboard yet"
+                sub="Daily 9AM M–F · Outlook email sequences"
+                color="var(--muted)"
+              />
+              <StatusItem
+                label="WF3 — Cash Application"
+                status="Not built"
+                detail="Plaid bank feed integration not yet implemented"
+                sub="Planned — payment auto-matching via bank feed"
+                color="var(--muted)"
+              />
+            </>
+          ) : (
+            <>
+              <StatusItem
+                label="WF1 — Invoice AI"
+                status="Operational"
+                detail={`Last run: ${fmtRunTime(data.wf1LastRun)}`}
+                sub="Slack → QuickBooks · AI invoice creation"
+                color="var(--green)"
+              />
+              <StatusItem
+                label="WF2 — Payment Reminders"
+                status="Operational"
+                detail={`Last: ${fmtRunTime(data.wf2LastRun)} · Next: ${fmtNextRun(data.wf2NextRun)}`}
+                sub="Daily 9AM M–F · Outlook email sequences"
+                color="var(--green)"
+              />
+              <StatusItem
+                label="WF3 — Cash Application"
+                status="Active"
+                detail="Plaid bank feed · Auto-matching payments"
+                sub={`Confidence threshold: 90% · ${autoApplied.length} matched`}
+                color="var(--teal)"
+              />
+            </>
+          )}
         </div>
       </div>
 
@@ -298,10 +329,10 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
         <SectionLabel>DSO root cause diagnostic — click any driver to see source data</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
           <RootCause
-            status="resolved" color="#22c55e"
+            status={data.isLive ? 'unknown' : 'resolved'} color={data.isLive ? 'var(--muted)' : '#22c55e'}
             title="Invoice Lag"
-            detail="Invoices auto-sent within minutes of job approval via LunarLogic"
-            sub="Was adding 3–8 days to DSO before go-live"
+            detail={data.isLive ? 'No WF1 send-timestamp telemetry reported to this dashboard yet' : 'Invoices auto-sent within minutes of job approval via LunarLogic'}
+            sub={data.isLive ? 'Can\'t yet confirm automated vs. manual invoice creation' : 'Was adding 3–8 days to DSO before go-live'}
             onClick={() => onDrill({
               title: 'Invoice Lag — Send Time Log',
               subtitle: 'All invoices are created and sent automatically — was 3–8 days manual lag before LunarLogic',
@@ -320,9 +351,11 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             })}
           />
           <RootCause
-            status="resolved" color="#22c55e"
+            status={reminderDataAvailable ? 'resolved' : 'unknown'} color={reminderDataAvailable ? '#22c55e' : 'var(--muted)'}
             title="Inconsistent Follow-Up"
-            detail={`${data.invoices.filter(i => i.status !== 'Paid' && i.reminders?.length > 0).length} active invoices in automated reminder sequences`}
+            detail={reminderDataAvailable
+              ? `${data.invoices.filter(i => i.status !== 'Paid' && i.reminders?.length > 0).length} active invoices in automated reminder sequences`
+              : 'WF2 reminder logging isn\'t linked to this dashboard\'s invoice data yet'}
             sub="Customers with 3+ reminders pay 40% faster on average"
             onClick={() => {
               const pbMap = Object.fromEntries((data.paymentBehavior ?? []).map(p => [p.customer, p]));
@@ -361,11 +394,15 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
             }}
           />
           <RootCause
-            status={pending.length > 0 ? 'attention' : 'resolved'}
-            color={pending.length > 0 ? '#f59e0b' : '#22c55e'}
+            status={!paymentDataAvailable ? 'unknown' : pending.length > 0 ? 'attention' : 'resolved'}
+            color={!paymentDataAvailable ? 'var(--muted)' : pending.length > 0 ? '#f59e0b' : '#22c55e'}
             title="Unapplied Payments"
-            detail={pending.length > 0 ? `${pending.length} payment${pending.length !== 1 ? 's' : ''} received but not yet matched to an invoice` : 'All payments matched and applied automatically'}
-            sub={pending.length > 0 ? `Total ${fmtM(pending.reduce((s, p) => s + p.amount, 0))} held — AI confidence below threshold, needs your confirmation` : 'AI fuzzy-matching active, 90%+ confidence auto-applied'}
+            detail={!paymentDataAvailable
+              ? 'WF3 payment matching isn\'t built yet — no payment data to evaluate'
+              : pending.length > 0 ? `${pending.length} payment${pending.length !== 1 ? 's' : ''} received but not yet matched to an invoice` : 'All payments matched and applied automatically'}
+            sub={!paymentDataAvailable
+              ? 'Planned: Plaid bank feed payment auto-matching'
+              : pending.length > 0 ? `Total ${fmtM(pending.reduce((s, p) => s + p.amount, 0))} held — AI confidence below threshold, needs your confirmation` : 'AI fuzzy-matching active, 90%+ confidence auto-applied'}
             onClick={() => onDrill({
               title: 'Unapplied Payments — Confirmation Needed',
               subtitle: `${pending.length} payment${pending.length !== 1 ? 's' : ''} · ${fmtM(pending.reduce((s, p) => s + p.amount, 0))} held pending your review`,
@@ -723,7 +760,7 @@ function RootCause({ status, color, title, detail, sub, onClick }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{title}</span>
           <span style={{ fontSize: 9, fontWeight: 700, color, background: `${color}15`, borderRadius: 10, padding: '1px 7px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {status === 'resolved' ? 'Resolved' : 'Needs Attention'}
+            {status === 'resolved' ? 'Resolved' : status === 'unknown' ? 'Not Tracked' : 'Needs Attention'}
           </span>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2 }}>{detail}</div>
