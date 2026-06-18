@@ -111,8 +111,13 @@ export async function qbApiRequest(endpoint, options = {}, clientId = 'default')
  * Used by the "Send Reminder" button
  */
 export async function sendInvoiceEmail(invoiceId, email, clientId = 'default') {
+  // QBO's /send endpoint expects no JSON body — declaring
+  // Content-Type: application/json on an empty body throws a generic
+  // SystemFailureError/NullPointerException. n8n's WF2 sends this same
+  // request with Content-Type: application/octet-stream, which QBO accepts.
   return qbApiRequest(`/invoice/${invoiceId}/send?sendTo=${encodeURIComponent(email)}&minorversion=73`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream' },
   }, clientId);
 }
 
