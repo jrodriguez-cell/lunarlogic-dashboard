@@ -111,7 +111,7 @@ export async function qbApiRequest(endpoint, options = {}, clientId = 'default')
  * Used by the "Send Reminder" button
  */
 export async function sendInvoiceEmail(invoiceId, email, clientId = 'default') {
-  return qbApiRequest(`/invoice/${invoiceId}/send?sendTo=${email}`, {
+  return qbApiRequest(`/invoice/${invoiceId}/send?sendTo=${encodeURIComponent(email)}&minorversion=73`, {
     method: 'POST',
   }, clientId);
 }
