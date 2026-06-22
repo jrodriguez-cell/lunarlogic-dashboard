@@ -5,8 +5,10 @@
  * Manually send a payment reminder email for an invoice
  */
 
-import { getInvoice, sendInvoiceEmail } from './_lib/quickbooks.js';
+import { getInvoice } from './_lib/quickbooks.js';
 import { logReminderToSheets } from './_lib/googleSheets.js';
+import { sendOutlookEmail } from './_lib/outlook.js';
+import { buildReminderEmail } from './_lib/reminderTemplates.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -31,23 +33,44 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Invoice not found' });
     }
 
-    // Step 2: Send reminder email via QuickBooks
+    // Step 2: Resolve recipient and compute reminder tier
     const customerEmail = invoice.BillEmail?.Address;
 
     if (!customerEmail) {
       return res.status(400).json({ error: 'Invoice has no email address' });
     }
 
-    console.log('Sending reminder to:', customerEmail);
-    await sendInvoiceEmail(invoice_id, customerEmail, clientId);
-
-    // Step 3: Calculate days overdue for logging
     const dueDate = new Date(invoice.DueDate);
     const today = new Date();
     const daysOverdue = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
+    const tierName = calculateReminderTier(daysOverdue);
+
+    // Step 3: Build tier-appropriate escalating copy and send via Outlook
+    // (Microsoft Graph, app-only auth — see _lib/outlook.js). This replaces
+    // the old QB-native invoice resend, which only emails QuickBooks' fixed
+    // template and can't carry the escalating tone the reminder sequence
+    // needs.
+    const ccAddresses = (process.env.REMINDER_ESCALATION_CC || '')
+      .split(',')
+      .map((addr) => addr.trim())
+      .filter(Boolean);
+
+    const { subject, htmlBody, cc } = buildReminderEmail(
+      tierName,
+      {
+        customerName: invoice.CustomerRef.name,
+        invoiceNumber: invoice.DocNumber,
+        dueDateFormatted: dueDate.toLocaleDateString('en-US'),
+        amountFormatted: `$${parseFloat(invoice.Balance).toFixed(2)}`,
+        daysOverdue: Math.max(0, daysOverdue),
+      },
+      ccAddresses
+    );
+
+    console.log('Sending reminder to:', customerEmail, 'tier:', tierName);
+    await sendOutlookEmail({ to: customerEmail, subject, htmlBody, cc });
 
     // Step 4: Log to AR Reminder Log sheet (same format as WF2)
-    const tierName = calculateReminderTier(daysOverdue);
     await logReminderToSheets({
       customer_name: invoice.CustomerRef.name,
       customer_email: customerEmail,
