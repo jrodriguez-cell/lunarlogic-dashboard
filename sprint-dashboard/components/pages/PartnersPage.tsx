@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, TrendingUp } from "lucide-react";
 
-const TYPES: PartnerType[] = ["CPA", "QB ProAdvisor", "Agency", "Consultant", "Other"];
+const TYPES: PartnerType[] = ["CPA", "QB ProAdvisor", "Agency", "Consultant", "Cowork / Network", "Other"];
 const STATUSES: PartnerStatus[] = ["Not Contacted", "Contacted", "Loom Sent", "Agreement Signed", "Delivering Intros", "Inactive"];
 
 const statusColors: Record<PartnerStatus, string> = {
