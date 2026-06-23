@@ -183,6 +183,7 @@ const DEFAULT_PARTNERS: ReferralPartner[] = [
   { id: "p5", name: "Kate Binder", company: "Siegfried Group Miami", type: "CPA", status: "Not Contacted", introsDelivered: 0, clientsConverted: 0, lastContactDate: "", nextAction: "LinkedIn DM + email by June 7", notes: "" },
   { id: "p6", name: "Alexander Marina", company: "Siegfried Group Miami", type: "CPA", status: "Not Contacted", introsDelivered: 0, clientsConverted: 0, lastContactDate: "", nextAction: "LinkedIn DM + email by June 7", notes: "" },
   { id: "p7", name: "Usama Waheed", company: "Siegfried Group Miami", type: "CPA", status: "Not Contacted", introsDelivered: 0, clientsConverted: 0, lastContactDate: "", nextAction: "LinkedIn DM + email by June 7", notes: "" },
+  { id: "p8", name: "Keanu Trujillo", company: "Alchemy CoWork", type: "Cowork / Network", status: "Contacted", introsDelivered: 0, clientsConverted: 0, lastContactDate: "2026-06-23", nextAction: "Confirm fractional CFO intro timing; attend next mastermind/networking event.", notes: "Coworking space network (Westover Hills, Charlotte + Gastonia). Owner offered (1) introduction to his fractional CFO, (2) standing invite to recurring mastermind + networking events. Concentrated pool of owner-operated businesses — qualify revenue range before investing cadence (community skews early-stage/solo founder). Tier 1 active channel partner." },
 ];
 
 export function getPartners(): ReferralPartner[] {

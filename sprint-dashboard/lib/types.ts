@@ -11,7 +11,7 @@ export type ContactOutcome =
   | "Not Interested"
   | "Discovery Call Booked"
   | "Demo Booked";
-export type PartnerType = "CPA" | "QB ProAdvisor" | "Agency" | "Consultant" | "Other";
+export type PartnerType = "CPA" | "QB ProAdvisor" | "Agency" | "Consultant" | "Cowork / Network" | "Other";
 export type PartnerStatus = "Not Contacted" | "Contacted" | "Loom Sent" | "Agreement Signed" | "Delivering Intros" | "Inactive";
 
 export interface Deal {
