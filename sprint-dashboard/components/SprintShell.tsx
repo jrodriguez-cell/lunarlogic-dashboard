@@ -41,7 +41,7 @@ export default function SprintShell({ children }: { children: React.ReactNode })
   return (
     <div className="flex flex-col min-h-screen">
       {/* Sprint Banner */}
-      <div className="bg-blue-600 text-white text-center py-2 text-sm font-medium px-4">
+      <div className="bg-blue-500 text-white text-center py-2 text-sm font-medium px-4">
         June Sprint &nbsp;·&nbsp; <span className="font-bold">{daysRemaining} days remaining</span> &nbsp;·&nbsp;{" "}
         <span className={cn("font-bold", clientsSigned >= 5 ? "text-green-300" : clientsSigned >= 3 ? "text-yellow-300" : "text-white")}>
           {clientsSigned} of 5 clients signed
