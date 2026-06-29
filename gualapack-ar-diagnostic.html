@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR Health Diagnostic — Gualapack North America Spare Parts Division</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0D1B2E;
+      --navy-mid:  #112240;
+      --navy-light:#1A2F4A;
+      --cyan:      #22D3EE;
+      --cyan-muted:#0ea5c9;
+      --white:     #FFFFFF;
+      --off-white: #F8FAFC;
+      --text:      #1E293B;
+      --text-muted:#475569;
+      --border:    #CBD5E1;
+      --red-soft:  #FEE2E2;
+      --red-text:  #991B1B;
+      --green-soft:#DCFCE7;
+      --green-text:#166534;
+    }
+
+    html { font-size: 13px; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      background: #E2E8F0;
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.5;
+    }
+
+    /* ===== PAGE WRAPPER ===== */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      background: var(--white);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: var(--navy);
+      padding: 28px 36px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 220px; height: 100%;
+      background: linear-gradient(135deg, transparent 60%, rgba(34,211,238,0.08) 100%);
+      pointer-events: none;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .company-block {}
+    .company-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .company-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.2;
+    }
+    .company-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      margin-top: 2px;
+    }
+
+    .header-meta {
+      text-align: right;
+    }
+    .meta-date {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 4px;
+    }
+    .meta-badge {
+      display: inline-block;
+      background: rgba(34,211,238,0.15);
+      border: 1px solid rgba(34,211,238,0.4);
+      color: var(--cyan);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 3px;
+    }
+
+    .header-title {
+      margin-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 16px;
+    }
+    .diagnostic-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.3px;
+    }
+    .diagnostic-sub {
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 3px;
+    }
+
+    /* ===== BODY SECTIONS ===== */
+    .section {
+      padding: 24px 36px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section:last-of-type { border-bottom: none; }
+
+    .section-label {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cyan-muted);
+      margin-bottom: 14px;
+    }
+
+    /* ===== PROBLEM SECTION ===== */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      background: var(--navy);
+      border-radius: 6px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--cyan);
+    }
+    .metric-card.alert::before { background: #EF4444; }
+    .metric-card.warning::before { background: #F59E0B; }
+
+    .metric-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 8px;
+    }
+    .metric-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .metric-value.accent { color: var(--cyan); }
+    .metric-value.red { color: #FCA5A5; }
+    .metric-caption {
+      font-size: 10.5px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .quote-box {
+      background: #FFF7ED;
+      border-left: 4px solid #F59E0B;
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin-top: 4px;
+    }
+    .quote-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #92400E;
+      line-height: 1.4;
+    }
+    .quote-sub {
+      font-size: 11px;
+      color: #B45309;
+      margin-top: 3px;
+    }
+
+    /* ===== TERMS CALLOUT ===== */
+    .terms-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .terms-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--red-soft);
+      border: 1px solid #FECACA;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 11.5px;
+    }
+    .terms-pill .pill-label { color: var(--red-text); font-weight: 700; }
+    .terms-pill .pill-note { color: #B91C1C; font-weight: 400; }
+
+    .terms-pill.ok {
+      background: var(--green-soft);
+      border-color: #BBF7D0;
+    }
+    .terms-pill.ok .pill-label { color: var(--green-text); }
+    .terms-pill.ok .pill-note { color: #15803D; }
+
+    /* ===== OPPORTUNITY SECTION ===== */
+    .opportunity-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .dso-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dso-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dso-bar-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      width: 48px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .dso-bar-track {
+      flex: 1;
+      background: #F1F5F9;
+      border-radius: 4px;
+      height: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .dso-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+    }
+    .dso-bar-fill.current {
+      background: linear-gradient(90deg, #0D1B2E, #1A2F4A);
+      width: 100%;
+    }
+    .dso-bar-fill.target {
+      background: linear-gradient(90deg, #22D3EE, #0ea5c9);
+      width: 50%;
+    }
+    .dso-bar-fill.kaptain {
+      background: linear-gradient(90deg, #6366F1, #818CF8);
+      width: 64%;
+    }
+    .dso-bar-num {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .dso-bar-days {
+      font-size: 10px;
+      color: rgba(255,255,255,0.6);
+      margin-left: 4px;
+    }
+
+    .dso-note {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .unlock-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .unlock-card {
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      position: relative;
+    }
+    .unlock-card.primary {
+      border-color: var(--cyan);
+      background: linear-gradient(135deg, #F0FDFF, #ECFEFF);
+    }
+
+    .unlock-card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .unlock-card.primary .unlock-card-label { color: var(--cyan-muted); }
+
+    .unlock-card-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.4px;
+    }
+    .unlock-card.primary .unlock-card-value { color: var(--navy); }
+
+    .unlock-card-note {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* ===== CALC BOX ===== */
+    .calc-box {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-top: 12px;
+    }
+    .calc-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .calc-line {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    }
+    .calc-line strong {
+      color: var(--navy);
+      font-weight: 700;
+    }
+    .calc-result {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--navy);
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+      padding-top: 6px;
+    }
+    .calc-result span { color: var(--cyan-muted); }
+
+    /* ===== WHAT CHANGES ===== */
+    .changes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .change-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      background: var(--off-white);
+    }
+
+    .change-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--navy);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .change-icon svg { width: 16px; height: 16px; }
+
+    .change-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 5px;
+    }
+    .change-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ===== POC SECTION ===== */
+    .poc-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .poc-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .poc-week {
+      display: flex;
+      gap: 12px;
+      position: relative;
+    }
+    .poc-week:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 12px;
+      top: 26px;
+      bottom: -4px;
+      width: 2px;
+      background: var(--border);
+      z-index: 0;
+    }
+    .poc-week-dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 2px solid var(--cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--cyan);
+    }
+    .poc-week-body {
+      padding-bottom: 14px;
+      padding-top: 3px;
+    }
+    .poc-week-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .poc-week-desc {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      line-height: 1.4;
+    }
+
+    .poc-details {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .poc-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .poc-detail-row:last-child { border-bottom: none; }
+    .poc-detail-key {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .poc-detail-val {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--navy);
+      text-align: right;
+    }
+    .poc-detail-val.cyan { color: var(--cyan-muted); }
+
+    .success-box {
+      margin-top: 12px;
+      background: var(--navy);
+      border-radius: 6px;
+      padding: 12px 16px;
+    }
+    .success-box-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+    .success-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .success-list li {
+      font-size: 11px;
+      color: rgba(255,255,255,0.75);
+      padding-left: 14px;
+      position: relative;
+    }
+    .success-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    /* ===== KAPTAIN CALLOUT ===== */
+    .proof-bar {
+      background: linear-gradient(135deg, var(--navy-mid), var(--navy-light));
+      border-radius: 6px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .proof-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 4px;
+    }
+    .proof-quote {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+      line-height: 1.5;
+    }
+    .proof-stats {
+      display: flex;
+      gap: 20px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .proof-stat {
+      text-align: center;
+    }
+    .proof-stat-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--cyan);
+      display: block;
+    }
+    .proof-stat-label {
+      font-size: 9.5px;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+
+    /* ===== CTA SECTION ===== */
+    .cta-section {
+      background: var(--navy);
+      padding: 24px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .cta-left {}
+    .cta-headline {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.3;
+    }
+    .cta-sub {
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 4px;
+    }
+
+    .cta-right {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .cta-contact {
+      text-align: right;
+    }
+    .cta-contact-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 3px;
+    }
+    .cta-contact-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .cta-contact-email {
+      font-size: 11.5px;
+      color: var(--cyan);
+      margin-top: 1px;
+    }
+    .cta-contact-phone {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 1px;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      background: #F8FAFC;
+      border-top: 1px solid var(--border);
+      padding: 14px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .footer-logo {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.3px;
+    }
+    .footer-logo span { color: var(--cyan-muted); }
+    .footer-tagline {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 16px;
+    }
+    .footer-link {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .footer-disclaimer {
+      width: 100%;
+      font-size: 9.5px;
+      color: #94A3B8;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    /* ===== PRINT STYLES ===== */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+        font-size: 11px;
+      }
+      .page {
+        max-width: 100%;
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      /* Force backgrounds to print */
+      .header,
+      .metric-card,
+      .proof-bar,
+      .cta-section,
+      .success-box,
+      .poc-week-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      .metric-card { background: #0D1B2E !important; }
+
+      /* Avoid breaks inside cards */
+      .metric-card, .change-card, .unlock-card,
+      .poc-week, .proof-bar, .cta-section { break-inside: avoid; }
+
+      .problem-grid, .changes-grid { break-inside: avoid; }
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 600px) {
+      body { padding: 0; }
+      .page { border-radius: 0; }
+      .header, .section, .cta-section, .footer { padding-left: 18px; padding-right: 18px; }
+      .problem-grid { grid-template-columns: 1fr 1fr; }
+      .opportunity-layout { grid-template-columns: 1fr; }
+      .changes-grid { grid-template-columns: 1fr; }
+      .poc-layout { grid-template-columns: 1fr; }
+      .cta-section { flex-direction: column; align-items: flex-start; }
+      .cta-right { margin-top: 8px; }
+      .proof-stats { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-top">
+      <div class="company-block">
+        <div class="company-label">Prepared for</div>
+        <div class="company-name">Gualapack North America</div>
+        <div class="company-sub">Spare Parts Division — Pilot Scope</div>
+      </div>
+      <div class="header-meta">
+        <div class="meta-date">Generated June 29, 2026</div>
+        <div class="meta-badge">Confidential</div>
+      </div>
+    </div>
+    <div class="header-title">
+      <div class="diagnostic-title">AR Health Diagnostic</div>
+      <div class="diagnostic-sub">A data-driven analysis of your current cash flow gap — and what's available on the other side.</div>
+    </div>
+  </header>
+
+  <!-- ===== SECTION 1: THE PROBLEM ===== -->
+  <section class="section">
+    <div class="section-label">The Problem — Your Dollars, Not Averages</div>
+
+    <div class="problem-grid">
+
+      <div class="metric-card alert">
+        <div class="metric-label">AR Balance (as of Mar 31, 2026)</div>
+        <div class="metric-value red">$520K+</div>
+        <div class="metric-caption">Perpetually tied up in unpaid invoices — not working for you</div>
+      </div>
+
+      <div class="metric-card warning">
+        <div class="metric-label">Working Capital Locked / Month</div>
+        <div class="metric-value accent">~$57K</div>
+        <div class="metric-caption">Cash earned but not in your bank — funding your customers' operations</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Current DSO vs. Your Payment Terms</div>
+        <div class="metric-value red">40 days</div>
+        <div class="metric-caption">Primary terms: Net 7 — customers are paying 33 days late on average</div>
+      </div>
+
+    </div>
+
+    <div class="terms-row">
+      <div class="terms-pill">
+        <span class="pill-label">Net 7 terms</span>
+        <span class="pill-note">→ customers paying at 40 days = 33 days overdue</span>
+      </div>
+      <div class="terms-pill">
+        <span class="pill-label">~100 invoices/mo</span>
+        <span class="pill-note">→ manual follow-up on each is unsustainable</span>
+      </div>
+      <div class="terms-pill">
+        <span class="pill-label">Est. $16K bad debt/yr</span>
+        <span class="pill-note">→ 2% of $800K spare parts revenue</span>
+      </div>
+    </div>
+
+    <div class="quote-box" style="margin-top: 14px;">
+      <div class="quote-text">"Every 10 days of DSO improvement unlocks $55,000+ of working capital that's already yours."</div>
+      <div class="quote-sub">Based on your $800K annual spare parts revenue and current AR balance. These are your numbers.</div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 2: THE OPPORTUNITY ===== -->
+  <section class="section">
+    <div class="section-label">The Opportunity — What a 30-Day POC Unlocks</div>
+
+    <div class="opportunity-layout">
+
+      <div>
+        <div class="dso-visual">
+
+          <div class="dso-bar-row">
+            <div class="dso-bar-label" style="color:#EF4444;font-weight:800;">NOW</div>
+            <div class="dso-bar-track">
+              <div class="dso-bar-fill current">
+                <span class="dso-bar-num">40</span>
+                <span class="dso-bar-days">days DSO</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dso-bar-row">
+            <div class="dso-bar-label" style="color:#22D3EE;font-weight:800;">TARGET</div>
+            <div class="dso-bar-track">
+              <div class="dso-bar-fill target">
+                <span class="dso-bar-num">20</span>
+                <span class="dso-bar-days">days DSO</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dso-bar-row">
+            <div class="dso-bar-label" style="color:#818CF8;font-weight:800;">K.CLEAN</div>
+            <div class="dso-bar-track">
+              <div class="dso-bar-fill kaptain">
+                <span class="dso-bar-num">33</span>
+                <span class="dso-bar-days">→ from 52 days</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dso-note">
+            Conservative target: <strong>20-day DSO</strong> — a 40% reduction. Comparable clients have hit 35–45% within 90 days. The K.CLEAN bar shows a real result, not a projection.
+          </div>
+        </div>
+
+        <div class="calc-box">
+          <div class="calc-title">Working Capital Release — Calculation</div>
+          <div class="calc-line">((Current DSO − Target DSO) / 365) × Annual Revenue</div>
+          <div class="calc-line">((40 − 20) / 365) × $800,000</div>
+          <div class="calc-line">(20 / 365) × $800,000</div>
+          <div class="calc-result">= <span>$43,800 – $65,000+</span> released within 30–90 days</div>
+        </div>
+      </div>
+
+      <div class="unlock-cards">
+
+        <div class="unlock-card primary">
+          <div class="unlock-card-label">Projected Working Capital Released</div>
+          <div class="unlock-card-value">$43K – $65K+</div>
+          <div class="unlock-card-note">Money you've already earned, returned to your bank within 30–90 days of POC go-live</div>
+        </div>
+
+        <div class="unlock-card">
+          <div class="unlock-card-label">DSO Reduction Target</div>
+          <div class="unlock-card-value">15–20 days</div>
+          <div class="unlock-card-note">Conservative benchmark. Best-case: 20+ days within first 90 days</div>
+        </div>
+
+        <div class="unlock-card">
+          <div class="unlock-card-label">Bad Debt Reduction (annual)</div>
+          <div class="unlock-card-value">~$11,200</div>
+          <div class="unlock-card-note">70% of estimated $16K/yr bad debt eliminated through earlier intervention</div>
+        </div>
+
+        <div class="unlock-card">
+          <div class="unlock-card-label">Hours Saved / Month</div>
+          <div class="unlock-card-value">8–12 hrs</div>
+          <div class="unlock-card-note">Manual reminder emails, status checks, and aging report prep eliminated</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 3: WHAT CHANGES ===== -->
+  <section class="section">
+    <div class="section-label">What Changes — Three Things That Drive the Number</div>
+
+    <div class="changes-grid">
+
+      <div class="change-card">
+        <div class="change-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.64A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+        </div>
+        <div class="change-title">Automated Payment Reminders</div>
+        <div class="change-desc">Structured, multi-touch reminder sequences sent at the right time — no more relying on your team to chase manually. Reminders go out on day 3, 7, 14, and 21 automatically.</div>
+      </div>
+
+      <div class="change-card">
+        <div class="change-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div class="change-title">Real-Time AR Visibility</div>
+        <div class="change-desc">A live dashboard showing aging buckets, overdue invoice flags, and DSO trend — updated daily instead of a weekly spreadsheet pull. You see the problem before it compounds.</div>
+      </div>
+
+      <div class="change-card">
+        <div class="change-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="change-title">Collection Priority Scoring</div>
+        <div class="change-desc">The system tells your team which invoices to push hardest — ranked by amount, age, and customer payment history. Effort goes where it moves the DSO needle most.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== SECTION 4: KAPTAIN CLEAN PROOF ===== -->
+  <section class="section" style="padding-top: 16px; padding-bottom: 16px;">
+    <div class="section-label" style="margin-bottom: 10px;">Comparable Client — Real Result</div>
+    <div class="proof-bar">
+      <div>
+        <div class="proof-label">Case Study — Professional Services</div>
+        <div class="proof-quote">"Kaptain Clean LLC — same profile: small team, high invoice volume, manual AR process.<br>
+        Went live on LunarLogic. Within 90 days: DSO dropped 52 → 33 days. $65K unlocked."</div>
+      </div>
+      <div class="proof-stats">
+        <div class="proof-stat">
+          <span class="proof-stat-val">19</span>
+          <div class="proof-stat-label">Days DSO<br>Improvement</div>
+        </div>
+        <div class="proof-stat">
+          <span class="proof-stat-val">$65K</span>
+          <div class="proof-stat-label">Working Capital<br>Released</div>
+        </div>
+        <div class="proof-stat">
+          <span class="proof-stat-val">84%</span>
+          <div class="proof-stat-label">Faster Invoice<br>Processing</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 5: THE 30-DAY POC ===== -->
+  <section class="section">
+    <div class="section-label">The 30-Day POC — Low Risk, Measurable Outcome</div>
+
+    <div class="poc-layout">
+
+      <div>
+        <div class="poc-timeline">
+
+          <div class="poc-week">
+            <div class="poc-week-dot">1</div>
+            <div class="poc-week-body">
+              <div class="poc-week-label">Week 1 — Setup &amp; Integration</div>
+              <div class="poc-week-desc">QuickBooks connection, pilot customer onboarding, reminder sequences configured. No disruption to current workflow.</div>
+            </div>
+          </div>
+
+          <div class="poc-week">
+            <div class="poc-week-dot">2</div>
+            <div class="poc-week-body">
+              <div class="poc-week-label">Weeks 2–3 — Live Operations</div>
+              <div class="poc-week-desc">Automated reminders running. AR dashboard live. Team monitors alongside existing process — zero dependency risk.</div>
+            </div>
+          </div>
+
+          <div class="poc-week">
+            <div class="poc-week-dot">4</div>
+            <div class="poc-week-body">
+              <div class="poc-week-label">Week 4 — Measurement &amp; Decision</div>
+              <div class="poc-week-desc">DSO comparison, working capital impact report, collection rate change. You decide to scale — or not. No lock-in.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div>
+        <div class="poc-details">
+
+          <div class="poc-detail-row">
+            <div class="poc-detail-key">Pilot Scope</div>
+            <div class="poc-detail-val">5 customer accounts<br><span style="font-weight:400;color:var(--text-muted);font-size:10px;">Spare Parts Division only</span></div>
+          </div>
+
+          <div class="poc-detail-row">
+            <div class="poc-detail-key">Duration</div>
+            <div class="poc-detail-val">30 days</div>
+          </div>
+
+          <div class="poc-detail-row">
+            <div class="poc-detail-key">Integrations</div>
+            <div class="poc-detail-val">QuickBooks Online<br>Outlook / Email</div>
+          </div>
+
+          <div class="poc-detail-row">
+            <div class="poc-detail-key">Pilot Pricing</div>
+            <div class="poc-detail-val cyan">To be discussed<br><span style="font-weight:400;color:var(--text-muted);font-size:10px;">Heavily discounted for POC</span></div>
+          </div>
+
+          <div class="poc-detail-row">
+            <div class="poc-detail-key">Your Risk</div>
+            <div class="poc-detail-val" style="color:#166534;">60-day satisfaction<br>guarantee applies</div>
+          </div>
+
+        </div>
+
+        <div class="success-box">
+          <div class="success-box-title">POC Success Criteria</div>
+          <ul class="success-list">
+            <li>10–15 day DSO reduction by Day 30</li>
+            <li>$20K+ working capital measurably freed</li>
+            <li>Zero manual reminder emails sent by team</li>
+            <li>AR dashboard replaces weekly sheet pull</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <div class="cta-section">
+    <div class="cta-left">
+      <div class="cta-headline">Ready to start your 30-day POC?</div>
+      <div class="cta-sub">One call. We scope the pilot, confirm your QuickBooks access, and we're live within a week.</div>
+    </div>
+    <div class="cta-right">
+      <div class="cta-contact">
+        <div class="cta-contact-label">Your LunarLogic Contact</div>
+        <div class="cta-contact-name">Jonathan Rodriguez</div>
+        <div class="cta-contact-email">jrodriguez@lunarlogic.ai</div>
+        <div class="cta-contact-phone">lunarlogic.ai</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-brand">
+      <div class="footer-logo">Lunar<span>Logic</span></div>
+      <div style="width: 1px; height: 28px; background: var(--border); margin: 0 4px;"></div>
+      <div class="footer-tagline">"We turn what you have already earned into cash in your bank account."</div>
+    </div>
+    <div class="footer-links">
+      <a class="footer-link" href="https://lunarlogic.ai">lunarlogic.ai</a>
+      <a class="footer-link" href="mailto:support@lunarlogic.ai">support@lunarlogic.ai</a>
+    </div>
+    <div class="footer-disclaimer">
+      All projections are estimates based on inputs provided by Gualapack and benchmarks from comparable LunarLogic clients. Actual results depend on customer payment behavior, volume, and implementation timeline. Working capital release figures assume AR balance remains constant through the POC period. This document is confidential and prepared exclusively for Gualapack North America.
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>
