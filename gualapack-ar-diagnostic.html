@@ -4,41 +4,53 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AR Health Diagnostic — Gualapack North America Spare Parts Division</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
   <style>
     /* ===== RESET & BASE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:          #060A16;
-      --panel:       #0B1120;
-      --panel-2:     #0F172E;
-      --card:        #111A30;
-      --border:      rgba(255,255,255,0.08);
-      --border-mid:  rgba(255,255,255,0.14);
-      --indigo:      #5B6EF5;
-      --indigo-soft: #8B97F8;
-      --indigo-dim:  rgba(91,110,245,0.14);
+      /* Brand Guide — LunarLogic.ai */
+      --blue:        #3B82F6;
+      --blue-light:  #60A5FA;
+      --indigo:      #818CF8;
+      --navy:        #0F172A;
+
+      --panel:       #0F172A;
+      --panel-2:     #111E36;
+      --card:        rgba(30,41,59,0.4);   /* bg-slate-800/40 */
+      --card-solid:  #1E293B;
+      --border:      #334155;              /* border-slate-700 */
+      --border-soft: rgba(51,65,85,0.6);
+
       --white:       #F8FAFC;
-      --text-muted:  rgba(248,250,252,0.58);
-      --text-dim:    rgba(248,250,252,0.38);
+      --text:        #CBD5E1;              /* text-slate-300 */
+      --text-mid:    #94A3B8;              /* text-slate-400 */
+      --text-muted:  #64748B;              /* text-slate-500 */
+
       --red:         #F87171;
-      --red-soft:    rgba(248,113,113,0.12);
+      --red-soft:    rgba(248,113,113,0.1);
       --amber:       #FBBF24;
-      --amber-soft:  rgba(251,191,36,0.12);
-      --green:       #4ADE80;
-      --green-soft:  rgba(74,222,128,0.12);
-      --serif:       "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-      --sans:        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --amber-soft:  rgba(251,191,36,0.1);
+      --green:       #4ADE80;              /* text-green-400 */
+      --green-soft:  rgba(74,222,128,0.1);
+
+      --gradient: linear-gradient(135deg, var(--blue-light), var(--indigo));
+
+      --font-body: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-head: 'Fraunces', Georgia, 'Times New Roman', serif;
     }
 
     html { font-size: 14px; }
 
     body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--white);
+      font-family: var(--font-body);
+      background: var(--navy);
+      color: var(--text);
       padding: 24px 16px;
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     /* ===== PAGE WRAPPER ===== */
@@ -52,10 +64,7 @@
       box-shadow: 0 24px 60px rgba(0,0,0,0.5);
     }
 
-    .topbar {
-      height: 3px;
-      background: linear-gradient(90deg, var(--indigo) 0%, var(--indigo) 38%, rgba(91,110,245,0.15) 38%, rgba(91,110,245,0.15) 100%);
-    }
+    .topbar { height: 3px; background: var(--gradient); }
 
     /* ===== BRAND STRIP ===== */
     .brand-strip {
@@ -69,25 +78,36 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: -0.2px;
     }
-    .brand-logo .moon { font-size: 15px; }
-    .brand-logo .lunar { color: var(--white); }
-    .brand-logo .logic { color: var(--indigo-soft); }
+    .brand-logo .moon-icon { width: 20px; height: 20px; flex-shrink: 0; }
+    .brand-logo .wordmark {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.025em;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .brand-logo .suffix {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 18px;
+      color: rgba(255,255,255,0.70);
+    }
     .brand-step {
       font-size: 10.5px;
       font-weight: 700;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--indigo-soft);
+      color: var(--indigo);
     }
 
     /* ===== HEADER ===== */
     .header {
       padding: 30px 36px 26px;
-      background: radial-gradient(circle at 85% 0%, rgba(91,110,245,0.16), transparent 55%);
+      background: radial-gradient(circle at 85% 0%, rgba(129,140,248,0.14), transparent 55%);
     }
 
     .header-top {
@@ -102,34 +122,34 @@
       font-size: 10.5px;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--indigo-soft);
+      color: var(--indigo);
       font-weight: 700;
       margin-bottom: 6px;
     }
     .company-name {
-      font-family: var(--serif);
+      font-family: var(--font-head);
       font-size: 23px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
       line-height: 1.2;
     }
     .company-sub {
       font-size: 12.5px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       margin-top: 4px;
     }
 
     .header-meta { text-align: right; }
     .meta-date {
       font-size: 11px;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-bottom: 6px;
     }
     .meta-badge {
       display: inline-block;
-      background: var(--indigo-dim);
-      border: 1px solid rgba(91,110,245,0.35);
-      color: var(--indigo-soft);
+      background: rgba(129,140,248,0.12);
+      border: 1px solid rgba(129,140,248,0.35);
+      color: var(--indigo);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.1em;
@@ -144,15 +164,15 @@
       border-top: 1px solid var(--border);
     }
     .diagnostic-title {
-      font-family: var(--serif);
+      font-family: var(--font-head);
       font-size: 28px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
       letter-spacing: -0.2px;
     }
     .diagnostic-sub {
       font-size: 13px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       margin-top: 6px;
       max-width: 540px;
     }
@@ -169,7 +189,7 @@
       font-weight: 800;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--indigo-soft);
+      color: var(--indigo);
       margin-bottom: 16px;
     }
 
@@ -203,25 +223,25 @@
 
     .metric-label {
       font-size: 10.5px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-bottom: 10px;
     }
     .metric-value {
-      font-family: var(--serif);
+      font-family: var(--font-head);
       font-size: 28px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
       letter-spacing: -0.3px;
       line-height: 1;
     }
-    .metric-value.accent { color: var(--indigo-soft); }
+    .metric-value.accent { color: var(--indigo); }
     .metric-value.red { color: var(--red); }
     .metric-caption {
       font-size: 11px;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-top: 8px;
       line-height: 1.45;
       flex: 1;
@@ -320,7 +340,7 @@
       width: 100%;
     }
     .dso-bar-fill.target {
-      background: linear-gradient(90deg, var(--indigo), var(--indigo-soft));
+      background: var(--gradient);
       width: 50%;
     }
     .dso-bar-num {
@@ -336,7 +356,7 @@
 
     .dso-note {
       font-size: 11px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       margin-top: 6px;
       line-height: 1.55;
     }
@@ -353,12 +373,12 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-bottom: 10px;
     }
     .calc-line {
       font-size: 11.5px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       line-height: 1.9;
       font-family: "SF Mono", "Fira Code", "Consolas", monospace;
     }
@@ -370,7 +390,7 @@
       margin-top: 8px;
       padding-top: 8px;
     }
-    .calc-result span { color: var(--indigo-soft); }
+    .calc-result span { color: var(--indigo); }
 
     .unlock-cards {
       display: flex;
@@ -390,8 +410,8 @@
       justify-content: center;
     }
     .unlock-card.primary {
-      border-color: rgba(91,110,245,0.4);
-      background: linear-gradient(135deg, rgba(91,110,245,0.12), rgba(91,110,245,0.04));
+      border-color: rgba(129,140,248,0.4);
+      background: linear-gradient(135deg, rgba(96,165,250,0.12), rgba(129,140,248,0.04));
     }
 
     .unlock-card-label {
@@ -399,22 +419,22 @@
       font-weight: 700;
       letter-spacing: 0.07em;
       text-transform: uppercase;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-bottom: 5px;
     }
-    .unlock-card.primary .unlock-card-label { color: var(--indigo-soft); }
+    .unlock-card.primary .unlock-card-label { color: var(--indigo); }
 
     .unlock-card-value {
-      font-family: var(--serif);
+      font-family: var(--font-head);
       font-size: 23px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
       letter-spacing: -0.3px;
     }
 
     .unlock-card-note {
       font-size: 11px;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-top: 4px;
       line-height: 1.4;
     }
@@ -438,8 +458,8 @@
     .change-icon {
       width: 34px;
       height: 34px;
-      background: var(--indigo-dim);
-      border: 1px solid rgba(91,110,245,0.3);
+      background: rgba(129,140,248,0.12);
+      border: 1px solid rgba(129,140,248,0.3);
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -456,15 +476,13 @@
     }
     .change-desc {
       font-size: 11.5px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       line-height: 1.55;
       flex: 1;
     }
 
     /* ===== LIVE CALCULATOR ===== */
-    .calc-section {
-      background: var(--panel-2);
-    }
+    .calc-section { background: var(--panel-2); }
     .calc-intro {
       display: flex;
       justify-content: space-between;
@@ -474,14 +492,14 @@
       flex-wrap: wrap;
     }
     .calc-headline {
-      font-family: var(--serif);
+      font-family: var(--font-head);
       font-size: 21px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
     }
     .calc-deck {
       font-size: 12.5px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       margin-top: 6px;
       max-width: 480px;
       line-height: 1.55;
@@ -532,36 +550,34 @@
     .field-label {
       font-size: 11.5px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--text-mid);
       margin-bottom: 7px;
       display: block;
     }
     .field-input {
       width: 100%;
-      background: var(--card);
-      border: 1px solid var(--border-mid);
+      background: var(--card-solid);
+      border: 1px solid var(--border);
       border-radius: 9px;
       color: var(--white);
       font-size: 13.5px;
       font-weight: 600;
       padding: 11px 14px;
-      font-family: var(--sans);
+      font-family: var(--font-body);
       transition: border-color 0.15s;
     }
     .field-input:focus {
       outline: none;
       border-color: var(--indigo);
-      box-shadow: 0 0 0 3px rgba(91,110,245,0.18);
+      box-shadow: 0 0 0 3px rgba(129,140,248,0.18);
     }
-    .field-with-prefix {
-      position: relative;
-    }
+    .field-with-prefix { position: relative; }
     .field-with-prefix .prefix {
       position: absolute;
       left: 14px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--text-dim);
+      color: var(--text-muted);
       font-size: 13.5px;
       font-weight: 600;
       pointer-events: none;
@@ -580,20 +596,20 @@
       gap: 8px;
     }
     .term-btn {
-      background: var(--card);
-      border: 1px solid var(--border-mid);
+      background: var(--card-solid);
+      border: 1px solid var(--border);
       border-radius: 9px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       font-size: 12px;
       font-weight: 600;
       padding: 10px 0;
       cursor: pointer;
       transition: all 0.15s;
-      font-family: var(--sans);
+      font-family: var(--font-body);
     }
-    .term-btn:hover { border-color: rgba(91,110,245,0.5); }
+    .term-btn:hover { border-color: rgba(129,140,248,0.5); }
     .term-btn.active {
-      background: var(--indigo-dim);
+      background: rgba(129,140,248,0.14);
       border-color: var(--indigo);
       color: var(--white);
     }
@@ -605,8 +621,8 @@
     }
 
     .output-hero {
-      background: linear-gradient(135deg, rgba(91,110,245,0.18), rgba(91,110,245,0.05));
-      border: 1px solid rgba(91,110,245,0.4);
+      background: linear-gradient(135deg, rgba(96,165,250,0.16), rgba(129,140,248,0.05));
+      border: 1px solid rgba(129,140,248,0.4);
       border-radius: 12px;
       padding: 20px;
       text-align: center;
@@ -616,20 +632,20 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--indigo-soft);
+      color: var(--indigo);
       margin-bottom: 8px;
     }
     .output-hero-value {
-      font-family: var(--serif);
+      font-family: var(--font-head);
       font-size: 38px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
       letter-spacing: -0.5px;
       line-height: 1;
     }
     .output-hero-note {
       font-size: 11px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       margin-top: 8px;
     }
 
@@ -653,21 +669,21 @@
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-bottom: 5px;
     }
     .output-card-value {
       font-size: 19px;
       font-weight: 700;
       color: var(--white);
-      font-family: var(--serif);
+      font-family: var(--font-head);
     }
     .output-card-value.red { color: var(--red); }
     .output-card-value.green { color: var(--green); }
 
     .calc-footnote {
       font-size: 10.5px;
-      color: var(--text-dim);
+      color: var(--text-muted);
       margin-top: 14px;
       line-height: 1.5;
     }
@@ -707,7 +723,7 @@
       top: 28px;
       bottom: -14px;
       width: 2px;
-      background: var(--border-mid);
+      background: var(--border);
       z-index: 0;
     }
     .poc-week-dot {
@@ -724,7 +740,7 @@
       z-index: 1;
       font-size: 11px;
       font-weight: 800;
-      color: var(--indigo-soft);
+      color: var(--indigo);
     }
     .poc-week-body { padding-top: 3px; }
     .poc-week-label {
@@ -734,7 +750,7 @@
     }
     .poc-week-desc {
       font-size: 11px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       margin-top: 2px;
       line-height: 1.45;
     }
@@ -760,7 +776,7 @@
     .poc-detail-key {
       font-size: 11.5px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--text-mid);
       flex-shrink: 0;
     }
     .poc-detail-val {
@@ -769,7 +785,7 @@
       color: var(--white);
       text-align: right;
     }
-    .poc-detail-val.indigo { color: var(--indigo-soft); }
+    .poc-detail-val.indigo { color: var(--indigo); }
     .poc-detail-val.green { color: var(--green); }
 
     .success-box {
@@ -785,7 +801,7 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--indigo-soft);
+      color: var(--indigo);
       margin-bottom: 10px;
     }
     .success-list {
@@ -796,7 +812,7 @@
     }
     .success-list li {
       font-size: 11.5px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       padding-left: 16px;
       position: relative;
     }
@@ -820,26 +836,22 @@
     }
 
     .cta-headline {
-      font-family: var(--serif);
+      font-family: var(--font-head);
       font-size: 19px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
       line-height: 1.3;
     }
     .cta-sub {
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--text-mid);
       margin-top: 6px;
       max-width: 380px;
     }
 
-    .cta-right {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
+    .cta-right { display: flex; gap: 16px; align-items: center; }
     .cta-button {
-      background: var(--indigo);
+      background: var(--blue);
       color: var(--white);
       font-size: 13px;
       font-weight: 700;
@@ -851,7 +863,7 @@
     .cta-contact { text-align: right; }
     .cta-contact-label {
       font-size: 10px;
-      color: var(--text-dim);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.1em;
       margin-bottom: 4px;
@@ -863,7 +875,7 @@
     }
     .cta-contact-email {
       font-size: 11.5px;
-      color: var(--indigo-soft);
+      color: var(--indigo);
       margin-top: 2px;
     }
 
@@ -878,37 +890,34 @@
       flex-wrap: wrap;
     }
 
-    .footer-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .footer-logo {
-      font-size: 13.5px;
+    .footer-brand { display: flex; align-items: center; gap: 12px; }
+    .footer-logo { display: flex; align-items: center; gap: 6px; }
+    .footer-logo .moon-icon { width: 16px; height: 16px; }
+    .footer-logo .wordmark {
+      font-family: var(--font-body);
       font-weight: 700;
-      letter-spacing: -0.2px;
-      display: flex;
-      gap: 4px;
+      font-size: 13.5px;
+      letter-spacing: 0.025em;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
-    .footer-logo .lunar { color: var(--white); }
-    .footer-logo .logic { color: var(--indigo-soft); }
-    .footer-tagline {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-style: italic;
+    .footer-logo .suffix {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 13.5px;
+      color: rgba(255,255,255,0.70);
     }
+    .footer-tagline { font-size: 11px; color: var(--text-mid); font-style: italic; }
 
     .footer-links { display: flex; gap: 16px; }
-    .footer-link {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-decoration: none;
-    }
+    .footer-link { font-size: 11px; color: var(--text-mid); text-decoration: none; }
 
     .footer-disclaimer {
       width: 100%;
       font-size: 10px;
-      color: var(--text-dim);
+      color: var(--text-muted);
       border-top: 1px solid var(--border);
       padding-top: 12px;
       margin-top: 6px;
@@ -917,7 +926,7 @@
 
     /* ===== PRINT STYLES ===== */
     @media print {
-      body { background: var(--bg); padding: 0; font-size: 11px; }
+      body { background: var(--navy); padding: 0; font-size: 11px; }
       .page { max-width: 100%; box-shadow: none; border-radius: 0; }
       * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .metric-card, .change-card, .unlock-card, .output-card,
@@ -951,7 +960,16 @@
   <!-- ===== BRAND STRIP ===== -->
   <div class="brand-strip">
     <div class="brand-logo">
-      <span class="moon">🌙</span><span class="lunar">lunarlogic</span><span class="logic">.ai</span>
+      <svg class="moon-icon" viewBox="0 0 24 24" fill="url(#moonGradient)">
+        <defs>
+          <linearGradient id="moonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#60A5FA"/>
+            <stop offset="100%" stop-color="#818CF8"/>
+          </linearGradient>
+        </defs>
+        <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/>
+      </svg>
+      <span class="wordmark">lunarlogic</span><span class="suffix">.ai</span>
     </div>
     <div class="brand-step">AR Health Diagnostic</div>
   </div>
@@ -1042,7 +1060,7 @@
           </div>
 
           <div class="dso-bar-row">
-            <div class="dso-bar-label" style="color:var(--indigo-soft);">TARGET</div>
+            <div class="dso-bar-label" style="color:var(--indigo);">TARGET</div>
             <div class="dso-bar-track">
               <div class="dso-bar-fill target">
                 <span class="dso-bar-num">20</span>
@@ -1105,7 +1123,7 @@
 
       <div class="change-card">
         <div class="change-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#8B97F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.64A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
           </svg>
         </div>
@@ -1115,7 +1133,7 @@
 
       <div class="change-card">
         <div class="change-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#8B97F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
             <line x1="8" y1="21" x2="16" y2="21"/>
             <line x1="12" y1="17" x2="12" y2="21"/>
@@ -1127,7 +1145,7 @@
 
       <div class="change-card">
         <div class="change-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#8B97F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
         </div>
@@ -1279,7 +1297,7 @@
 
           <div class="poc-detail-row">
             <div class="poc-detail-key">Pilot Scope</div>
-            <div class="poc-detail-val">5 customer accounts<br><span style="font-weight:400;color:var(--text-dim);font-size:10px;">Spare Parts Division only</span></div>
+            <div class="poc-detail-val">5 customer accounts<br><span style="font-weight:400;color:var(--text-muted);font-size:10px;">Spare Parts Division only</span></div>
           </div>
 
           <div class="poc-detail-row">
@@ -1294,7 +1312,7 @@
 
           <div class="poc-detail-row">
             <div class="poc-detail-key">Pilot Pricing</div>
-            <div class="poc-detail-val indigo">To be discussed<br><span style="font-weight:400;color:var(--text-dim);font-size:10px;">Heavily discounted for POC</span></div>
+            <div class="poc-detail-val indigo">To be discussed<br><span style="font-weight:400;color:var(--text-muted);font-size:10px;">Heavily discounted for POC</span></div>
           </div>
 
           <div class="poc-detail-row">
@@ -1336,7 +1354,18 @@
   <!-- ===== FOOTER ===== -->
   <footer class="footer">
     <div class="footer-brand">
-      <div class="footer-logo"><span class="lunar">lunarlogic</span><span class="logic">.ai</span></div>
+      <div class="footer-logo">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="url(#moonGradientFooter)">
+          <defs>
+            <linearGradient id="moonGradientFooter" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#60A5FA"/>
+              <stop offset="100%" stop-color="#818CF8"/>
+            </linearGradient>
+          </defs>
+          <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/>
+        </svg>
+        <span class="wordmark">lunarlogic</span><span class="suffix">.ai</span>
+      </div>
       <div style="width: 1px; height: 24px; background: var(--border); margin: 0 4px;"></div>
       <div class="footer-tagline">"We turn what you have already earned into cash in your bank account."</div>
     </div>
