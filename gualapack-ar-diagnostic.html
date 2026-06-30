@@ -9,57 +9,85 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy:      #0D1B2E;
-      --navy-mid:  #112240;
-      --navy-light:#1A2F4A;
-      --cyan:      #22D3EE;
-      --cyan-muted:#0ea5c9;
-      --white:     #FFFFFF;
-      --off-white: #F8FAFC;
-      --text:      #1E293B;
-      --text-muted:#475569;
-      --border:    #CBD5E1;
-      --red-soft:  #FEE2E2;
-      --red-text:  #991B1B;
-      --green-soft:#DCFCE7;
-      --green-text:#166534;
+      --bg:          #060A16;
+      --panel:       #0B1120;
+      --panel-2:     #0F172E;
+      --card:        #111A30;
+      --border:      rgba(255,255,255,0.08);
+      --border-mid:  rgba(255,255,255,0.14);
+      --indigo:      #5B6EF5;
+      --indigo-soft: #8B97F8;
+      --indigo-dim:  rgba(91,110,245,0.14);
+      --white:       #F8FAFC;
+      --text-muted:  rgba(248,250,252,0.58);
+      --text-dim:    rgba(248,250,252,0.38);
+      --red:         #F87171;
+      --red-soft:    rgba(248,113,113,0.12);
+      --amber:       #FBBF24;
+      --amber-soft:  rgba(251,191,36,0.12);
+      --green:       #4ADE80;
+      --green-soft:  rgba(74,222,128,0.12);
+      --serif:       "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+      --sans:        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
-    html { font-size: 13px; }
+    html { font-size: 14px; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                   "Helvetica Neue", Arial, sans-serif;
-      background: #E2E8F0;
-      color: var(--text);
-      padding: 16px;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--white);
+      padding: 24px 16px;
       line-height: 1.5;
     }
 
     /* ===== PAGE WRAPPER ===== */
     .page {
-      max-width: 860px;
+      max-width: 880px;
       margin: 0 auto;
-      background: var(--white);
-      border-radius: 6px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    .topbar {
+      height: 3px;
+      background: linear-gradient(90deg, var(--indigo) 0%, var(--indigo) 38%, rgba(91,110,245,0.15) 38%, rgba(91,110,245,0.15) 100%);
+    }
+
+    /* ===== BRAND STRIP ===== */
+    .brand-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 36px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .brand-logo .moon { font-size: 15px; }
+    .brand-logo .lunar { color: var(--white); }
+    .brand-logo .logic { color: var(--indigo-soft); }
+    .brand-step {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--indigo-soft);
     }
 
     /* ===== HEADER ===== */
     .header {
-      background: var(--navy);
-      padding: 28px 36px 24px;
-      position: relative;
-      overflow: hidden;
-    }
-    .header::after {
-      content: '';
-      position: absolute;
-      top: 0; right: 0;
-      width: 220px; height: 100%;
-      background: linear-gradient(135deg, transparent 60%, rgba(34,211,238,0.08) 100%);
-      pointer-events: none;
+      padding: 30px 36px 26px;
+      background: radial-gradient(circle at 85% 0%, rgba(91,110,245,0.16), transparent 55%);
     }
 
     .header-top {
@@ -70,154 +98,159 @@
       flex-wrap: wrap;
     }
 
-    .company-block {}
     .company-label {
-      font-size: 10px;
-      letter-spacing: 0.15em;
+      font-size: 10.5px;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--cyan);
-      font-weight: 600;
-      margin-bottom: 4px;
+      color: var(--indigo-soft);
+      font-weight: 700;
+      margin-bottom: 6px;
     }
     .company-name {
-      font-size: 20px;
+      font-family: var(--serif);
+      font-size: 23px;
       font-weight: 700;
       color: var(--white);
       line-height: 1.2;
     }
     .company-sub {
-      font-size: 12px;
-      color: rgba(255,255,255,0.55);
-      margin-top: 2px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
 
-    .header-meta {
-      text-align: right;
-    }
+    .header-meta { text-align: right; }
     .meta-date {
       font-size: 11px;
-      color: rgba(255,255,255,0.45);
-      margin-bottom: 4px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
     }
     .meta-badge {
       display: inline-block;
-      background: rgba(34,211,238,0.15);
-      border: 1px solid rgba(34,211,238,0.4);
-      color: var(--cyan);
+      background: var(--indigo-dim);
+      border: 1px solid rgba(91,110,245,0.35);
+      color: var(--indigo-soft);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      padding: 3px 10px;
-      border-radius: 3px;
+      padding: 4px 11px;
+      border-radius: 20px;
     }
 
     .header-title {
-      margin-top: 18px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding-top: 16px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
     }
     .diagnostic-title {
-      font-size: 22px;
-      font-weight: 800;
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 700;
       color: var(--white);
-      letter-spacing: -0.3px;
+      letter-spacing: -0.2px;
     }
     .diagnostic-sub {
-      font-size: 12.5px;
-      color: rgba(255,255,255,0.5);
-      margin-top: 3px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      max-width: 540px;
     }
 
     /* ===== BODY SECTIONS ===== */
     .section {
-      padding: 24px 36px;
+      padding: 30px 36px;
       border-bottom: 1px solid var(--border);
     }
     .section:last-of-type { border-bottom: none; }
 
     .section-label {
-      font-size: 9.5px;
+      font-size: 10px;
       font-weight: 800;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--cyan-muted);
-      margin-bottom: 14px;
+      color: var(--indigo-soft);
+      margin-bottom: 16px;
     }
 
     /* ===== PROBLEM SECTION ===== */
     .problem-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 14px;
+      margin-bottom: 18px;
     }
 
     .metric-card {
-      background: var(--navy);
-      border-radius: 6px;
-      padding: 16px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 18px 16px;
       position: relative;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .metric-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0;
       width: 3px; height: 100%;
-      background: var(--cyan);
+      border-radius: 10px 0 0 10px;
+      background: var(--indigo);
     }
-    .metric-card.alert::before { background: #EF4444; }
-    .metric-card.warning::before { background: #F59E0B; }
+    .metric-card.alert::before { background: var(--red); }
+    .metric-card.warning::before { background: var(--amber); }
 
     .metric-label {
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 600;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
-      margin-bottom: 8px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
     }
     .metric-value {
-      font-size: 26px;
-      font-weight: 800;
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 700;
       color: var(--white);
-      letter-spacing: -0.5px;
+      letter-spacing: -0.3px;
       line-height: 1;
     }
-    .metric-value.accent { color: var(--cyan); }
-    .metric-value.red { color: #FCA5A5; }
+    .metric-value.accent { color: var(--indigo-soft); }
+    .metric-value.red { color: var(--red); }
     .metric-caption {
-      font-size: 10.5px;
-      color: rgba(255,255,255,0.35);
-      margin-top: 6px;
-      line-height: 1.4;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 8px;
+      line-height: 1.45;
+      flex: 1;
     }
 
     .quote-box {
-      background: #FFF7ED;
-      border-left: 4px solid #F59E0B;
-      border-radius: 0 6px 6px 0;
-      padding: 12px 16px;
+      background: var(--amber-soft);
+      border: 1px solid rgba(251,191,36,0.3);
+      border-radius: 10px;
+      padding: 14px 18px;
       margin-top: 4px;
     }
     .quote-text {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 700;
-      color: #92400E;
-      line-height: 1.4;
+      color: #FDE68A;
+      line-height: 1.45;
     }
     .quote-sub {
       font-size: 11px;
-      color: #B45309;
-      margin-top: 3px;
+      color: rgba(253,230,138,0.65);
+      margin-top: 4px;
     }
 
     /* ===== TERMS CALLOUT ===== */
     .terms-row {
       display: flex;
       gap: 10px;
-      margin-top: 12px;
+      margin-top: 14px;
       flex-wrap: wrap;
     }
     .terms-pill {
@@ -225,32 +258,33 @@
       align-items: center;
       gap: 6px;
       background: var(--red-soft);
-      border: 1px solid #FECACA;
-      border-radius: 4px;
-      padding: 6px 12px;
+      border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 20px;
+      padding: 7px 14px;
       font-size: 11.5px;
+      flex: 1;
+      min-width: 200px;
     }
-    .terms-pill .pill-label { color: var(--red-text); font-weight: 700; }
-    .terms-pill .pill-note { color: #B91C1C; font-weight: 400; }
-
-    .terms-pill.ok {
-      background: var(--green-soft);
-      border-color: #BBF7D0;
-    }
-    .terms-pill.ok .pill-label { color: var(--green-text); }
-    .terms-pill.ok .pill-note { color: #15803D; }
+    .terms-pill .pill-label { color: #FCA5A5; font-weight: 700; white-space: nowrap; }
+    .terms-pill .pill-note { color: rgba(252,165,165,0.75); font-weight: 400; }
 
     /* ===== OPPORTUNITY SECTION ===== */
     .opportunity-layout {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
+      align-items: stretch;
+    }
+    .opportunity-col {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 
     .dso-visual {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .dso-bar-row {
@@ -260,165 +294,381 @@
     }
     .dso-bar-label {
       font-size: 11px;
-      font-weight: 600;
-      color: var(--text-muted);
-      width: 48px;
+      font-weight: 700;
+      width: 50px;
       text-align: right;
       flex-shrink: 0;
     }
     .dso-bar-track {
       flex: 1;
-      background: #F1F5F9;
-      border-radius: 4px;
-      height: 28px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      height: 32px;
       position: relative;
       overflow: hidden;
     }
     .dso-bar-fill {
       height: 100%;
-      border-radius: 4px;
+      border-radius: 5px;
       display: flex;
       align-items: center;
-      padding-left: 10px;
+      padding-left: 12px;
     }
     .dso-bar-fill.current {
-      background: linear-gradient(90deg, #0D1B2E, #1A2F4A);
+      background: linear-gradient(90deg, #7F1D1D, #B91C1C);
       width: 100%;
     }
     .dso-bar-fill.target {
-      background: linear-gradient(90deg, #22D3EE, #0ea5c9);
+      background: linear-gradient(90deg, var(--indigo), var(--indigo-soft));
       width: 50%;
     }
     .dso-bar-num {
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--white);
     }
     .dso-bar-days {
-      font-size: 10px;
-      color: rgba(255,255,255,0.6);
+      font-size: 10.5px;
+      color: rgba(255,255,255,0.65);
       margin-left: 4px;
     }
 
     .dso-note {
-      font-size: 10.5px;
+      font-size: 11px;
       color: var(--text-muted);
-      margin-top: 4px;
-      line-height: 1.5;
+      margin-top: 6px;
+      line-height: 1.55;
     }
 
-    .unlock-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .unlock-card {
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
-      padding: 14px 16px;
-      position: relative;
-    }
-    .unlock-card.primary {
-      border-color: var(--cyan);
-      background: linear-gradient(135deg, #F0FDFF, #ECFEFF);
-    }
-
-    .unlock-card-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    .unlock-card.primary .unlock-card-label { color: var(--cyan-muted); }
-
-    .unlock-card-value {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--navy);
-      letter-spacing: -0.4px;
-    }
-    .unlock-card.primary .unlock-card-value { color: var(--navy); }
-
-    .unlock-card-note {
-      font-size: 10.5px;
-      color: var(--text-muted);
-      margin-top: 3px;
-    }
-
-    /* ===== CALC BOX ===== */
     .calc-box {
-      background: var(--off-white);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px 16px;
-      margin-top: 12px;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-top: 14px;
     }
     .calc-title {
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 8px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
     }
     .calc-line {
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--text-muted);
-      line-height: 1.8;
+      line-height: 1.9;
       font-family: "SF Mono", "Fira Code", "Consolas", monospace;
     }
-    .calc-line strong {
-      color: var(--navy);
-      font-weight: 700;
-    }
     .calc-result {
-      font-size: 12.5px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--white);
       border-top: 1px solid var(--border);
-      margin-top: 6px;
-      padding-top: 6px;
+      margin-top: 8px;
+      padding-top: 8px;
     }
-    .calc-result span { color: var(--cyan-muted); }
+    .calc-result span { color: var(--indigo-soft); }
+
+    .unlock-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      flex: 1;
+    }
+
+    .unlock-card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 15px 17px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .unlock-card.primary {
+      border-color: rgba(91,110,245,0.4);
+      background: linear-gradient(135deg, rgba(91,110,245,0.12), rgba(91,110,245,0.04));
+    }
+
+    .unlock-card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 5px;
+    }
+    .unlock-card.primary .unlock-card-label { color: var(--indigo-soft); }
+
+    .unlock-card-value {
+      font-family: var(--serif);
+      font-size: 23px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.3px;
+    }
+
+    .unlock-card-note {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
 
     /* ===== WHAT CHANGES ===== */
     .changes-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
+      gap: 14px;
     }
 
     .change-card {
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 16px;
-      background: var(--off-white);
+      border-radius: 10px;
+      padding: 18px;
+      background: var(--card);
+      display: flex;
+      flex-direction: column;
     }
 
     .change-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--navy);
-      border-radius: 6px;
+      width: 34px;
+      height: 34px;
+      background: var(--indigo-dim);
+      border: 1px solid rgba(91,110,245,0.3);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .change-icon svg { width: 16px; height: 16px; }
 
     .change-title {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 5px;
+      color: var(--white);
+      margin-bottom: 6px;
     }
     .change-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+      flex: 1;
+    }
+
+    /* ===== LIVE CALCULATOR ===== */
+    .calc-section {
+      background: var(--panel-2);
+    }
+    .calc-intro {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .calc-headline {
+      font-family: var(--serif);
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .calc-deck {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      max-width: 480px;
+      line-height: 1.55;
+    }
+    .calc-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-soft);
+      border: 1px solid rgba(74,222,128,0.35);
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 20px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .calc-live-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .calculator {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .calc-inputs {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+      display: block;
+    }
+    .field-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border-mid);
+      border-radius: 9px;
+      color: var(--white);
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 11px 14px;
+      font-family: var(--sans);
+      transition: border-color 0.15s;
+    }
+    .field-input:focus {
+      outline: none;
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 3px rgba(91,110,245,0.18);
+    }
+    .field-with-prefix {
+      position: relative;
+    }
+    .field-with-prefix .prefix {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 13.5px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+    .field-with-prefix input { padding-left: 28px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .terms-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .term-btn {
+      background: var(--card);
+      border: 1px solid var(--border-mid);
+      border-radius: 9px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 0;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--sans);
+    }
+    .term-btn:hover { border-color: rgba(91,110,245,0.5); }
+    .term-btn.active {
+      background: var(--indigo-dim);
+      border-color: var(--indigo);
+      color: var(--white);
+    }
+
+    .calc-outputs {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .output-hero {
+      background: linear-gradient(135deg, rgba(91,110,245,0.18), rgba(91,110,245,0.05));
+      border: 1px solid rgba(91,110,245,0.4);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .output-hero-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--indigo-soft);
+      margin-bottom: 8px;
+    }
+    .output-hero-value {
+      font-family: var(--serif);
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .output-hero-note {
       font-size: 11px;
       color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .output-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      flex: 1;
+    }
+    .output-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .output-card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 5px;
+    }
+    .output-card-value {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--white);
+      font-family: var(--serif);
+    }
+    .output-card-value.red { color: var(--red); }
+    .output-card-value.green { color: var(--green); }
+
+    .calc-footnote {
+      font-size: 10.5px;
+      color: var(--text-dim);
+      margin-top: 14px;
       line-height: 1.5;
     }
 
@@ -427,127 +677,141 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
+      align-items: stretch;
+    }
+    .poc-col {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 
     .poc-timeline {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 0;
+      justify-content: space-evenly;
     }
     .poc-week {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       position: relative;
     }
     .poc-week:not(:last-child)::after {
       content: '';
       position: absolute;
-      left: 12px;
-      top: 26px;
-      bottom: -4px;
+      left: 13px;
+      top: 28px;
+      bottom: -14px;
       width: 2px;
-      background: var(--border);
+      background: var(--border-mid);
       z-index: 0;
     }
     .poc-week-dot {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: var(--navy);
-      border: 2px solid var(--cyan);
+      background: var(--panel);
+      border: 2px solid var(--indigo);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       position: relative;
       z-index: 1;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 800;
-      color: var(--cyan);
+      color: var(--indigo-soft);
     }
-    .poc-week-body {
-      padding-bottom: 14px;
-      padding-top: 3px;
-    }
+    .poc-week-body { padding-top: 3px; }
     .poc-week-label {
-      font-size: 10.5px;
+      font-size: 11.5px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--white);
     }
     .poc-week-desc {
-      font-size: 10.5px;
+      font-size: 11px;
       color: var(--text-muted);
-      margin-top: 1px;
-      line-height: 1.4;
+      margin-top: 2px;
+      line-height: 1.45;
     }
 
     .poc-details {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
     }
 
     .poc-detail-row {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      padding: 10px 0;
+      padding: 13px 0;
       border-bottom: 1px solid var(--border);
       gap: 12px;
     }
     .poc-detail-row:last-child { border-bottom: none; }
     .poc-detail-key {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--text-muted);
       flex-shrink: 0;
     }
     .poc-detail-val {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--white);
       text-align: right;
     }
-    .poc-detail-val.cyan { color: var(--cyan-muted); }
+    .poc-detail-val.indigo { color: var(--indigo-soft); }
+    .poc-detail-val.green { color: var(--green); }
 
     .success-box {
-      margin-top: 12px;
-      background: var(--navy);
-      border-radius: 6px;
-      padding: 12px 16px;
+      margin-top: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      flex: 1;
     }
     .success-box-title {
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--cyan);
-      margin-bottom: 8px;
+      color: var(--indigo-soft);
+      margin-bottom: 10px;
     }
     .success-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 7px;
     }
     .success-list li {
-      font-size: 11px;
-      color: rgba(255,255,255,0.75);
-      padding-left: 14px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      padding-left: 16px;
       position: relative;
     }
     .success-list li::before {
       content: '✓';
       position: absolute;
       left: 0;
-      color: var(--cyan);
+      color: var(--green);
       font-weight: 700;
     }
 
     /* ===== CTA SECTION ===== */
     .cta-section {
-      background: var(--navy);
-      padding: 24px 36px;
+      background: linear-gradient(135deg, var(--panel-2), var(--panel));
+      padding: 30px 36px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -555,17 +819,18 @@
       flex-wrap: wrap;
     }
 
-    .cta-left {}
     .cta-headline {
-      font-size: 16px;
-      font-weight: 800;
+      font-family: var(--serif);
+      font-size: 19px;
+      font-weight: 700;
       color: var(--white);
       line-height: 1.3;
     }
     .cta-sub {
-      font-size: 11.5px;
-      color: rgba(255,255,255,0.5);
-      margin-top: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      max-width: 380px;
     }
 
     .cta-right {
@@ -573,15 +838,23 @@
       gap: 16px;
       align-items: center;
     }
-    .cta-contact {
-      text-align: right;
+    .cta-button {
+      background: var(--indigo);
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 12px 22px;
+      border-radius: 9px;
+      text-decoration: none;
+      white-space: nowrap;
     }
+    .cta-contact { text-align: right; }
     .cta-contact-label {
       font-size: 10px;
-      color: rgba(255,255,255,0.35);
+      color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
     .cta-contact-name {
       font-size: 13px;
@@ -590,20 +863,14 @@
     }
     .cta-contact-email {
       font-size: 11.5px;
-      color: var(--cyan);
-      margin-top: 1px;
-    }
-    .cta-contact-phone {
-      font-size: 11px;
-      color: rgba(255,255,255,0.4);
-      margin-top: 1px;
+      color: var(--indigo-soft);
+      margin-top: 2px;
     }
 
     /* ===== FOOTER ===== */
     .footer {
-      background: #F8FAFC;
       border-top: 1px solid var(--border);
-      padding: 14px 36px;
+      padding: 16px 36px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -614,79 +881,63 @@
     .footer-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .footer-logo {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--navy);
-      letter-spacing: -0.3px;
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      display: flex;
+      gap: 4px;
     }
-    .footer-logo span { color: var(--cyan-muted); }
+    .footer-logo .lunar { color: var(--white); }
+    .footer-logo .logic { color: var(--indigo-soft); }
     .footer-tagline {
-      font-size: 10.5px;
+      font-size: 11px;
       color: var(--text-muted);
       font-style: italic;
     }
 
-    .footer-links {
-      display: flex;
-      gap: 16px;
-    }
+    .footer-links { display: flex; gap: 16px; }
     .footer-link {
-      font-size: 10.5px;
+      font-size: 11px;
       color: var(--text-muted);
       text-decoration: none;
     }
 
     .footer-disclaimer {
       width: 100%;
-      font-size: 9.5px;
-      color: #94A3B8;
+      font-size: 10px;
+      color: var(--text-dim);
       border-top: 1px solid var(--border);
-      padding-top: 10px;
-      margin-top: 4px;
-      line-height: 1.5;
+      padding-top: 12px;
+      margin-top: 6px;
+      line-height: 1.55;
     }
 
     /* ===== PRINT STYLES ===== */
     @media print {
-      body {
-        background: white;
-        padding: 0;
-        font-size: 11px;
-      }
-      .page {
-        max-width: 100%;
-        box-shadow: none;
-        border-radius: 0;
-      }
-
-      /* Force backgrounds to print */
-      .header,
-      .metric-card,
-      .cta-section,
-      .success-box,
-      .poc-week-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-      .metric-card { background: #0D1B2E !important; }
-
-      /* Avoid breaks inside cards */
-      .metric-card, .change-card, .unlock-card,
-      .poc-week, .cta-section { break-inside: avoid; }
-
+      body { background: var(--bg); padding: 0; font-size: 11px; }
+      .page { max-width: 100%; box-shadow: none; border-radius: 0; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .metric-card, .change-card, .unlock-card, .output-card,
+      .poc-week, .cta-section, .calculator { break-inside: avoid; }
       .problem-grid, .changes-grid { break-inside: avoid; }
+      .calc-live-badge .dot { animation: none; }
     }
 
     /* ===== MOBILE ===== */
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
       body { padding: 0; }
       .page { border-radius: 0; }
-      .header, .section, .cta-section, .footer { padding-left: 18px; padding-right: 18px; }
+      .header, .section, .cta-section, .footer, .brand-strip { padding-left: 18px; padding-right: 18px; }
       .problem-grid { grid-template-columns: 1fr 1fr; }
       .opportunity-layout { grid-template-columns: 1fr; }
       .changes-grid { grid-template-columns: 1fr; }
       .poc-layout { grid-template-columns: 1fr; }
+      .calculator { grid-template-columns: 1fr; }
+      .output-grid { grid-template-columns: 1fr 1fr; }
+      .terms-options { grid-template-columns: repeat(2, 1fr); }
       .cta-section { flex-direction: column; align-items: flex-start; }
       .cta-right { margin-top: 8px; }
     }
@@ -695,6 +946,15 @@
 <body>
 
 <div class="page">
+  <div class="topbar"></div>
+
+  <!-- ===== BRAND STRIP ===== -->
+  <div class="brand-strip">
+    <div class="brand-logo">
+      <span class="moon">🌙</span><span class="lunar">lunarlogic</span><span class="logic">.ai</span>
+    </div>
+    <div class="brand-step">AR Health Diagnostic</div>
+  </div>
 
   <!-- ===== HEADER ===== -->
   <header class="header">
@@ -710,8 +970,8 @@
       </div>
     </div>
     <div class="header-title">
-      <div class="diagnostic-title">AR Health Diagnostic</div>
-      <div class="diagnostic-sub">A data-driven analysis of your current cash flow gap — and what's available on the other side.</div>
+      <div class="diagnostic-title">Your AR Health Diagnostic</div>
+      <div class="diagnostic-sub">A data-driven look at your current cash flow gap — built from your own AR aging report, not industry averages.</div>
     </div>
   </header>
 
@@ -756,7 +1016,7 @@
       </div>
     </div>
 
-    <div class="quote-box" style="margin-top: 14px;">
+    <div class="quote-box" style="margin-top: 16px;">
       <div class="quote-text">"Every 10 days of DSO improvement unlocks $55,000+ of working capital that's already yours."</div>
       <div class="quote-sub">Based on your $800K annual spare parts revenue and current AR balance. These are your numbers.</div>
     </div>
@@ -768,11 +1028,11 @@
 
     <div class="opportunity-layout">
 
-      <div>
+      <div class="opportunity-col">
         <div class="dso-visual">
 
           <div class="dso-bar-row">
-            <div class="dso-bar-label" style="color:#EF4444;font-weight:800;">NOW</div>
+            <div class="dso-bar-label" style="color:#FCA5A5;">NOW</div>
             <div class="dso-bar-track">
               <div class="dso-bar-fill current">
                 <span class="dso-bar-num">40</span>
@@ -782,7 +1042,7 @@
           </div>
 
           <div class="dso-bar-row">
-            <div class="dso-bar-label" style="color:#22D3EE;font-weight:800;">TARGET</div>
+            <div class="dso-bar-label" style="color:var(--indigo-soft);">TARGET</div>
             <div class="dso-bar-track">
               <div class="dso-bar-fill target">
                 <span class="dso-bar-num">20</span>
@@ -792,7 +1052,7 @@
           </div>
 
           <div class="dso-note">
-            Conservative target: <strong>20-day DSO</strong> — a 40% reduction from your current 40-day average, aligned to your dominant Net-7 terms.
+            Conservative target: <strong style="color:var(--white);">20-day DSO</strong> — a 40% reduction from your current 40-day average, aligned to your dominant Net-7 terms.
           </div>
         </div>
 
@@ -805,32 +1065,34 @@
         </div>
       </div>
 
-      <div class="unlock-cards">
+      <div class="opportunity-col">
+        <div class="unlock-cards">
 
-        <div class="unlock-card primary">
-          <div class="unlock-card-label">Projected Working Capital Released</div>
-          <div class="unlock-card-value">$43K – $65K+</div>
-          <div class="unlock-card-note">Money you've already earned, returned to your bank within 30–90 days of POC go-live</div>
+          <div class="unlock-card primary">
+            <div class="unlock-card-label">Projected Working Capital Released</div>
+            <div class="unlock-card-value">$43K – $65K+</div>
+            <div class="unlock-card-note">Money you've already earned, returned to your bank within 30–90 days of POC go-live</div>
+          </div>
+
+          <div class="unlock-card">
+            <div class="unlock-card-label">DSO Reduction Target</div>
+            <div class="unlock-card-value">15–20 days</div>
+            <div class="unlock-card-note">Conservative benchmark. Best-case: 20+ days within first 90 days</div>
+          </div>
+
+          <div class="unlock-card">
+            <div class="unlock-card-label">Bad Debt Reduction (annual)</div>
+            <div class="unlock-card-value">~$11,200</div>
+            <div class="unlock-card-note">70% of estimated $16K/yr bad debt eliminated through earlier intervention</div>
+          </div>
+
+          <div class="unlock-card">
+            <div class="unlock-card-label">Hours Saved / Month</div>
+            <div class="unlock-card-value">8–12 hrs</div>
+            <div class="unlock-card-note">Manual reminder emails, status checks, and aging report prep eliminated</div>
+          </div>
+
         </div>
-
-        <div class="unlock-card">
-          <div class="unlock-card-label">DSO Reduction Target</div>
-          <div class="unlock-card-value">15–20 days</div>
-          <div class="unlock-card-note">Conservative benchmark. Best-case: 20+ days within first 90 days</div>
-        </div>
-
-        <div class="unlock-card">
-          <div class="unlock-card-label">Bad Debt Reduction (annual)</div>
-          <div class="unlock-card-value">~$11,200</div>
-          <div class="unlock-card-note">70% of estimated $16K/yr bad debt eliminated through earlier intervention</div>
-        </div>
-
-        <div class="unlock-card">
-          <div class="unlock-card-label">Hours Saved / Month</div>
-          <div class="unlock-card-value">8–12 hrs</div>
-          <div class="unlock-card-note">Manual reminder emails, status checks, and aging report prep eliminated</div>
-        </div>
-
       </div>
     </div>
   </section>
@@ -843,7 +1105,7 @@
 
       <div class="change-card">
         <div class="change-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8B97F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.64A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
           </svg>
         </div>
@@ -853,7 +1115,7 @@
 
       <div class="change-card">
         <div class="change-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8B97F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
             <line x1="8" y1="21" x2="16" y2="21"/>
             <line x1="12" y1="17" x2="12" y2="21"/>
@@ -865,7 +1127,7 @@
 
       <div class="change-card">
         <div class="change-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8B97F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
         </div>
@@ -876,13 +1138,113 @@
     </div>
   </section>
 
+  <!-- ===== SECTION: LIVE DSO CALCULATOR ===== -->
+  <section class="section calc-section" id="calculator-section">
+    <div class="section-label">Run It Live — Calculate Your DSO Impact Together</div>
+
+    <div class="calc-intro">
+      <div>
+        <div class="calc-headline">See the number move in real time</div>
+        <div class="calc-deck">Walk through this on the call. The fields below are pre-loaded with your numbers from the diagnostic above — adjust any of them live and watch the working capital release recalculate instantly, so it's clear this isn't a sales projection. It's your math.</div>
+      </div>
+      <div class="calc-live-badge"><span class="dot"></span>Live Calculator</div>
+    </div>
+
+    <div class="calculator">
+
+      <div class="calc-inputs">
+
+        <div>
+          <label class="field-label">Current AR Balance</label>
+          <div class="field-with-prefix">
+            <span class="prefix">$</span>
+            <input class="field-input" type="number" id="inputAR" value="520000" step="1000">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div>
+            <label class="field-label">Current DSO (days)</label>
+            <input class="field-input" type="number" id="inputCurrentDSO" value="40" step="1">
+          </div>
+          <div>
+            <label class="field-label">Target DSO (days)</label>
+            <input class="field-input" type="number" id="inputTargetDSO" value="20" step="1">
+          </div>
+        </div>
+
+        <div>
+          <label class="field-label">Annual Revenue (Spare Parts)</label>
+          <div class="field-with-prefix">
+            <span class="prefix">$</span>
+            <input class="field-input" type="number" id="inputRevenue" value="800000" step="10000">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div>
+            <label class="field-label">Invoices / Month</label>
+            <input class="field-input" type="number" id="inputInvoices" value="100" step="5">
+          </div>
+          <div>
+            <label class="field-label">Est. Bad Debt (% of rev.)</label>
+            <input class="field-input" type="number" id="inputBadDebtPct" value="2" step="0.5">
+          </div>
+        </div>
+
+        <div>
+          <label class="field-label">Primary Payment Terms</label>
+          <div class="terms-options">
+            <button type="button" class="term-btn" data-term="7">Net 7</button>
+            <button type="button" class="term-btn" data-term="21">Net 21</button>
+            <button type="button" class="term-btn" data-term="30">Net 30</button>
+            <button type="button" class="term-btn" data-term="60">Net 60</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="calc-outputs">
+
+        <div class="output-hero">
+          <div class="output-hero-label">Working Capital Released</div>
+          <div class="output-hero-value" id="outRelease">$43,836</div>
+          <div class="output-hero-note" id="outReleaseNote">Based on a 20-day DSO reduction against $800,000 in annual revenue</div>
+        </div>
+
+        <div class="output-grid">
+          <div class="output-card">
+            <div class="output-card-label">Daily Capital Locked</div>
+            <div class="output-card-value" id="outDaily">$1,425</div>
+          </div>
+          <div class="output-card">
+            <div class="output-card-label">Locked / Month</div>
+            <div class="output-card-value" id="outMonthly">$42,740</div>
+          </div>
+          <div class="output-card">
+            <div class="output-card-label">Days Over Terms</div>
+            <div class="output-card-value red" id="outOverTerms">33 days</div>
+          </div>
+          <div class="output-card">
+            <div class="output-card-label">Bad Debt Reduced /yr</div>
+            <div class="output-card-value green" id="outBadDebt">$11,200</div>
+          </div>
+        </div>
+
+        <div class="calc-footnote">
+          Formula: ((Current DSO − Target DSO) / 365) × Annual Revenue = Working Capital Released. Bad debt reduction assumes a 70% improvement rate, consistent with earlier-intervention collection models.
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== SECTION 4: THE 30-DAY POC ===== -->
   <section class="section">
     <div class="section-label">The 30-Day POC — Low Risk, Measurable Outcome</div>
 
     <div class="poc-layout">
 
-      <div>
+      <div class="poc-col">
         <div class="poc-timeline">
 
           <div class="poc-week">
@@ -912,12 +1274,12 @@
         </div>
       </div>
 
-      <div>
+      <div class="poc-col">
         <div class="poc-details">
 
           <div class="poc-detail-row">
             <div class="poc-detail-key">Pilot Scope</div>
-            <div class="poc-detail-val">5 customer accounts<br><span style="font-weight:400;color:var(--text-muted);font-size:10px;">Spare Parts Division only</span></div>
+            <div class="poc-detail-val">5 customer accounts<br><span style="font-weight:400;color:var(--text-dim);font-size:10px;">Spare Parts Division only</span></div>
           </div>
 
           <div class="poc-detail-row">
@@ -932,12 +1294,12 @@
 
           <div class="poc-detail-row">
             <div class="poc-detail-key">Pilot Pricing</div>
-            <div class="poc-detail-val cyan">To be discussed<br><span style="font-weight:400;color:var(--text-muted);font-size:10px;">Heavily discounted for POC</span></div>
+            <div class="poc-detail-val indigo">To be discussed<br><span style="font-weight:400;color:var(--text-dim);font-size:10px;">Heavily discounted for POC</span></div>
           </div>
 
           <div class="poc-detail-row">
             <div class="poc-detail-key">Your Risk</div>
-            <div class="poc-detail-val" style="color:#166534;">60-day satisfaction<br>guarantee applies</div>
+            <div class="poc-detail-val green">60-day satisfaction<br>guarantee applies</div>
           </div>
 
         </div>
@@ -967,7 +1329,6 @@
         <div class="cta-contact-label">Your LunarLogic Contact</div>
         <div class="cta-contact-name">Jonathan Rodriguez</div>
         <div class="cta-contact-email">jrodriguez@lunarlogic.ai</div>
-        <div class="cta-contact-phone">lunarlogic.ai</div>
       </div>
     </div>
   </div>
@@ -975,8 +1336,8 @@
   <!-- ===== FOOTER ===== -->
   <footer class="footer">
     <div class="footer-brand">
-      <div class="footer-logo">Lunar<span>Logic</span></div>
-      <div style="width: 1px; height: 28px; background: var(--border); margin: 0 4px;"></div>
+      <div class="footer-logo"><span class="lunar">lunarlogic</span><span class="logic">.ai</span></div>
+      <div style="width: 1px; height: 24px; background: var(--border); margin: 0 4px;"></div>
       <div class="footer-tagline">"We turn what you have already earned into cash in your bank account."</div>
     </div>
     <div class="footer-links">
@@ -984,11 +1345,76 @@
       <a class="footer-link" href="mailto:support@lunarlogic.ai">support@lunarlogic.ai</a>
     </div>
     <div class="footer-disclaimer">
-      All projections are estimates based on inputs provided by Gualapack and benchmarks from comparable LunarLogic clients. Actual results depend on customer payment behavior, volume, and implementation timeline. Working capital release figures assume AR balance remains constant through the POC period. This document is confidential and prepared exclusively for Gualapack North America.
+      All projections are estimates based on inputs provided by Gualapack. Actual results depend on customer payment behavior, volume, and implementation timeline. Working capital release figures assume AR balance remains constant through the POC period. This document is confidential and prepared exclusively for Gualapack North America.
     </div>
   </footer>
 
 </div>
+
+<script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var fmtMoney = function (n) {
+      var rounded = Math.round(n);
+      return (rounded < 0 ? '-$' : '$') + Math.abs(rounded).toLocaleString('en-US');
+    };
+
+    var inputs = {
+      ar: $('inputAR'),
+      currentDSO: $('inputCurrentDSO'),
+      targetDSO: $('inputTargetDSO'),
+      revenue: $('inputRevenue'),
+      invoices: $('inputInvoices'),
+      badDebtPct: $('inputBadDebtPct')
+    };
+
+    var termButtons = document.querySelectorAll('.term-btn');
+    var activeTerm = 7;
+
+    function setActiveTerm(term) {
+      activeTerm = term;
+      termButtons.forEach(function (btn) {
+        btn.classList.toggle('active', Number(btn.dataset.term) === term);
+      });
+      recalc();
+    }
+
+    termButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setActiveTerm(Number(btn.dataset.term));
+      });
+    });
+
+    function recalc() {
+      var ar = parseFloat(inputs.ar.value) || 0;
+      var currentDSO = parseFloat(inputs.currentDSO.value) || 0;
+      var targetDSO = parseFloat(inputs.targetDSO.value) || 0;
+      var revenue = parseFloat(inputs.revenue.value) || 0;
+      var badDebtPct = parseFloat(inputs.badDebtPct.value) || 0;
+
+      var dailyLocked = ar / 365;
+      var monthlyLocked = dailyLocked * 30;
+      var release = ((currentDSO - targetDSO) / 365) * revenue;
+      var overTerms = Math.max(currentDSO - activeTerm, 0);
+      var badDebtAnnual = revenue * (badDebtPct / 100);
+      var badDebtReduced = badDebtAnnual * 0.7;
+
+      $('outRelease').textContent = fmtMoney(release);
+      $('outReleaseNote').textContent =
+        'Based on a ' + (currentDSO - targetDSO) + '-day DSO reduction against ' + fmtMoney(revenue) + ' in annual revenue';
+      $('outDaily').textContent = fmtMoney(dailyLocked);
+      $('outMonthly').textContent = fmtMoney(monthlyLocked);
+      $('outOverTerms').textContent = overTerms + ' days';
+      $('outBadDebt').textContent = fmtMoney(badDebtReduced);
+    }
+
+    Object.keys(inputs).forEach(function (key) {
+      inputs[key].addEventListener('input', recalc);
+    });
+
+    setActiveTerm(7);
+  })();
+</script>
 
 </body>
 </html>
