@@ -75,7 +75,19 @@ export default function Sidebar({ activeView, onNav, session, onLogout, pendingP
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <div className="sidebar-wordmark">lunarlogic</div>
+        <div className="sidebar-wordmark">
+          <svg className="sidebar-wordmark-icon" width="18" height="18" viewBox="0 0 24 24" fill="url(#moonGradientSidebar)">
+            <defs>
+              <linearGradient id="moonGradientSidebar" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#60A5FA" />
+                <stop offset="100%" stopColor="#818CF8" />
+              </linearGradient>
+            </defs>
+            <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+          </svg>
+          <span className="sidebar-wordmark-text">lunarlogic</span>
+          <span className="sidebar-wordmark-suffix">.ai</span>
+        </div>
         <div className="sidebar-tagline">AR Automation Platform</div>
       </div>
 
