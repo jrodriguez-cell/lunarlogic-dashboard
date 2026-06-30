@@ -114,8 +114,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
               </defs>
               <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
             </svg>
-            <span className="sidebar-wordmark-text">lunarlogic</span>
-            <span className="sidebar-wordmark-suffix">.ai</span>
+            <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>
           </div>
           <div style={{ width: 1, height: 16, background: 'var(--border)', flexShrink: 0 }} />
           <div style={{ fontSize: 13, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>

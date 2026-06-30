@@ -85,8 +85,7 @@ export default function Sidebar({ activeView, onNav, session, onLogout, pendingP
             </defs>
             <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
           </svg>
-          <span className="sidebar-wordmark-text">lunarlogic</span>
-          <span className="sidebar-wordmark-suffix">.ai</span>
+          <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>
         </div>
         <div className="sidebar-tagline">AR Automation Platform</div>
       </div>

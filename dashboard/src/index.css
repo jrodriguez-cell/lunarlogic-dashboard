@@ -85,7 +85,6 @@ h1, h2, .dso-value, .ph-value {
 .sidebar-wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   font-family: var(--font-body);
   font-size: 18px;
   font-weight: 700;
@@ -94,6 +93,12 @@ h1, h2, .dso-value, .ph-value {
 
 .sidebar-wordmark-icon {
   flex-shrink: 0;
+  margin-right: 7px;
+}
+
+.sidebar-wordmark-name {
+  display: inline-flex;
+  align-items: baseline;
 }
 
 .sidebar-wordmark-text {
@@ -1068,12 +1073,16 @@ h1, h2, .dso-value, .ph-value {
 .login-wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   font-family: var(--font-body);
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.025em;
   margin-bottom: 4px;
+}
+
+.login-wordmark svg {
+  flex-shrink: 0;
+  margin-right: 8px;
 }
 
 .login-subtitle {
