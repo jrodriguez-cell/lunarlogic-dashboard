@@ -1006,7 +1006,7 @@
 
       <div class="metric-card warning">
         <div class="metric-label">Working Capital Locked / Month</div>
-        <div class="metric-value accent">~$57K</div>
+        <div class="metric-value accent">~$42.7K</div>
         <div class="metric-caption">Cash earned but not in your bank — funding your customers' operations</div>
       </div>
 
@@ -1028,8 +1028,8 @@
         <span class="pill-note">→ manual follow-up on each is unsustainable</span>
       </div>
       <div class="terms-pill">
-        <span class="pill-label">Est. $16K bad debt/yr</span>
-        <span class="pill-note">→ 2% of $800K spare parts revenue</span>
+        <span class="pill-label">Est. 2% bad debt/yr</span>
+        <span class="pill-note">→ 2% of total annual revenue (to be confirmed)</span>
       </div>
     </div>
 
@@ -1076,7 +1076,7 @@
         <div class="calc-box">
           <div class="calc-title">Working Capital Release — Calculation</div>
           <div class="calc-line">((Current DSO − Target DSO) / 365) × Annual Revenue</div>
-          <div class="calc-line" id="calcLineNums">(( — − 20) / 365) × $800,000</div>
+          <div class="calc-line" id="calcLineNums">(( — − 20 ) / 365) × —</div>
           <div class="calc-result">= <span id="calcLineResult">calculated live below</span></div>
         </div>
       </div>
@@ -1086,8 +1086,8 @@
 
           <div class="unlock-card primary">
             <div class="unlock-card-label">Projected Working Capital Released</div>
-            <div class="unlock-card-value">$43K – $65K+</div>
-            <div class="unlock-card-note">Money you've already earned, returned to your bank within 30–90 days of go-live</div>
+            <div class="unlock-card-value">Calculated live →</div>
+            <div class="unlock-card-note">Money you've already earned, returned to your bank within 30–90 days of go-live — exact figure run live in the calculator below</div>
           </div>
 
           <div class="unlock-card">
@@ -1098,8 +1098,8 @@
 
           <div class="unlock-card">
             <div class="unlock-card-label">Bad Debt Reduction (annual)</div>
-            <div class="unlock-card-value">~$11,200</div>
-            <div class="unlock-card-note">70% of estimated $16K/yr bad debt eliminated through earlier intervention</div>
+            <div class="unlock-card-value">Calculated live →</div>
+            <div class="unlock-card-note">70% of estimated bad debt eliminated through earlier intervention — exact figure run live below</div>
           </div>
 
           <div class="unlock-card">
@@ -1179,10 +1179,10 @@
         </div>
 
         <div>
-          <label class="field-label">Annual Revenue (Spare Parts)</label>
+          <label class="field-label">Total Annual Revenue (enter live on the call)</label>
           <div class="field-with-prefix">
             <span class="prefix">$</span>
-            <input class="field-input" type="number" id="inputRevenue" value="800000" step="10000">
+            <input class="field-input" type="number" id="inputRevenue" value="" step="10000" placeholder="Enter Gualapack's actual figure">
           </div>
         </div>
 
@@ -1219,13 +1219,13 @@
         <div class="output-hero">
           <div class="output-hero-label">Working Capital Released</div>
           <div class="output-hero-value" id="outRelease">$43,836</div>
-          <div class="output-hero-note" id="outReleaseNote">Based on a 20-day DSO reduction against $800,000 in annual revenue</div>
+          <div class="output-hero-note" id="outReleaseNote">Enter total annual revenue above to calculate live</div>
         </div>
 
         <div class="output-grid">
           <div class="output-card">
             <div class="output-card-label">Calculated Current DSO</div>
-            <div class="output-card-value" id="outCurrentDSO">237 days</div>
+            <div class="output-card-value" id="outCurrentDSO">— enter revenue</div>
           </div>
           <div class="output-card">
             <div class="output-card-label">Daily Capital Locked</div>
@@ -1241,7 +1241,7 @@
           </div>
           <div class="output-card">
             <div class="output-card-label">Bad Debt Reduced /yr</div>
-            <div class="output-card-value green" id="outBadDebt">$11,200</div>
+            <div class="output-card-value green" id="outBadDebt">$0</div>
           </div>
         </div>
 
@@ -1428,7 +1428,8 @@
       var revenue = parseFloat(inputs.revenue.value) || 0;
       var badDebtPct = parseFloat(inputs.badDebtPct.value) || 0;
 
-      var currentDSO = revenue > 0 ? (ar / revenue) * 365 : 0;
+      var hasRevenue = revenue > 0;
+      var currentDSO = hasRevenue ? (ar / revenue) * 365 : 0;
       var currentDSORounded = Math.round(currentDSO);
 
       var dailyLocked = ar / 365;
@@ -1438,20 +1439,24 @@
       var badDebtAnnual = revenue * (badDebtPct / 100);
       var badDebtReduced = badDebtAnnual * 0.7;
 
-      $('outCurrentDSO').textContent = currentDSORounded + ' days';
-      $('outRelease').textContent = fmtMoney(release);
-      $('outReleaseNote').textContent =
-        'Based on a ' + Math.round(currentDSO - targetDSO) + '-day DSO reduction against ' + fmtMoney(revenue) + ' in annual revenue';
+      $('outCurrentDSO').textContent = hasRevenue ? (currentDSORounded + ' days') : '— enter revenue';
+      $('outRelease').textContent = hasRevenue ? fmtMoney(release) : '—';
+      $('outReleaseNote').textContent = hasRevenue
+        ? ('Based on a ' + Math.round(currentDSO - targetDSO) + '-day DSO reduction against ' + fmtMoney(revenue) + ' in annual revenue')
+        : 'Enter total annual revenue above to calculate live';
       $('outDaily').textContent = fmtMoney(dailyLocked);
       $('outMonthly').textContent = fmtMoney(monthlyLocked);
-      $('outOverTerms').textContent = overTerms + ' days';
+      $('outOverTerms').textContent = hasRevenue ? (overTerms + ' days') : '—';
       $('outBadDebt').textContent = fmtMoney(badDebtReduced);
 
-      $('dsoBarNow').textContent = currentDSORounded;
+      $('dsoBarNow').textContent = hasRevenue ? currentDSORounded : '—';
       $('dsoBarTarget').textContent = targetDSO;
-      $('calcLineNums').textContent =
-        '(( ' + currentDSORounded + ' − ' + targetDSO + ' ) / 365) × ' + fmtMoney(revenue);
-      $('calcLineResult').textContent = fmtMoney(release) + ' released within 30–90 days';
+      $('calcLineNums').textContent = hasRevenue
+        ? ('(( ' + currentDSORounded + ' − ' + targetDSO + ' ) / 365) × ' + fmtMoney(revenue))
+        : '(( — − ' + targetDSO + ' ) / 365) × — ';
+      $('calcLineResult').textContent = hasRevenue
+        ? (fmtMoney(release) + ' released within 30–90 days')
+        : 'calculated live once revenue is entered';
     }
 
     Object.keys(inputs).forEach(function (key) {
