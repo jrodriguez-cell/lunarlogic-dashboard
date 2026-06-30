@@ -1088,26 +1088,22 @@ function showReminderModal(){
 function closeReminder(){ modal.classList.remove('show'); }
 
 // CTA: notify support@lunarlogic.ai in the background (no mail app opens), then confirm.
-// Real delivery from this static file is handled by a no-backend form service.
-// Paste a Web3Forms access key (free at https://web3forms.com, verified to
-// support@lunarlogic.ai) into PILOT_NOTIFY_KEY to turn on live sending. Left
-// blank, the click still shows the confirmation but no email is sent.
-const PILOT_NOTIFY_KEY = '';
+// Posts to the project's Resend-backed serverless function (api/pilot-notify.js),
+// mirroring how the rest of the site sends mail. PILOT_NOTIFY_URL must be an
+// absolute URL because this demo is a standalone file. Point it at wherever the
+// function is deployed. The confirmation shows regardless of network result.
+const PILOT_NOTIFY_URL = 'https://lunarlogic-dashboard.vercel.app/api/pilot-notify';
 function pilotClick(){
   const c = document.getElementById('pilotConfirm'); if(c) c.classList.add('show');
   const lbl = document.getElementById('pilotBtnLabel'); if(lbl) lbl.textContent = 'Request sent';
   const btn = document.getElementById('pilotBtn'); if(btn){ btn.disabled = true; btn.style.opacity = .8; }
-  if(PILOT_NOTIFY_KEY){
-    fetch('https://api.web3forms.com/submit', {
-      method:'POST', headers:{'Content-Type':'application/json', Accept:'application/json'},
-      body: JSON.stringify({
-        access_key: PILOT_NOTIFY_KEY,
-        subject: 'Gualapack North America: 90-Day Pilot request',
-        from_name: 'Payment Reminder Demo',
-        message: 'Gualapack North America clicked "Start the Pilot" in the payment reminder demo.'
-      })
+  try {
+    fetch(PILOT_NOTIFY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company: 'Gualapack North America' }),
     }).catch(()=>{});
-  }
+  } catch(e){}
 }
 
 /* =======================================================================
