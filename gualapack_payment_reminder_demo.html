@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LunarLogic | Payment Reminder Walkthrough — Gualapack North America</title>
+<!--
+  ============================================================================
+  GUALAPACK NORTH AMERICA — PAYMENT REMINDER DEMO
+  Self-contained interactive walkthrough. No external dependencies.
+  ----------------------------------------------------------------------------
+  TO CUSTOMIZE: All client numbers and copy live in the HTML below. The most
+  commonly edited values are tagged with inline "EDIT:" comments so you can
+  find them fast. Color palette + fonts live in the :root block in the style tag.
+  ============================================================================
+-->
+<style>
+/* ============================ DESIGN TOKENS ============================== */
+:root{
+  --navy:      #0D1B2E;   /* primary brand navy            */
+  --navy-2:    #112240;   /* supporting panel             */
+  --navy-3:    #1A2F4A;   /* supporting panel (lighter)   */
+  --cyan:      #22D3EE;   /* accent                       */
+  --cyan-deep: #0E7490;   /* darker cyan for text-on-light*/
+  --green:     #16A34A;   /* success / send button        */
+  --green-dk:  #15803D;
+  --amber:     #D97706;   /* overdue / warning            */
+  --red:       #DC2626;   /* most overdue                 */
+
+  --ink:       #1F2937;   /* primary body text (dark gray)*/
+  --ink-soft:  #4B5563;   /* secondary text               */
+  --ink-faint: #6B7280;   /* tertiary text                */
+  --line:      #E5E7EB;   /* hairline borders             */
+  --bg:        #F4F6FA;   /* page background              */
+  --card:      #FFFFFF;   /* card surface                 */
+
+  --shadow:    0 10px 30px rgba(13,27,46,.10);
+  --shadow-lg: 0 24px 60px rgba(13,27,46,.18);
+  --radius:    16px;
+  --maxw:      1080px;
+  --font: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ============================ APP SHELL ================================= */
+.app{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Top brand bar */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:var(--navy);
+  border-bottom:1px solid rgba(34,211,238,.18);
+  padding:.85rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;
+}
+.brand{display:flex;align-items:center;gap:.6rem}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-deep));
+  position:relative;flex:0 0 auto;
+  box-shadow:0 0 0 3px rgba(34,211,238,.12);
+}
+.brand-mark::after{
+  content:"";position:absolute;inset:7px;border-radius:50%;
+  background:var(--navy);
+  box-shadow:inset -4px -4px 0 0 var(--cyan);
+}
+.brand-name{font-size:1.05rem;font-weight:700;letter-spacing:-.01em;color:#fff}
+.brand-name span{color:var(--cyan)}
+.brand-sub{font-size:.72rem;color:rgba(255,255,255,.55);letter-spacing:.06em;text-transform:uppercase}
+
+/* progress dots */
+.progress{display:flex;align-items:center;gap:.5rem}
+.dot{
+  width:9px;height:9px;border-radius:50%;
+  background:rgba(255,255,255,.22);transition:all .3s ease;cursor:pointer;
+}
+.dot.active{background:var(--cyan);box-shadow:0 0 0 4px rgba(34,211,238,.18);width:22px;border-radius:6px}
+.dot.done{background:rgba(34,211,238,.55)}
+
+/* ============================ STAGE / SECTIONS ========================= */
+.stage{flex:1;position:relative;display:flex;align-items:flex-start;justify-content:center}
+.section{
+  display:none;
+  width:100%;
+  max-width:var(--maxw);
+  padding:3rem 1.5rem 2rem;
+  margin:0 auto;
+}
+.section.active{display:block;animation:fadeUp .55s cubic-bezier(.16,.84,.44,1) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--cyan-deep);background:rgba(34,211,238,.10);
+  padding:.35rem .8rem;border-radius:999px;margin-bottom:1.1rem;
+}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.08;letter-spacing:-.02em;color:var(--navy);font-weight:800}
+h2{font-size:clamp(1.5rem,3.4vw,2.2rem);line-height:1.15;letter-spacing:-.02em;color:var(--navy);font-weight:800}
+h3{font-size:1.1rem;color:var(--navy);font-weight:700}
+.lead{font-size:clamp(1.05rem,2vw,1.3rem);color:var(--ink-soft);margin-top:.8rem;max-width:46ch}
+
+/* ============================ SECTION 1: TITLE ======================== */
+.title-slide{
+  text-align:center;
+  background:
+    radial-gradient(1200px 500px at 50% -10%,rgba(34,211,238,.10),transparent 60%),
+    linear-gradient(180deg,#fff,var(--bg));
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:clamp(2.5rem,6vw,5rem) 1.5rem;
+  box-shadow:var(--shadow);
+}
+.logo-placeholder{
+  display:inline-flex;flex-direction:column;align-items:center;gap:.3rem;
+  padding:.9rem 1.6rem;border:1.5px dashed var(--line);border-radius:14px;
+  margin-bottom:2rem;background:#fff;
+}
+.logo-placeholder .co{font-size:1.35rem;font-weight:800;color:var(--navy);letter-spacing:.02em}
+.logo-placeholder .co b{color:var(--cyan-deep)}
+.logo-placeholder .tag{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+
+.manual-visual{
+  display:flex;align-items:center;justify-content:center;gap:1.4rem;
+  margin:2.4rem auto 0;flex-wrap:wrap;
+}
+.mv-icon{
+  width:96px;height:96px;border-radius:20px;background:#fff;border:1px solid var(--line);
+  box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;
+  color:var(--cyan-deep);position:relative;
+}
+.mv-arrow{color:var(--ink-faint);display:flex;align-items:center}
+.mv-icon.tired::after{
+  content:"⌛";position:absolute;top:-10px;right:-10px;font-size:1.1rem;
+  background:#fff;border-radius:50%;padding:2px;border:1px solid var(--line);
+}
+.mv-caption{margin-top:1.4rem;font-size:.9rem;color:var(--ink-faint)}
+
+/* ============================ GRID UTILITIES ========================== */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem;margin-top:2rem;align-items:start}
+@media(max-width:780px){.two-col{grid-template-columns:1fr}}
+
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:1.6rem;box-shadow:var(--shadow);
+}
+.card-dark{background:var(--navy);border:1px solid rgba(34,211,238,.18);color:#fff}
+.card-dark h3{color:#fff}
+
+/* current-state list */
+.process-list{list-style:none;margin-top:.4rem}
+.process-list li{
+  display:flex;gap:.7rem;padding:.6rem 0;border-bottom:1px dashed var(--line);
+  color:var(--ink-soft);font-size:.98rem;
+}
+.process-list li:last-child{border-bottom:none}
+.process-list li .x{color:var(--red);flex:0 0 auto;font-weight:700;margin-top:.1rem}
+
+/* metric callout boxes */
+.callouts{display:grid;gap:1rem}
+.callout{
+  background:linear-gradient(135deg,var(--navy),var(--navy-2));
+  border:1px solid rgba(34,211,238,.20);border-radius:14px;
+  padding:1.2rem 1.3rem;color:#fff;position:relative;overflow:hidden;
+}
+.callout::before{
+  content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;
+  background:radial-gradient(circle,rgba(34,211,238,.18),transparent 70%);
+}
+.callout .num{font-size:2rem;font-weight:800;letter-spacing:-.02em;color:var(--cyan)}
+.callout .lbl{font-size:.84rem;color:rgba(255,255,255,.72);margin-top:.15rem}
+
+/* simplified excel/outlook mockup */
+.mock-wrap{margin-top:1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:560px){.mock-wrap{grid-template-columns:1fr}}
+.mock{
+  border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;
+  box-shadow:var(--shadow);font-size:.72rem;
+}
+.mock-head{
+  padding:.45rem .7rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:.4rem;font-size:.72rem;
+}
+.mock-head.xls{background:#107C41}
+.mock-head.out{background:#0F6CBD}
+.xls-row{display:grid;grid-template-columns:1.4fr 1fr .8fr;border-bottom:1px solid var(--line)}
+.xls-row>div{padding:.32rem .5rem;border-right:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-soft)}
+.xls-row.h>div{background:#F3F4F6;font-weight:700;color:var(--ink)}
+.xls-row.late>div:nth-child(3){color:var(--red);font-weight:700}
+.out-item{padding:.45rem .7rem;border-bottom:1px solid var(--line);color:var(--ink-soft)}
+.out-item b{color:var(--ink);display:block}
+.out-item .cc{color:var(--ink-faint);font-size:.68rem}
+
+/* ============================ SECTION 3: DASHBOARD ==================== */
+.dash{
+  background:var(--navy);border-radius:20px;padding:1.4rem;margin-top:1.8rem;
+  box-shadow:var(--shadow-lg);border:1px solid rgba(34,211,238,.18);
+}
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.2rem}
+@media(max-width:560px){.dash-stats{grid-template-columns:1fr}}
+.stat{
+  background:var(--navy-2);border:1px solid rgba(34,211,238,.14);border-radius:12px;padding:1rem 1.1rem;
+}
+.stat .k{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.stat .v{font-size:1.7rem;font-weight:800;color:#fff;margin-top:.15rem}
+.stat .v.cyan{color:var(--cyan)}
+.stat .v.amber{color:#FBBF24}
+
+.inv-table{background:var(--navy-2);border-radius:12px;overflow:hidden;border:1px solid rgba(34,211,238,.12)}
+.inv-head,.inv-row{
+  display:grid;grid-template-columns:1.1fr 1.3fr 1fr 1fr .9fr;gap:.5rem;align-items:center;
+  padding:.7rem 1rem;font-size:.86rem;
+}
+.inv-head{background:rgba(255,255,255,.04);color:rgba(255,255,255,.55);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.inv-row{border-top:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.86);transition:background .2s}
+.inv-row:hover{background:rgba(34,211,238,.06)}
+.inv-row .id{font-weight:700;color:#fff}
+.inv-row .amt{font-weight:700;color:#fff}
+.age-pill{
+  display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.74rem;font-weight:700;
+}
+.age-cur{background:rgba(34,211,238,.15);color:var(--cyan)}
+.age-warn{background:rgba(251,191,36,.15);color:#FBBF24}
+.age-late{background:rgba(248,113,113,.16);color:#F87171}
+
+.inv-row.feature{
+  background:linear-gradient(90deg,rgba(34,211,238,.14),rgba(34,211,238,.04));
+  border-left:3px solid var(--cyan);
+}
+.inv-row.feature.paid{
+  background:linear-gradient(90deg,rgba(34,197,94,.16),rgba(34,197,94,.04));
+  border-left:3px solid var(--green);
+}
+
+@media(max-width:640px){
+  .inv-head{display:none}
+  .inv-row{grid-template-columns:1fr 1fr;row-gap:.25rem}
+  .inv-row .col-due,.inv-row .col-act{grid-column:1/-1}
+}
+
+/* send button */
+.send-btn{
+  background:var(--green);color:#fff;border:none;border-radius:10px;
+  padding:.55rem 1rem;font-weight:700;font-size:.84rem;cursor:pointer;
+  display:inline-flex;align-items:center;gap:.4rem;transition:all .2s;
+  box-shadow:0 4px 14px rgba(22,163,74,.35);white-space:nowrap;
+}
+.send-btn:hover{background:var(--green-dk);transform:translateY(-1px)}
+.send-btn:disabled{cursor:default;transform:none}
+.send-btn.sending{background:var(--amber);box-shadow:none}
+.send-btn.sent{background:var(--green-dk);box-shadow:none}
+
+.feature-spot{
+  margin-top:1.1rem;background:rgba(34,211,238,.08);border:1px dashed rgba(34,211,238,.35);
+  border-radius:12px;padding:1rem 1.2rem;color:rgba(255,255,255,.9);font-size:.92rem;
+  display:flex;gap:.7rem;align-items:flex-start;
+}
+.feature-spot .tag{color:var(--cyan);font-weight:800}
+
+/* confirmation line under dashboard */
+.confirm-line{
+  margin-top:1rem;padding:.9rem 1.2rem;border-radius:12px;background:#fff;border:1px solid var(--line);
+  box-shadow:var(--shadow);display:none;align-items:center;gap:.7rem;color:var(--ink);font-weight:600;
+  animation:fadeUp .4s both;
+}
+.confirm-line.show{display:flex}
+.confirm-line .check{
+  width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-weight:800;
+}
+.confirm-line small{display:block;color:var(--ink-faint);font-weight:500;font-size:.82rem}
+
+/* voiceover blocks */
+.voiceover{
+  margin-top:1.6rem;background:var(--navy-3);border-radius:14px;padding:1.2rem 1.4rem;
+  color:rgba(255,255,255,.92);border-left:4px solid var(--cyan);font-size:1rem;position:relative;
+}
+.voiceover::before{
+  content:"“";position:absolute;left:.7rem;top:-.4rem;font-size:2.4rem;color:rgba(34,211,238,.4);font-family:Georgia,serif;
+}
+.voiceover .vo-label{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-weight:700;display:block;margin-bottom:.35rem}
+
+/* ============================ MODAL =================================== */
+.modal-overlay{
+  position:fixed;inset:0;z-index:100;background:rgba(13,27,46,.62);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;padding:1.5rem;
+}
+.modal-overlay.show{display:flex;animation:fadeIn .25s both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:#fff;border-radius:16px;max-width:540px;width:100%;box-shadow:var(--shadow-lg);
+  overflow:hidden;animation:modalPop .35s cubic-bezier(.16,.84,.44,1) both;max-height:90vh;display:flex;flex-direction:column;
+}
+@keyframes modalPop{from{opacity:0;transform:scale(.94) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-bar{
+  background:var(--navy);color:#fff;padding:.9rem 1.2rem;display:flex;align-items:center;justify-content:space-between;
+}
+.modal-bar .t{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.92rem}
+.modal-bar .t .pill{font-size:.68rem;background:rgba(34,211,238,.18);color:var(--cyan);padding:.15rem .5rem;border-radius:999px}
+.modal-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:1.3rem;cursor:pointer;line-height:1}
+.modal-close:hover{color:#fff}
+.email{padding:1.3rem;overflow:auto}
+.email-meta{font-size:.86rem;color:var(--ink-soft);border-bottom:1px solid var(--line);padding-bottom:.8rem;margin-bottom:.8rem}
+.email-meta div{margin:.18rem 0}
+.email-meta b{color:var(--ink);display:inline-block;min-width:64px}
+.email-subject{font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:.7rem}
+.email-body{font-size:.92rem;color:var(--ink);line-height:1.65}
+.email-body p{margin:.6rem 0}
+.attach{
+  margin-top:1rem;display:flex;align-items:center;gap:.7rem;padding:.7rem .9rem;
+  background:var(--bg);border:1px solid var(--line);border-radius:10px;
+}
+.attach .ic{
+  width:38px;height:46px;background:#fff;border:1px solid var(--line);border-radius:5px;position:relative;flex:0 0 auto;
+  display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;
+}
+.attach .ic b{font-size:.55rem;color:var(--red);background:rgba(220,38,38,.1);padding:1px 3px;border-radius:3px}
+.attach .meta b{display:block;font-size:.86rem;color:var(--ink)}
+.attach .meta span{font-size:.74rem;color:var(--ink-faint)}
+.modal-foot{
+  padding:.9rem 1.2rem;border-top:1px solid var(--line);display:flex;align-items:center;gap:.6rem;
+  background:var(--bg);
+}
+.modal-status{font-size:.86rem;color:var(--ink-soft);display:flex;align-items:center;gap:.5rem}
+.spinner{
+  width:16px;height:16px;border:2px solid rgba(13,27,46,.15);border-top-color:var(--cyan);border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal-status.done{color:var(--green-dk);font-weight:700}
+
+/* ============================ SECTION 4: RESULTS ===================== */
+.compare{display:grid;grid-template-columns:1fr auto 1fr;gap:1.2rem;align-items:stretch;margin-top:2rem}
+@media(max-width:780px){.compare{grid-template-columns:1fr;gap:1rem}.compare .arrow{transform:rotate(90deg);justify-self:center}}
+.panel{border-radius:var(--radius);padding:1.5rem;border:1px solid var(--line);box-shadow:var(--shadow)}
+.panel.before{background:#fff}
+.panel.after{background:linear-gradient(160deg,var(--navy),var(--navy-2));border-color:rgba(34,211,238,.25)}
+.panel h3{margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.panel.after h3{color:#fff}
+.panel .badge{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .55rem;border-radius:999px;font-weight:700}
+.panel.before .badge{background:#FEE2E2;color:var(--red)}
+.panel.after .badge{background:rgba(34,211,238,.18);color:var(--cyan)}
+.metric{padding:.8rem 0;border-bottom:1px dashed var(--line)}
+.metric:last-child{border-bottom:none}
+.panel.after .metric{border-color:rgba(255,255,255,.12)}
+.metric .ml{font-size:.8rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em}
+.panel.after .metric .ml{color:rgba(255,255,255,.55)}
+.metric .mv{font-size:1.8rem;font-weight:800;color:var(--navy)}
+.panel.after .metric .mv{color:#fff}
+.panel.after .metric .mv.hl{color:var(--cyan)}
+.arrow{display:flex;align-items:center;justify-content:center;color:var(--cyan-deep)}
+
+.result-box{
+  margin-top:1.8rem;text-align:center;border-radius:18px;padding:2rem 1.5rem;
+  background:linear-gradient(135deg,rgba(34,211,238,.12),rgba(34,211,238,.03));
+  border:1.5px solid rgba(34,211,238,.4);
+}
+.result-box .big{font-size:clamp(1.8rem,4.5vw,2.8rem);font-weight:800;color:var(--navy);letter-spacing:-.02em}
+.result-box .big span{color:var(--cyan-deep)}
+.result-box .proof{margin-top:.7rem;color:var(--ink-soft);max-width:54ch;margin-left:auto;margin-right:auto}
+.result-box .adv{
+  margin-top:1rem;display:inline-flex;gap:.5rem;align-items:center;
+  background:var(--navy);color:#fff;padding:.6rem 1.1rem;border-radius:999px;font-size:.88rem;font-weight:600;
+}
+.result-box .adv b{color:var(--cyan)}
+
+/* ============================ SECTION 5: CTA ========================= */
+.cta-slide{text-align:center}
+.timeline{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:2.2rem 0;position:relative;
+}
+@media(max-width:680px){.timeline{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.timeline{grid-template-columns:1fr}}
+.tl-step{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.2rem 1rem;text-align:left;
+  box-shadow:var(--shadow);position:relative;
+}
+.tl-step .wk{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan-deep)}
+.tl-step .ti{font-weight:700;color:var(--navy);margin-top:.3rem;font-size:1rem}
+.tl-step .td{font-size:.84rem;color:var(--ink-soft);margin-top:.3rem}
+.tl-step .nodecirc{
+  position:absolute;top:1.2rem;right:1.2rem;width:28px;height:28px;border-radius:50%;
+  background:rgba(34,211,238,.12);color:var(--cyan-deep);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;
+}
+
+/* ============================ BUTTONS / NAV ========================== */
+.nav{
+  position:sticky;bottom:0;z-index:40;background:rgba(244,246,250,.85);backdrop-filter:blur(8px);
+  border-top:1px solid var(--line);padding:1rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+}
+.nav-meta{font-size:.82rem;color:var(--ink-faint)}
+.nav-meta b{color:var(--navy)}
+.btn{
+  border:none;border-radius:11px;padding:.8rem 1.5rem;font-weight:700;font-size:.95rem;cursor:pointer;
+  display:inline-flex;align-items:center;gap:.5rem;transition:all .2s;font-family:inherit;
+}
+.btn-primary{background:var(--cyan);color:var(--navy);box-shadow:0 6px 18px rgba(34,211,238,.35)}
+.btn-primary:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line)}
+.btn-ghost:hover{background:#fff;color:var(--navy)}
+.btn-ghost:disabled{opacity:.4;cursor:not-allowed}
+.btn-cta{
+  background:var(--cyan);color:var(--navy);font-size:1.05rem;padding:1rem 2.2rem;
+  box-shadow:0 10px 28px rgba(34,211,238,.4);
+}
+.btn-cta:hover{filter:brightness(1.05);transform:translateY(-2px)}
+
+.icon{width:1em;height:1em;display:inline-block;vertical-align:-.12em}
+
+/* ============================ PRINT ================================== */
+@media print{
+  .topbar,.nav{display:none!important}
+  body{background:#fff}
+  .section{display:block!important;page-break-after:always;max-width:none;padding:1.4rem;animation:none!important}
+  .section:last-child{page-break-after:auto}
+  .dash,.panel.after,.callout,.card-dark{ -webkit-print-color-adjust:exact;print-color-adjust:exact }
+  .modal-overlay{display:none!important}
+  .voiceover{ -webkit-print-color-adjust:exact;print-color-adjust:exact }
+}
+
+/* reduced motion */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============================ TOP BAR ============================ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">Lunar<span>Logic</span></div>
+        <div class="brand-sub">Payment Reminders</div>
+      </div>
+    </div>
+    <nav class="progress" aria-label="Walkthrough progress">
+      <span class="dot active" data-go="0" title="Overview"></span>
+      <span class="dot" data-go="1" title="Current State"></span>
+      <span class="dot" data-go="2" title="The Solution"></span>
+      <span class="dot" data-go="3" title="The Result"></span>
+      <span class="dot" data-go="4" title="Next Step"></span>
+    </nav>
+  </header>
+
+  <!-- ============================ STAGE ============================== -->
+  <main class="stage">
+
+    <!-- ===================== SECTION 1: TITLE ===================== -->
+    <section class="section active" id="s0">
+      <div class="title-slide">
+        <!-- EDIT: client logo / name -->
+        <div class="logo-placeholder">
+          <div class="co">GUALAPACK <b>North America</b></div>
+          <div class="tag">Spare Parts Division</div>
+        </div>
+
+        <div class="eyebrow">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-5"/></svg>
+          A 90-Day Solution
+        </div>
+        <h1>The Manual AR<br>Follow-Up Problem</h1>
+        <p class="lead" style="margin-left:auto;margin-right:auto">A simple, repeatable way to get invoices paid faster — without adding to anyone's plate.</p>
+
+        <!-- manual process visual: spreadsheet + envelope -->
+        <div class="manual-visual" aria-hidden="true">
+          <div class="mv-icon tired" title="Spreadsheet">
+            <svg class="icon" style="width:46px;height:46px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+          </div>
+          <div class="mv-arrow">
+            <svg class="icon" style="width:30px;height:30px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </div>
+          <div class="mv-icon tired" title="Email">
+            <svg class="icon" style="width:46px;height:46px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+          </div>
+        </div>
+        <p class="mv-caption">Today: a spreadsheet, a stack of emails, and hours of manual chasing.</p>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 2: CURRENT STATE ===================== -->
+    <section class="section" id="s1">
+      <div class="eyebrow">Section 1 — Where things stand today</div>
+      <h2>The Current State</h2>
+      <p class="lead">Every overdue invoice is chased by hand. It works — but it's slow, inconsistent, and it eats Geraldine's week.</p>
+
+      <div class="two-col">
+        <!-- LEFT: process -->
+        <div class="card">
+          <h3 style="margin-bottom:.6rem">Today's Process</h3>
+          <ul class="process-list">
+            <li><span class="x">✕</span><span>Geraldine manually tracks overdue invoices in Excel</span></li>
+            <li><span class="x">✕</span><span>Individually composes every follow-up email</span></li>
+            <li><span class="x">✕</span><span>Sends them on an inconsistent schedule</span></li>
+            <li><span class="x">✕</span><span>Copies you on every email <em>(time waste)</em></span></li>
+            <li><span class="x">✕</span><span>No visibility into what's actually working</span></li>
+          </ul>
+
+          <!-- simplified mockups -->
+          <div class="mock-wrap">
+            <div class="mock" aria-label="Excel tracker mockup">
+              <div class="mock-head xls">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m8 8 8 8M16 8l-8 8"/></svg>
+                AR_Tracking.xlsx
+              </div>
+              <div class="xls-row h"><div>Customer</div><div>Amount</div><div>Days</div></div>
+              <div class="xls-row late"><div>Acme Foods</div><div>$12,500</div><div>30</div></div>
+              <div class="xls-row late"><div>Bell Pkg.</div><div>$8,200</div><div>47</div></div>
+              <div class="xls-row late"><div>Crane Co.</div><div>$5,750</div><div>22</div></div>
+              <div class="xls-row late"><div>Delta Mfg.</div><div>$3,400</div><div>61</div></div>
+            </div>
+            <div class="mock" aria-label="Outlook inbox mockup">
+              <div class="mock-head out">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+                Sent — Outlook
+              </div>
+              <div class="out-item"><b>RE: Invoice past due</b>Acme Foods <span class="cc">Cc: you</span></div>
+              <div class="out-item"><b>Friendly reminder…</b>Bell Pkg. <span class="cc">Cc: you</span></div>
+              <div class="out-item"><b>Following up again</b>Delta Mfg. <span class="cc">Cc: you</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: metric callouts -->
+        <div class="callouts">
+          <div class="callout">
+            <div class="num">$24,750<span style="font-size:1rem;color:rgba(255,255,255,.6)"> /mo</span></div>
+            <div class="lbl">Working capital locked up in late payments</div>
+          </div>
+          <div class="callout">
+            <div class="num">46 days</div>
+            <div class="lbl">Average days <em>over</em> your 14-day payment terms</div>
+          </div>
+          <div class="callout">
+            <div class="num">~5 hrs<span style="font-size:1rem;color:rgba(255,255,255,.6)"> /week</span></div>
+            <div class="lbl">Spent on manual follow-up that nobody enjoys</div>
+          </div>
+          <div class="card-dark" style="border-radius:14px;padding:1.1rem 1.3rem">
+            <div style="font-size:.92rem;color:rgba(255,255,255,.85)">
+              That's roughly <b style="color:var(--cyan)">$810 a day</b> sitting in invoices that should already be paid — on a $295K spare-parts AR balance.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 3: THE SOLUTION ===================== -->
+    <section class="section" id="s2">
+      <div class="eyebrow">Section 2 — The Payment Reminder</div>
+      <h2>One Dashboard. One Click.</h2>
+      <p class="lead">Every open invoice in one place. Reminders go out the same professional way, every time — automatically logged for Geraldine to monitor.</p>
+
+      <!-- DASHBOARD -->
+      <div class="dash" role="region" aria-label="AR dashboard demo">
+        <div class="dash-stats">
+          <div class="stat"><div class="k">Current DSO</div><div class="v amber">60 days</div></div>
+          <div class="stat"><div class="k">Total AR</div><div class="v">$295K</div></div>
+          <div class="stat"><div class="k">Overdue</div><div class="v cyan">$87K</div></div>
+        </div>
+
+        <div class="inv-table">
+          <div class="inv-head">
+            <div>Invoice</div><div class="col-cust">Customer</div><div class="col-due">Status</div><div>Amount</div><div class="col-act">Action</div>
+          </div>
+
+          <!-- FEATURED invoice (the one we send) -->
+          <div class="inv-row feature" id="featureRow">
+            <div class="id">#2847</div>
+            <div class="col-cust">Acme Foods</div>
+            <div class="col-due"><span class="age-pill age-late">Due 30 days ago</span></div>
+            <div class="amt">$12,500</div>
+            <div class="col-act">
+              <button class="send-btn" id="sendBtn" onclick="openReminder()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                Send Reminder
+              </button>
+            </div>
+          </div>
+
+          <div class="inv-row"><div class="id">#2851</div><div class="col-cust">Bell Packaging</div><div class="col-due"><span class="age-pill age-late">47 days</span></div><div class="amt">$8,200</div><div class="col-act" style="color:rgba(255,255,255,.4);font-size:.82rem">Auto-queued</div></div>
+          <div class="inv-row"><div class="id">#2860</div><div class="col-cust">Crane &amp; Co.</div><div class="col-due"><span class="age-pill age-warn">22 days</span></div><div class="amt">$5,750</div><div class="col-act" style="color:rgba(255,255,255,.4);font-size:.82rem">Auto-queued</div></div>
+          <div class="inv-row"><div class="id">#2864</div><div class="col-cust">Delta Mfg.</div><div class="col-due"><span class="age-pill age-late">61 days</span></div><div class="amt">$3,400</div><div class="col-act" style="color:rgba(255,255,255,.4);font-size:.82rem">Auto-queued</div></div>
+          <div class="inv-row"><div class="id">#2871</div><div class="col-cust">Evergreen Ltd.</div><div class="col-due"><span class="age-pill age-cur">Current</span></div><div class="amt">$9,100</div><div class="col-act" style="color:rgba(255,255,255,.4);font-size:.82rem">—</div></div>
+          <div class="inv-row"><div class="id">#2875</div><div class="col-cust">Foster Group</div><div class="col-due"><span class="age-pill age-warn">12 days</span></div><div class="amt">$6,300</div><div class="col-act" style="color:rgba(255,255,255,.4);font-size:.82rem">—</div></div>
+        </div>
+
+        <div class="feature-spot">
+          <span class="tag">▶</span>
+          <span><b style="color:#fff">Try it:</b> Click <b style="color:var(--green)">Send Reminder</b> on Invoice #2847 to see exactly what your customer receives.</span>
+        </div>
+      </div>
+
+      <!-- confirmation line (appears after send) -->
+      <div class="confirm-line" id="confirmLine">
+        <div class="check">✓</div>
+        <div>
+          Reminder sent via QuickBooks — Invoice #2847, Acme Foods.
+          <small>Geraldine's inbox updates with a summary. That's all she does.</small>
+        </div>
+      </div>
+
+      <!-- voiceover -->
+      <div class="voiceover">
+        <span class="vo-label">What you're seeing</span>
+        One click. Reminder sent. Invoice attached. Formatted like your standard emails, not a bot.
+        Geraldine gets a daily summary — which invoices were reminded, what's still outstanding.
+        She can monitor progress without managing it manually.
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 4: THE RESULT ===================== -->
+    <section class="section" id="s3">
+      <div class="eyebrow">Section 3 — The 90-Day Proof</div>
+      <h2>The Result</h2>
+      <p class="lead">Same team. Same customers. Money comes in faster and the busywork disappears.</p>
+
+      <div class="compare">
+        <!-- BEFORE -->
+        <div class="panel before">
+          <h3><span class="badge">Before</span> Today</h3>
+          <div class="metric"><div class="ml">DSO</div><div class="mv">60 days</div></div>
+          <div class="metric"><div class="ml">AR Locked</div><div class="mv">$295K</div></div>
+          <div class="metric"><div class="ml">Time / week</div><div class="mv">~5 hours</div></div>
+        </div>
+
+        <div class="arrow" aria-hidden="true">
+          <svg class="icon" style="width:42px;height:42px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </div>
+
+        <!-- AFTER -->
+        <div class="panel after">
+          <h3><span class="badge">After 90 days</span></h3>
+          <div class="metric"><div class="ml">DSO</div><div class="mv hl">38–42 days</div></div>
+          <div class="metric"><div class="ml">AR Locked</div><div class="mv">$215K</div></div>
+          <div class="metric"><div class="ml">Time / week</div><div class="mv">&lt; 1 hour</div></div>
+        </div>
+      </div>
+
+      <div class="result-box">
+        <div class="big">Working Capital Released: <span>$65K–$85K</span></div>
+        <p class="proof">
+          Proof: <b>Kaptain Clean</b>, a similar business, went from 52 to 33 DSO in 90 days —
+          unlocking $65K in working capital and cutting follow-up time by 84%.
+        </p>
+        <div class="adv">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m13 2-3 7h6l-3 13"/></svg>
+          Your advantage: <b>14-day terms</b>&nbsp;vs their 30-day terms = faster recovery
+        </div>
+      </div>
+
+      <!-- voiceover -->
+      <div class="voiceover" style="background:var(--navy)">
+        <span class="vo-label">What this means</span>
+        Over 90 days, you'll see measurable improvement in collection velocity. Geraldine's workload
+        drops from hours to minutes. And you keep every reminder consistent — no more missed follow-ups,
+        no more guessing what tone works. Every invoice gets the same professional treatment.
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 5: CTA ===================== -->
+    <section class="section" id="s4">
+      <div class="cta-slide">
+        <div class="eyebrow" style="margin-left:auto;margin-right:auto">Section 4 — The Next Step</div>
+        <h2>Let's Run a 90-Day Pilot</h2>
+        <p class="lead" style="margin-left:auto;margin-right:auto">Start with your 5 most challenging customers. Prove the concept. Scale if it works.</p>
+
+        <div class="timeline">
+          <div class="tl-step">
+            <div class="nodecirc">1</div>
+            <div class="wk">Week 1</div>
+            <div class="ti">Setup &amp; Configuration</div>
+            <div class="td">Connect QuickBooks, load your reminder templates, pick the 5 pilot customers.</div>
+          </div>
+          <div class="tl-step">
+            <div class="nodecirc">2</div>
+            <div class="wk">Weeks 2–4</div>
+            <div class="ti">Live Reminders</div>
+            <div class="td">Reminders go out automatically. We tune timing and tone together.</div>
+          </div>
+          <div class="tl-step">
+            <div class="nodecirc">3</div>
+            <div class="wk">Weeks 5–13</div>
+            <div class="ti">Measure Results</div>
+            <div class="td">Track DSO, cash collected, and hours saved against your baseline.</div>
+          </div>
+          <div class="tl-step">
+            <div class="nodecirc">4</div>
+            <div class="wk">Week 13</div>
+            <div class="ti">Expand or Iterate</div>
+            <div class="td">Roll out to the full AR book — or adjust and keep refining.</div>
+          </div>
+        </div>
+
+        <a class="btn btn-cta" href="#" onclick="return false" role="button">
+          Start the Pilot
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <p style="margin-top:1.6rem;color:var(--ink-faint);font-size:.88rem">
+          LunarLogic — AR automation for professional services &nbsp;·&nbsp; jrodriguez@lunarlogic.ai
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================ NAV ============================== -->
+  <footer class="nav">
+    <button class="btn btn-ghost" id="prevBtn" onclick="go(current-1)" disabled>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <div class="nav-meta"><b id="stepNum">1</b> of 5 — <span id="stepName">Overview</span></div>
+    <button class="btn btn-primary" id="nextBtn" onclick="go(current+1)">
+      Next
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </footer>
+</div>
+
+<!-- ============================ MODAL ============================== -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeReminder()">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Reminder email preview">
+    <div class="modal-bar">
+      <div class="t">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+        Reminder Email Preview <span class="pill">via QuickBooks</span>
+      </div>
+      <button class="modal-close" onclick="closeReminder()" aria-label="Close">×</button>
+    </div>
+
+    <div class="email">
+      <div class="email-meta">
+        <div><b>To:</b> accounts@acmefoods.com</div>
+        <div><b>From:</b> Gualapack North America &lt;ar@gualapack.com&gt;</div>
+        <div><b>Subject:</b> Follow-up: Invoice #2847</div>
+      </div>
+      <div class="email-subject">Follow-up: Invoice #2847</div>
+      <div class="email-body">
+        <p>Hi Acme Foods team,</p>
+        <p>I hope you're doing well. This is a friendly reminder that Invoice <b>#2847</b> for <b>$12,500.00</b> was due on <b>May 31, 2026</b> and is now showing as outstanding.</p>
+        <p>I've attached a copy for your convenience. If payment is already on its way, please disregard this note — otherwise, we'd appreciate it being processed at your earliest convenience.</p>
+        <p>Thank you for your continued partnership.</p>
+        <p style="margin-top:1rem">Best regards,<br><b>Gualapack North America</b><br>Accounts Receivable</p>
+
+        <div class="attach">
+          <div class="ic"><b>PDF</b></div>
+          <div class="meta">
+            <b>Invoice_2847_AcmeFoods.pdf</b>
+            <span>Original invoice attached · 1 page · 84 KB</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <div class="modal-status" id="modalStatus">
+        <span class="spinner"></span> Sending reminder…
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   WALKTHROUGH NAVIGATION
+   ===================================================================== */
+const sections = Array.from(document.querySelectorAll('.section'));
+const dots      = Array.from(document.querySelectorAll('.dot'));
+const names     = ['Overview','Current State','The Solution','The Result','Next Step'];
+let current = 0;
+
+function go(i){
+  if(i<0 || i>=sections.length) return;
+  sections[current].classList.remove('active');
+  dots[current].classList.remove('active');
+  current = i;
+  sections[current].classList.add('active');
+
+  // progress dots
+  dots.forEach((d,idx)=>{
+    d.classList.toggle('active', idx===current);
+    d.classList.toggle('done',  idx<current);
+  });
+
+  // nav state
+  document.getElementById('prevBtn').disabled = current===0;
+  const nextBtn = document.getElementById('nextBtn');
+  if(current===sections.length-1){
+    nextBtn.style.visibility='hidden';
+  } else {
+    nextBtn.style.visibility='visible';
+  }
+  document.getElementById('stepNum').textContent  = current+1;
+  document.getElementById('stepName').textContent = names[current];
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+dots.forEach(d=>d.addEventListener('click',()=>go(parseInt(d.dataset.go))));
+
+// keyboard arrows
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('modal').classList.contains('show')){
+    if(e.key==='Escape') closeReminder();
+    return;
+  }
+  if(e.key==='ArrowRight') go(current+1);
+  if(e.key==='ArrowLeft')  go(current-1);
+});
+
+/* =======================================================================
+   SEND REMINDER INTERACTION
+   ===================================================================== */
+const sendBtn     = document.getElementById('sendBtn');
+const modal       = document.getElementById('modal');
+const modalStatus = document.getElementById('modalStatus');
+const confirmLine = document.getElementById('confirmLine');
+const featureRow  = document.getElementById('featureRow');
+let reminderSent  = false;
+
+function openReminder(){
+  // button → "Sending..."
+  sendBtn.classList.add('sending');
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<span class="spinner" style="border-top-color:#fff"></span> Sending…';
+
+  // open modal with email preview + "sending" state
+  modal.classList.add('show');
+  modalStatus.classList.remove('done');
+  modalStatus.innerHTML = '<span class="spinner"></span> Sending reminder…';
+
+  // after ~1s: confirm
+  setTimeout(()=>{
+    modalStatus.classList.add('done');
+    modalStatus.innerHTML = '✓ Reminder sent via QuickBooks';
+
+    sendBtn.classList.remove('sending');
+    sendBtn.classList.add('sent');
+    sendBtn.innerHTML = '✓ Sent';
+
+    // mark row as paid-track + reveal confirmation line
+    featureRow.classList.add('paid');
+    confirmLine.classList.add('show');
+    reminderSent = true;
+  }, 1100);
+}
+
+function closeReminder(){
+  modal.classList.remove('show');
+}
+
+// init
+go(0);
+</script>
+</body>
+</html>
