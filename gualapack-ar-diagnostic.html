@@ -6,7 +6,7 @@
   <title>AR Health Diagnostic — Gualapack North America Spare Parts Division</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     /* ===== RESET & BASE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,8 +27,8 @@
 
       --white:       #F8FAFC;
       --text:        #CBD5E1;              /* text-slate-300 */
-      --text-mid:    #94A3B8;              /* text-slate-400 */
-      --text-muted:  #64748B;              /* text-slate-500 */
+      --text-mid:    #E2E8F0;              /* text-slate-200 */
+      --text-muted:  #CBD5E1;              /* text-slate-300 */
 
       --red:         #F87171;
       --red-soft:    rgba(248,113,113,0.1);
@@ -40,7 +40,6 @@
       --gradient: linear-gradient(135deg, var(--blue-light), var(--indigo));
 
       --font-body: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --font-head: 'Fraunces', Georgia, 'Times New Roman', serif;
     }
 
     html { font-size: 14px; }
@@ -127,7 +126,7 @@
       margin-bottom: 6px;
     }
     .company-name {
-      font-family: var(--font-head);
+      font-family: var(--font-body);
       font-size: 23px;
       font-weight: 600;
       color: var(--white);
@@ -164,7 +163,7 @@
       border-top: 1px solid var(--border);
     }
     .diagnostic-title {
-      font-family: var(--font-head);
+      font-family: var(--font-body);
       font-size: 28px;
       font-weight: 600;
       color: var(--white);
@@ -230,7 +229,7 @@
       margin-bottom: 10px;
     }
     .metric-value {
-      font-family: var(--font-head);
+      font-family: var(--font-body);
       font-size: 28px;
       font-weight: 600;
       color: var(--white);
@@ -425,7 +424,7 @@
     .unlock-card.primary .unlock-card-label { color: var(--indigo); }
 
     .unlock-card-value {
-      font-family: var(--font-head);
+      font-family: var(--font-body);
       font-size: 23px;
       font-weight: 600;
       color: var(--white);
@@ -492,7 +491,7 @@
       flex-wrap: wrap;
     }
     .calc-headline {
-      font-family: var(--font-head);
+      font-family: var(--font-body);
       font-size: 21px;
       font-weight: 600;
       color: var(--white);
@@ -636,7 +635,7 @@
       margin-bottom: 8px;
     }
     .output-hero-value {
-      font-family: var(--font-head);
+      font-family: var(--font-body);
       font-size: 38px;
       font-weight: 600;
       color: var(--white);
@@ -676,7 +675,7 @@
       font-size: 19px;
       font-weight: 700;
       color: var(--white);
-      font-family: var(--font-head);
+      font-family: var(--font-body);
     }
     .output-card-value.red { color: var(--red); }
     .output-card-value.green { color: var(--green); }
@@ -836,7 +835,7 @@
     }
 
     .cta-headline {
-      font-family: var(--font-head);
+      font-family: var(--font-body);
       font-size: 19px;
       font-weight: 600;
       color: var(--white);
@@ -1180,23 +1179,17 @@
           </div>
         </div>
 
-        <div class="field-row">
-          <div>
-            <label class="field-label">Current DSO (days)</label>
-            <input class="field-input" type="number" id="inputCurrentDSO" value="40" step="1">
-          </div>
-          <div>
-            <label class="field-label">Target DSO (days)</label>
-            <input class="field-input" type="number" id="inputTargetDSO" value="20" step="1">
-          </div>
-        </div>
-
         <div>
           <label class="field-label">Annual Revenue (Spare Parts)</label>
           <div class="field-with-prefix">
             <span class="prefix">$</span>
             <input class="field-input" type="number" id="inputRevenue" value="800000" step="10000">
           </div>
+        </div>
+
+        <div>
+          <label class="field-label">Target DSO (days)</label>
+          <input class="field-input" type="number" id="inputTargetDSO" value="20" step="1">
         </div>
 
         <div class="field-row">
@@ -1232,6 +1225,10 @@
 
         <div class="output-grid">
           <div class="output-card">
+            <div class="output-card-label">Calculated Current DSO</div>
+            <div class="output-card-value" id="outCurrentDSO">237 days</div>
+          </div>
+          <div class="output-card">
             <div class="output-card-label">Daily Capital Locked</div>
             <div class="output-card-value" id="outDaily">$1,425</div>
           </div>
@@ -1250,7 +1247,7 @@
         </div>
 
         <div class="calc-footnote">
-          Formula: ((Current DSO − Target DSO) / 365) × Annual Revenue = Working Capital Released. Bad debt reduction assumes a 70% improvement rate, consistent with earlier-intervention collection models.
+          Current DSO is calculated live as (AR Balance ÷ Annual Revenue) × 365. Working Capital Released = ((Current DSO − Target DSO) / 365) × Annual Revenue. Bad debt reduction assumes a 70% improvement rate, consistent with earlier-intervention collection models.
         </div>
       </div>
     </div>
@@ -1390,7 +1387,6 @@
 
     var inputs = {
       ar: $('inputAR'),
-      currentDSO: $('inputCurrentDSO'),
       targetDSO: $('inputTargetDSO'),
       revenue: $('inputRevenue'),
       invoices: $('inputInvoices'),
@@ -1416,21 +1412,24 @@
 
     function recalc() {
       var ar = parseFloat(inputs.ar.value) || 0;
-      var currentDSO = parseFloat(inputs.currentDSO.value) || 0;
       var targetDSO = parseFloat(inputs.targetDSO.value) || 0;
       var revenue = parseFloat(inputs.revenue.value) || 0;
       var badDebtPct = parseFloat(inputs.badDebtPct.value) || 0;
 
+      var currentDSO = revenue > 0 ? (ar / revenue) * 365 : 0;
+      var currentDSORounded = Math.round(currentDSO);
+
       var dailyLocked = ar / 365;
       var monthlyLocked = dailyLocked * 30;
       var release = ((currentDSO - targetDSO) / 365) * revenue;
-      var overTerms = Math.max(currentDSO - activeTerm, 0);
+      var overTerms = Math.max(currentDSORounded - activeTerm, 0);
       var badDebtAnnual = revenue * (badDebtPct / 100);
       var badDebtReduced = badDebtAnnual * 0.7;
 
+      $('outCurrentDSO').textContent = currentDSORounded + ' days';
       $('outRelease').textContent = fmtMoney(release);
       $('outReleaseNote').textContent =
-        'Based on a ' + (currentDSO - targetDSO) + '-day DSO reduction against ' + fmtMoney(revenue) + ' in annual revenue';
+        'Based on a ' + Math.round(currentDSO - targetDSO) + '-day DSO reduction against ' + fmtMoney(revenue) + ' in annual revenue';
       $('outDaily').textContent = fmtMoney(dailyLocked);
       $('outMonthly').textContent = fmtMoney(monthlyLocked);
       $('outOverTerms').textContent = overTerms + ' days';
