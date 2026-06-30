@@ -289,10 +289,6 @@
       background: linear-gradient(90deg, #22D3EE, #0ea5c9);
       width: 50%;
     }
-    .dso-bar-fill.kaptain {
-      background: linear-gradient(90deg, #6366F1, #818CF8);
-      width: 64%;
-    }
     .dso-bar-num {
       font-size: 11.5px;
       font-weight: 700;
@@ -548,53 +544,6 @@
       font-weight: 700;
     }
 
-    /* ===== KAPTAIN CALLOUT ===== */
-    .proof-bar {
-      background: linear-gradient(135deg, var(--navy-mid), var(--navy-light));
-      border-radius: 6px;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .proof-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
-      margin-bottom: 4px;
-    }
-    .proof-quote {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--white);
-      line-height: 1.5;
-    }
-    .proof-stats {
-      display: flex;
-      gap: 20px;
-      flex-shrink: 0;
-      margin-left: auto;
-    }
-    .proof-stat {
-      text-align: center;
-    }
-    .proof-stat-val {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--cyan);
-      display: block;
-    }
-    .proof-stat-label {
-      font-size: 9.5px;
-      color: rgba(255,255,255,0.45);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-top: 2px;
-    }
-
     /* ===== CTA SECTION ===== */
     .cta-section {
       background: var(--navy);
@@ -716,7 +665,6 @@
       /* Force backgrounds to print */
       .header,
       .metric-card,
-      .proof-bar,
       .cta-section,
       .success-box,
       .poc-week-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -725,7 +673,7 @@
 
       /* Avoid breaks inside cards */
       .metric-card, .change-card, .unlock-card,
-      .poc-week, .proof-bar, .cta-section { break-inside: avoid; }
+      .poc-week, .cta-section { break-inside: avoid; }
 
       .problem-grid, .changes-grid { break-inside: avoid; }
     }
@@ -741,7 +689,6 @@
       .poc-layout { grid-template-columns: 1fr; }
       .cta-section { flex-direction: column; align-items: flex-start; }
       .cta-right { margin-top: 8px; }
-      .proof-stats { margin-left: 0; }
     }
   </style>
 </head>
@@ -844,18 +791,8 @@
             </div>
           </div>
 
-          <div class="dso-bar-row">
-            <div class="dso-bar-label" style="color:#818CF8;font-weight:800;">K.CLEAN</div>
-            <div class="dso-bar-track">
-              <div class="dso-bar-fill kaptain">
-                <span class="dso-bar-num">33</span>
-                <span class="dso-bar-days">→ from 52 days</span>
-              </div>
-            </div>
-          </div>
-
           <div class="dso-note">
-            Conservative target: <strong>20-day DSO</strong> — a 40% reduction. Comparable clients have hit 35–45% within 90 days. The K.CLEAN bar shows a real result, not a projection.
+            Conservative target: <strong>20-day DSO</strong> — a 40% reduction from your current 40-day average, aligned to your dominant Net-7 terms.
           </div>
         </div>
 
@@ -939,33 +876,7 @@
     </div>
   </section>
 
-  <!-- ===== SECTION 4: KAPTAIN CLEAN PROOF ===== -->
-  <section class="section" style="padding-top: 16px; padding-bottom: 16px;">
-    <div class="section-label" style="margin-bottom: 10px;">Comparable Client — Real Result</div>
-    <div class="proof-bar">
-      <div>
-        <div class="proof-label">Case Study — Professional Services</div>
-        <div class="proof-quote">"Kaptain Clean LLC — same profile: small team, high invoice volume, manual AR process.<br>
-        Went live on LunarLogic. Within 90 days: DSO dropped 52 → 33 days. $65K unlocked."</div>
-      </div>
-      <div class="proof-stats">
-        <div class="proof-stat">
-          <span class="proof-stat-val">19</span>
-          <div class="proof-stat-label">Days DSO<br>Improvement</div>
-        </div>
-        <div class="proof-stat">
-          <span class="proof-stat-val">$65K</span>
-          <div class="proof-stat-label">Working Capital<br>Released</div>
-        </div>
-        <div class="proof-stat">
-          <span class="proof-stat-val">84%</span>
-          <div class="proof-stat-label">Faster Invoice<br>Processing</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== SECTION 5: THE 30-DAY POC ===== -->
+  <!-- ===== SECTION 4: THE 30-DAY POC ===== -->
   <section class="section">
     <div class="section-label">The 30-Day POC — Low Risk, Measurable Outcome</div>
 
