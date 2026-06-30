@@ -1012,8 +1012,8 @@
 
       <div class="metric-card">
         <div class="metric-label">Current DSO vs. Your Payment Terms</div>
-        <div class="metric-value red">40 days</div>
-        <div class="metric-caption">Primary terms: Net 7 — customers are paying 33 days late on average</div>
+        <div class="metric-value red">Let's calculate it →</div>
+        <div class="metric-caption">Primary terms: Net 7 — we'll compute your actual DSO live, from your AR balance and revenue, in the calculator below</div>
       </div>
 
     </div>
@@ -1021,7 +1021,7 @@
     <div class="terms-row">
       <div class="terms-pill">
         <span class="pill-label">Net 7 terms</span>
-        <span class="pill-note">→ customers paying at 40 days = 33 days overdue</span>
+        <span class="pill-note">→ the bar your actual DSO gets measured against</span>
       </div>
       <div class="terms-pill">
         <span class="pill-label">~100 invoices/mo</span>
@@ -1034,8 +1034,8 @@
     </div>
 
     <div class="quote-box" style="margin-top: 16px;">
-      <div class="quote-text">"Every 10 days of DSO improvement unlocks $55,000+ of working capital that's already yours."</div>
-      <div class="quote-sub">Based on your $800K annual spare parts revenue and current AR balance. These are your numbers.</div>
+      <div class="quote-text">"Every day of DSO improvement is cash you've already earned, sitting unpaid instead of in your bank."</div>
+      <div class="quote-sub">We'll calculate exactly how much that's worth to you live, using your own AR balance and revenue — no assumed numbers.</div>
     </div>
   </section>
 
@@ -1052,7 +1052,7 @@
             <div class="dso-bar-label" style="color:#FCA5A5;">NOW</div>
             <div class="dso-bar-track">
               <div class="dso-bar-fill current">
-                <span class="dso-bar-num">40</span>
+                <span class="dso-bar-num" id="dsoBarNow">—</span>
                 <span class="dso-bar-days">days DSO</span>
               </div>
             </div>
@@ -1062,23 +1062,22 @@
             <div class="dso-bar-label" style="color:var(--indigo);">TARGET</div>
             <div class="dso-bar-track">
               <div class="dso-bar-fill target">
-                <span class="dso-bar-num">20</span>
+                <span class="dso-bar-num" id="dsoBarTarget">20</span>
                 <span class="dso-bar-days">days DSO</span>
               </div>
             </div>
           </div>
 
           <div class="dso-note">
-            Conservative target: <strong style="color:var(--white);">20-day DSO</strong> — a 40% reduction from your current 40-day average, aligned to your dominant Net-7 terms.
+            Current DSO is calculated live below from your AR balance and revenue — not assumed. Conservative target: <strong style="color:var(--white);">20-day DSO</strong>, aligned to your dominant Net-7 terms.
           </div>
         </div>
 
         <div class="calc-box">
           <div class="calc-title">Working Capital Release — Calculation</div>
           <div class="calc-line">((Current DSO − Target DSO) / 365) × Annual Revenue</div>
-          <div class="calc-line">((40 − 20) / 365) × $800,000</div>
-          <div class="calc-line">(20 / 365) × $800,000</div>
-          <div class="calc-result">= <span>$43,800 – $65,000+</span> released within 30–90 days</div>
+          <div class="calc-line" id="calcLineNums">(( — − 20) / 365) × $800,000</div>
+          <div class="calc-result">= <span id="calcLineResult">calculated live below</span></div>
         </div>
       </div>
 
@@ -1447,6 +1446,12 @@
       $('outMonthly').textContent = fmtMoney(monthlyLocked);
       $('outOverTerms').textContent = overTerms + ' days';
       $('outBadDebt').textContent = fmtMoney(badDebtReduced);
+
+      $('dsoBarNow').textContent = currentDSORounded;
+      $('dsoBarTarget').textContent = targetDSO;
+      $('calcLineNums').textContent =
+        '(( ' + currentDSORounded + ' − ' + targetDSO + ' ) / 365) × ' + fmtMoney(revenue);
+      $('calcLineResult').textContent = fmtMoney(release) + ' released within 30–90 days';
     }
 
     Object.keys(inputs).forEach(function (key) {
