@@ -116,7 +116,7 @@ body::before{
 .dot.done{background:rgba(96,165,250,.5)}
 
 /* ============================ STAGE / SECTIONS ========================= */
-.stage{flex:1;position:relative;display:flex;align-items:flex-start;justify-content:center}
+.stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center}
 .section{display:none;width:100%;max-width:var(--maxw);padding:1.1rem 1.5rem .8rem;margin:0 auto;text-align:center}
 .section.active{display:block;animation:fadeUp .5s cubic-bezier(.16,.84,.44,1) both}
 /* center the header band; keep block content left-aligned for readability */
@@ -929,15 +929,15 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
           </div>
         </div>
 
-        <a class="btn btn-cta" id="pilotBtn" href="mailto:jrodriguez@lunarlogic.ai?subject=Gualapack%20North%20America%3A%2090-Day%20Pilot&body=We%20would%20like%20to%20start%20a%2090-day%20payment%20reminder%20pilot." onclick="pilotClick()" role="button">
-          Start the Pilot
+        <button class="btn btn-cta" id="pilotBtn" type="button" onclick="pilotClick()">
+          <span id="pilotBtnLabel">Start the Pilot</span>
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
+        </button>
         <div class="pilot-confirm" id="pilotConfirm" role="status">
-          <b>Thanks.</b> This opens an email to LunarLogic so we can set up your 90 day pilot. Prefer a call? Reach us at jrodriguez@lunarlogic.ai.
+          <b>Thanks, your request is in.</b> We've notified the LunarLogic team at support@lunarlogic.ai and we'll reach out to set up your 90 day pilot.
         </div>
         <p style="margin-top:1rem;color:var(--slate-500);font-size:.86rem">
-          <span class="grad" style="font-weight:800">lunarlogic</span><span style="color:var(--slate-400)">.ai</span> · AR automation for professional services &nbsp;·&nbsp; jrodriguez@lunarlogic.ai
+          <span class="grad" style="font-weight:800">lunarlogic</span><span style="color:var(--slate-400)">.ai</span> · AR automation for professional services &nbsp;·&nbsp; support@lunarlogic.ai
         </p>
       </div>
     </section>
@@ -1087,8 +1087,28 @@ function showReminderModal(){
 
 function closeReminder(){ modal.classList.remove('show'); }
 
-// CTA: reveal a confirmation alongside the mailto link
-function pilotClick(){ const c=document.getElementById('pilotConfirm'); if(c) c.classList.add('show'); }
+// CTA: notify support@lunarlogic.ai in the background (no mail app opens), then confirm.
+// Real delivery from this static file is handled by a no-backend form service.
+// Paste a Web3Forms access key (free at https://web3forms.com, verified to
+// support@lunarlogic.ai) into PILOT_NOTIFY_KEY to turn on live sending. Left
+// blank, the click still shows the confirmation but no email is sent.
+const PILOT_NOTIFY_KEY = '';
+function pilotClick(){
+  const c = document.getElementById('pilotConfirm'); if(c) c.classList.add('show');
+  const lbl = document.getElementById('pilotBtnLabel'); if(lbl) lbl.textContent = 'Request sent';
+  const btn = document.getElementById('pilotBtn'); if(btn){ btn.disabled = true; btn.style.opacity = .8; }
+  if(PILOT_NOTIFY_KEY){
+    fetch('https://api.web3forms.com/submit', {
+      method:'POST', headers:{'Content-Type':'application/json', Accept:'application/json'},
+      body: JSON.stringify({
+        access_key: PILOT_NOTIFY_KEY,
+        subject: 'Gualapack North America: 90-Day Pilot request',
+        from_name: 'Payment Reminder Demo',
+        message: 'Gualapack North America clicked "Start the Pilot" in the payment reminder demo.'
+      })
+    }).catch(()=>{});
+  }
+}
 
 /* =======================================================================
    SECTION 4 · COMMAND CENTER FEATURE EXPLORER
