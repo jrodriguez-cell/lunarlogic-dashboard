@@ -144,11 +144,11 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
   box-shadow:var(--shadow);
 }
 .logo-placeholder{
-  display:inline-flex;flex-direction:column;align-items:center;gap:.3rem;
+  display:inline-flex;flex-direction:column;align-items:center;gap:.3rem;text-align:center;
   padding:.9rem 1.7rem;border:1.5px dashed var(--slate-600);border-radius:14px;
-  margin-bottom:2rem;background:rgba(15,23,42,.5);
+  margin:0 auto 2rem;background:rgba(15,23,42,.5);
 }
-.logo-placeholder .co{font-size:1.4rem;font-weight:800;color:#F1F5F9;letter-spacing:.01em}
+.logo-placeholder .co{font-size:1.4rem;font-weight:800;color:#F1F5F9;letter-spacing:.01em;text-align:center}
 .logo-placeholder .co b{font-weight:800}
 .logo-placeholder .tag{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--slate-500)}
 
@@ -359,6 +359,127 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
 
 .icon{width:1em;height:1em;display:inline-block;vertical-align:-.12em}
 
+/* ===================== SECTION 4: COMMAND CENTER / FEATURE TOUR ======= */
+.explorer{display:grid;grid-template-columns:300px 1fr;gap:1.2rem;margin-top:1.8rem;align-items:start}
+@media(max-width:820px){.explorer{grid-template-columns:1fr}}
+
+.exp-rail{display:flex;flex-direction:column;gap:.55rem}
+@media(max-width:820px){
+  .exp-rail{flex-direction:row;overflow-x:auto;padding-bottom:.4rem;-webkit-overflow-scrolling:touch}
+  .exp-btn{flex:0 0 78%}
+}
+.exp-btn{
+  display:flex;gap:.7rem;align-items:flex-start;text-align:left;cursor:pointer;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.8rem .9rem;
+  transition:all .18s;font-family:inherit;color:var(--slate-300);position:relative;overflow:hidden;
+}
+.exp-btn:hover{border-color:rgba(96,165,250,.35);background:rgba(96,165,250,.05)}
+.exp-btn.active{border-color:rgba(96,165,250,.5);background:linear-gradient(100deg,rgba(59,130,246,.16),rgba(129,140,248,.05))}
+.exp-btn.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad)}
+.exp-btn .ic{
+  width:34px;height:34px;border-radius:9px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  background:rgba(96,165,250,.12);color:var(--blue-light);
+}
+.exp-btn.active .ic{background:var(--grad);color:#0B1120}
+.exp-btn .tt{font-weight:800;color:#F1F5F9;font-size:.92rem;line-height:1.2}
+.exp-btn .ss{font-size:.76rem;color:var(--slate-500);margin-top:.15rem}
+
+.exp-stage{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;
+  box-shadow:var(--shadow);backdrop-filter:blur(4px);min-height:380px;
+}
+.feat-panel{display:none;animation:fadeUp .4s both}
+.feat-panel.active{display:block}
+.feat-panel h3{font-size:1.25rem;color:#F8FAFC;margin-bottom:.4rem;font-family:var(--font-head);font-weight:700}
+.feat-panel .feat-intro{color:var(--slate-300);font-size:.98rem;margin-bottom:1.1rem}
+.feat-help{
+  margin-top:1.2rem;display:flex;gap:.6rem;align-items:flex-start;
+  background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.28);border-radius:10px;padding:.8rem 1rem;
+  color:var(--slate-300);font-size:.9rem;
+}
+.feat-help b{color:#86EFAC}
+.feat-help .hi{color:var(--green);font-weight:800;flex:0 0 auto}
+
+/* cadence timeline */
+.cad-track{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.5rem;-webkit-overflow-scrolling:touch}
+.cad-node{
+  flex:0 0 auto;min-width:74px;text-align:center;cursor:pointer;border-radius:10px;padding:.6rem .5rem;
+  background:var(--navy-deep);border:1px solid var(--border);transition:all .18s;
+}
+.cad-node:hover{border-color:rgba(96,165,250,.4)}
+.cad-node.active{border-color:var(--blue-light);background:rgba(96,165,250,.12)}
+.cad-node .cd{font-size:.92rem;font-weight:800;color:#F1F5F9}
+.cad-node .cl{font-size:.64rem;color:var(--slate-500);text-transform:uppercase;letter-spacing:.04em;margin-top:.2rem}
+.cad-node.active .cl{color:var(--blue-light)}
+.cad-preview{margin-top:1rem;background:var(--navy-deep);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem}
+.cad-preview .tone{display:inline-block;font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:.18rem .55rem;border-radius:999px;margin-bottom:.55rem}
+.cad-preview .msg{color:var(--slate-300);font-size:.95rem;line-height:1.5}
+.cad-preview .meta{margin-top:.6rem;font-size:.78rem;color:var(--slate-500);display:flex;align-items:center;gap:.4rem}
+
+/* risk chips */
+.risk-chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.risk-chip{
+  cursor:pointer;font-family:inherit;font-weight:800;font-size:.82rem;border-radius:999px;padding:.45rem 1rem;
+  background:var(--navy-deep);border:1px solid var(--border);color:var(--slate-400);transition:all .18s;
+}
+.risk-chip.active{color:#F1F5F9}
+.risk-chip.lo.active{border-color:#4ADE80;background:rgba(74,222,128,.14);color:#86EFAC}
+.risk-chip.me.active{border-color:#FBBF24;background:rgba(251,191,36,.14);color:#FBBF24}
+.risk-chip.hi.active{border-color:#F87171;background:rgba(248,113,113,.14);color:#F87171}
+.risk-detail{background:var(--navy-deep);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem}
+.risk-detail .rd-top{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:.5rem;flex-wrap:wrap}
+.risk-detail .rd-name{font-weight:800;color:#F1F5F9;font-size:.95rem}
+.risk-detail .rd-avg{font-size:.82rem;color:var(--slate-400)}
+.risk-detail .rd-body{color:var(--slate-300);font-size:.92rem;line-height:1.5}
+
+/* coverage */
+.cov-row{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.cov-num{font-size:2.6rem;font-weight:900;background:var(--grad-h);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+.cov-barwrap{flex:1;min-width:170px}
+.cov-bar{height:9px;background:var(--navy-deep);border-radius:5px;overflow:hidden;border:1px solid var(--border)}
+.cov-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue-light),var(--green));border-radius:5px;transition:width 1s cubic-bezier(.16,.84,.44,1)}
+.cov-legend{display:flex;justify-content:space-between;font-size:.76rem;color:var(--slate-500);margin-top:.5rem}
+.needs-list{margin-top:1rem;display:none}
+.needs-list.show{display:block;animation:fadeUp .35s both}
+.needs-item{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem .8rem;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:9px;margin-bottom:.5rem;font-size:.86rem;color:var(--slate-300)}
+.needs-item .nf{font-size:.68rem;font-weight:800;color:#FBBF24;background:rgba(251,191,36,.14);border-radius:7px;padding:.12rem .5rem;white-space:nowrap}
+
+/* invoice actions */
+.act-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+@media(max-width:480px){.act-grid{grid-template-columns:1fr}}
+.act-btn{
+  cursor:pointer;font-family:inherit;text-align:left;border-radius:10px;padding:.7rem .85rem;transition:all .18s;
+  background:var(--navy-deep);border:1px solid var(--border);color:var(--slate-300);
+}
+.act-btn:hover{border-color:rgba(96,165,250,.4)}
+.act-btn.active{border-color:var(--blue-light);background:rgba(96,165,250,.1)}
+.act-btn.primary{border-color:rgba(34,197,94,.4)}
+.act-btn .al{font-weight:800;color:#F1F5F9;font-size:.9rem}
+.act-btn.primary .al{color:var(--green)}
+.act-btn .as{font-size:.74rem;color:var(--slate-500);margin-top:.15rem}
+.act-detail{background:var(--navy-deep);border:1px solid var(--border);border-left:3px solid var(--blue-light);border-radius:8px;padding:.85rem 1rem;color:var(--slate-300);font-size:.9rem;line-height:1.5}
+
+/* dispute card */
+.disp-card{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.3);border-radius:11px;padding:1rem 1.1rem}
+.disp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap}
+.disp-cust{font-weight:800;color:#F1F5F9;font-size:.96rem}
+.disp-flag{font-size:.66rem;font-weight:800;color:#C4B5FD;background:rgba(167,139,250,.18);border-radius:999px;padding:.16rem .6rem;text-transform:uppercase;letter-spacing:.04em}
+.disp-amt{font-size:1.2rem;font-weight:900;color:#F1F5F9}
+.disp-why{margin-top:.8rem;display:none;color:var(--slate-300);font-size:.9rem;line-height:1.55;background:var(--navy-deep);border-radius:8px;padding:.8rem .9rem}
+.disp-why.show{display:block;animation:fadeUp .35s both}
+.disp-toggle{margin-top:.8rem;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.35);color:#C4B5FD;font-family:inherit;font-weight:700;font-size:.82rem;border-radius:8px;padding:.45rem .9rem;cursor:pointer}
+
+/* daily summary digest */
+.digest{background:var(--navy-deep);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.digest-head{background:var(--navy);padding:.7rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid var(--border)}
+.digest-head .dh-title{font-weight:800;color:#F1F5F9;font-size:.9rem}
+.digest-head .dh-time{margin-left:auto;font-size:.72rem;color:var(--slate-500)}
+.digest-body{padding:.4rem 1rem}
+.digest-row{display:flex;align-items:center;gap:.7rem;padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.9rem;color:var(--slate-300)}
+.digest-row:last-child{border-bottom:none}
+.digest-row .dr-ic{width:24px;height:24px;border-radius:7px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem}
+.digest-row b{color:#F1F5F9}
+
 /* ============================ PRINT ================================== */
 @media print{
   .topbar,.nav{display:none!important}
@@ -368,6 +489,9 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
   .section:last-child{page-break-after:auto}
   *{ -webkit-print-color-adjust:exact!important;print-color-adjust:exact!important }
   .modal-overlay{display:none!important}
+  .explorer{grid-template-columns:1fr}
+  .feat-panel{display:block!important;page-break-inside:avoid;border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem}
+  .needs-list,.disp-why{display:block!important}
 }
 
 /* reduced motion */
@@ -395,9 +519,10 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
     <nav class="progress" aria-label="Walkthrough progress">
       <span class="dot active" data-go="0" title="Overview"></span>
       <span class="dot" data-go="1" title="Current State"></span>
-      <span class="dot" data-go="2" title="The Solution"></span>
-      <span class="dot" data-go="3" title="The Result"></span>
-      <span class="dot" data-go="4" title="Next Step"></span>
+      <span class="dot" data-go="2" title="The Payment Reminder"></span>
+      <span class="dot" data-go="3" title="Full Scope"></span>
+      <span class="dot" data-go="4" title="The Result"></span>
+      <span class="dot" data-go="5" title="Next Step"></span>
     </nav>
   </header>
 
@@ -408,9 +533,11 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
     <section class="section active" id="s0">
       <div class="title-slide">
         <!-- EDIT: client logo / name -->
-        <div class="logo-placeholder">
-          <div class="co">GUALAPACK <b class="grad">North America</b></div>
-          <div class="tag">Spare Parts Division</div>
+        <div style="text-align:center">
+          <div class="logo-placeholder">
+            <div class="co">GUALAPACK <b class="grad">North America</b></div>
+            <div class="tag">Spare Parts Division</div>
+          </div>
         </div>
 
         <div class="eyebrow">
@@ -562,9 +689,170 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
       </div>
     </section>
 
-    <!-- ===================== SECTION 4: THE RESULT ===================== -->
+    <!-- ===================== SECTION 4: THE FULL PICTURE / COMMAND CENTER ===================== -->
     <section class="section" id="s3">
-      <div class="eyebrow">Section 3 — The 90-Day Proof</div>
+      <div class="eyebrow">Section 3 — The Full Picture</div>
+      <h2>Your AR Command Center</h2>
+      <p class="lead">Sending one reminder is just the visible tip. Behind it, LunarLogic runs the whole follow-up cycle — and gives Geraldine one screen to <em style="color:var(--slate-300);font-style:italic">watch</em> it, not run it. Click any feature to see how it works.</p>
+
+      <div class="explorer">
+        <!-- LEFT RAIL -->
+        <div class="exp-rail" role="tablist" aria-label="Features">
+          <button class="exp-btn active" data-feat="0" onclick="selectFeat(0)">
+            <span class="ic"><svg class="icon" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.7 9.7 0 0 0-6.7 2.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+            <span><span class="tt">Automated Reminder Sequence</span><span class="ss">Never miss a follow-up</span></span>
+          </button>
+          <button class="exp-btn" data-feat="1" onclick="selectFeat(1)">
+            <span class="ic"><svg class="icon" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
+            <span><span class="tt">Risk-Based Timing</span><span class="ss">Tailored to each customer</span></span>
+          </button>
+          <button class="exp-btn" data-feat="2" onclick="selectFeat(2)">
+            <span class="ic"><svg class="icon" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <span><span class="tt">Automation Coverage</span><span class="ss">See what's hands-free</span></span>
+          </button>
+          <button class="exp-btn" data-feat="3" onclick="selectFeat(3)">
+            <span class="ic"><svg class="icon" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg></span>
+            <span><span class="tt">One-Click Invoice Actions</span><span class="ss">Everything in one place</span></span>
+          </button>
+          <button class="exp-btn" data-feat="4" onclick="selectFeat(4)">
+            <span class="ic"><svg class="icon" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+            <span><span class="tt">Dispute &amp; Aging Radar</span><span class="ss">Catch problems early</span></span>
+          </button>
+          <button class="exp-btn" data-feat="5" onclick="selectFeat(5)">
+            <span class="ic"><svg class="icon" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span>
+            <span><span class="tt">Geraldine's Daily Summary</span><span class="ss">Monitor without managing</span></span>
+          </button>
+        </div>
+
+        <!-- RIGHT STAGE -->
+        <div class="exp-stage">
+
+          <!-- FEAT 0 — Reminder Sequence -->
+          <div class="feat-panel active" id="feat-0">
+            <h3>Automated Reminder Sequence</h3>
+            <p class="feat-intro">Every invoice is placed on a consistent schedule the moment it's issued — a courtesy note before it's due, then steady, professional follow-ups if it slips. Tap a step to see what goes out.</p>
+            <div class="cad-track" id="cadTrack">
+              <div class="cad-node active" data-cad="0" onclick="cadStep(0)"><div class="cd">−7d</div><div class="cl">Pre-due</div></div>
+              <div class="cad-node" data-cad="1" onclick="cadStep(1)"><div class="cd">Due</div><div class="cl">Day 0</div></div>
+              <div class="cad-node" data-cad="2" onclick="cadStep(2)"><div class="cd">+1d</div><div class="cl">Nudge</div></div>
+              <div class="cad-node" data-cad="3" onclick="cadStep(3)"><div class="cd">+7d</div><div class="cl">Follow-up</div></div>
+              <div class="cad-node" data-cad="4" onclick="cadStep(4)"><div class="cd">+14d</div><div class="cl">Firmer</div></div>
+              <div class="cad-node" data-cad="5" onclick="cadStep(5)"><div class="cd">+21d</div><div class="cl">Escalate</div></div>
+              <div class="cad-node" data-cad="6" onclick="cadStep(6)"><div class="cd">+28d</div><div class="cl">Final</div></div>
+            </div>
+            <div class="cad-preview">
+              <span class="tone" id="cadTone"></span>
+              <div class="msg" id="cadMsg"></div>
+              <div class="meta" id="cadMeta"></div>
+            </div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps you:</b> No invoice ever slips through the cracks again — and it's consistent every time. Customers who get a steady reminder cadence pay roughly <b>40% faster</b> on average.</span></div>
+          </div>
+
+          <!-- FEAT 1 — Risk-Based Timing -->
+          <div class="feat-panel" id="feat-1">
+            <h3>Risk-Based Timing</h3>
+            <p class="feat-intro">LunarLogic learns each customer's real payment pattern and adjusts the cadence automatically — gentle with your reliable payers, earlier and firmer with the chronic late ones. Pick a payer type:</p>
+            <div class="risk-chips">
+              <button class="risk-chip lo active" data-risk="lo" onclick="riskSel('lo')">Reliable payer</button>
+              <button class="risk-chip me" data-risk="me" onclick="riskSel('me')">Occasionally late</button>
+              <button class="risk-chip hi" data-risk="hi" onclick="riskSel('hi')">Chronic late payer</button>
+            </div>
+            <div class="risk-detail">
+              <div class="rd-top"><span class="rd-name" id="rdName"></span><span class="rd-avg" id="rdAvg"></span></div>
+              <div class="rd-body" id="rdBody"></div>
+            </div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps you:</b> Your best customers never feel pestered, and the ones who actually need pushing get it — without Geraldine deciding who to chase or when.</span></div>
+          </div>
+
+          <!-- FEAT 2 — Automation Coverage -->
+          <div class="feat-panel" id="feat-2">
+            <h3>Automation Coverage</h3>
+            <p class="feat-intro">At a glance, you can see exactly how much of your open AR is on auto-pilot versus the short list that genuinely needs a person.</p>
+            <div class="cov-row">
+              <div class="cov-num">86%</div>
+              <div class="cov-barwrap">
+                <div class="cov-bar"><span id="covBar"></span></div>
+                <div class="cov-legend"><span>12 of 14 invoices handled hands-free</span><span>2 need you</span></div>
+              </div>
+            </div>
+            <button class="disp-toggle" style="margin-top:1rem;color:#FBBF24;background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35)" onclick="toggleNeeds()" id="needsBtn">Show what needs me →</button>
+            <div class="needs-list" id="needsList">
+              <div class="needs-item"><span>Western Foods · #2851 · $8,200 — sequence complete, still unpaid</span><span class="nf">Call recommended</span></div>
+              <div class="needs-item"><span>Bell Packaging · #2864 · $8,200 — opened but unpaid</span><span class="nf">Possible dispute</span></div>
+            </div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps you:</b> Geraldine stops re-reading the whole AR list every day. The dashboard tells her the 2 invoices that need a human — the other 12 are already handled.</span></div>
+          </div>
+
+          <!-- FEAT 3 — One-Click Actions -->
+          <div class="feat-panel" id="feat-3">
+            <h3>One-Click Invoice Actions</h3>
+            <p class="feat-intro">Open any invoice and every next step is one click away. Most of the time you won't need them — but when you do, they're right there. Tap one:</p>
+            <div class="act-grid">
+              <button class="act-btn primary active" data-act="reminder" onclick="actSel('reminder')"><div class="al">Send Reminder</div><div class="as">Email draft ready</div></button>
+              <button class="act-btn" data-act="log" onclick="actSel('log')"><div class="al">Log Contact</div><div class="as">Call, email, meeting</div></button>
+              <button class="act-btn" data-act="task" onclick="actSel('task')"><div class="al">Assign Task</div><div class="as">Delegate follow-up</div></button>
+              <button class="act-btn" data-act="snooze" onclick="actSel('snooze')"><div class="al">Snooze</div><div class="as">Promise-to-pay date</div></button>
+            </div>
+            <div class="act-detail" id="actDetail"></div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps you:</b> When a customer calls to say "we'll pay Friday," Geraldine logs it in two clicks and the invoice quietly steps out of the urgent queue until then. Nothing gets forgotten.</span></div>
+          </div>
+
+          <!-- FEAT 4 — Dispute & Aging Radar -->
+          <div class="feat-panel" id="feat-4">
+            <h3>Dispute &amp; Aging Radar</h3>
+            <p class="feat-intro">LunarLogic watches for invoices that are overdue in ways that don't match the customer's history — a sign of a billing question or dispute, not just slowness. It surfaces them while they're still easy to fix.</p>
+            <div class="disp-card">
+              <div class="disp-top">
+                <div>
+                  <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.3rem">
+                    <span class="disp-cust">Bell Packaging</span>
+                    <span style="color:var(--slate-500);font-size:.82rem">#2864</span>
+                    <span class="disp-flag">Possible dispute</span>
+                  </div>
+                  <div style="color:var(--slate-400);font-size:.86rem">Opened the invoice 9 days ago — still unpaid</div>
+                </div>
+                <div style="text-align:right"><div class="disp-amt">$8,200</div><div style="color:#C4B5FD;font-size:.78rem">15d overdue</div></div>
+              </div>
+              <button class="disp-toggle" onclick="toggleDispute()" id="dispBtn">Why was this flagged? →</button>
+              <div class="disp-why" id="dispWhy">This customer normally pays in <b style="color:#F1F5F9">28 days</b>. This invoice was <b style="color:#F1F5F9">viewed but left unpaid</b> well past due — outside their normal pattern. That usually means a billing question or internal approval delay, not a cash problem. A two-minute call now clears it, before it ages into bad debt.</div>
+            </div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps you:</b> Disputes left unresolved become write-offs. Catching the one invoice that's actually stuck — early — protects real dollars. Recovery drops below 50% once an invoice passes 90 days.</span></div>
+          </div>
+
+          <!-- FEAT 5 — Daily Summary -->
+          <div class="feat-panel" id="feat-5">
+            <h3>Geraldine's Daily Summary</h3>
+            <p class="feat-intro">Every morning, a plain-language recap lands in Slack and her inbox. She sees what happened overnight and the one or two things that need her — then gets on with her day.</p>
+            <div class="digest">
+              <div class="digest-head">
+                <svg class="icon" style="width:16px;height:16px;color:var(--blue-light)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+                <span class="dh-title">Your AR — Morning Recap</span>
+                <span class="dh-time">Today · 9:00 AM</span>
+              </div>
+              <div class="digest-body">
+                <div class="digest-row"><span class="dr-ic" style="background:rgba(96,165,250,.15);color:var(--blue-light)">✉</span><span><b>7 reminders sent</b> — $43,200 in invoices followed up, hands-free</span></div>
+                <div class="digest-row"><span class="dr-ic" style="background:rgba(74,222,128,.15);color:var(--green)">✓</span><span><b>2 customers promised to pay</b> this week</span></div>
+                <div class="digest-row"><span class="dr-ic" style="background:rgba(251,191,36,.15);color:#FBBF24">!</span><span><b>1 invoice needs your call</b> — Western Foods, 47 days</span></div>
+                <div class="digest-row"><span class="dr-ic" style="background:rgba(129,140,248,.15);color:var(--indigo)">↓</span><span><b>DSO trending down</b> — 60 → 54 → 49 days</span></div>
+              </div>
+            </div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps you:</b> This is the relief. Geraldine <b>monitors progress without managing it</b> — five minutes with a coffee instead of five hours of chasing. The work still gets done; she just stops doing the tedious part.</span></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="voiceover">
+        <span class="vo-label">The full scope</span>
+        Payment reminders are the start — but the same system tracks every open invoice, adapts to each customer,
+        flags the ones that need you, and hands your team a clean daily summary. It's not about replacing Geraldine.
+        It's about giving her the tedious 80% back, so she can focus on the relationships and the calls that actually need a person.
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 5: THE RESULT ===================== -->
+    <section class="section" id="s4">
+      <div class="eyebrow">Section 4 — The 90-Day Proof</div>
       <h2>The Result</h2>
       <p class="lead">Same team. Same customers. Money comes in faster and the busywork disappears.</p>
 
@@ -608,10 +896,10 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
       </div>
     </section>
 
-    <!-- ===================== SECTION 5: CTA ===================== -->
-    <section class="section" id="s4">
+    <!-- ===================== SECTION 6: CTA ===================== -->
+    <section class="section" id="s5">
       <div class="cta-slide">
-        <div class="eyebrow" style="margin-left:auto;margin-right:auto">Section 4 — The Next Step</div>
+        <div class="eyebrow" style="margin-left:auto;margin-right:auto">Section 5 — The Next Step</div>
         <h2>Let's Run a 90-Day Pilot</h2>
         <p class="lead" style="margin-left:auto;margin-right:auto">Start with your 5 most challenging customers. Prove the concept. Scale if it works.</p>
 
@@ -660,7 +948,7 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
       Back
     </button>
-    <div class="nav-meta"><b id="stepNum">1</b> of 5 — <span id="stepName">Overview</span></div>
+    <div class="nav-meta"><b id="stepNum">1</b> of 6 — <span id="stepName">Overview</span></div>
     <button class="btn btn-primary" id="nextBtn" onclick="go(current+1)">
       Next
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -717,7 +1005,7 @@ h3{font-size:1.08rem;color:#F1F5F9;font-weight:800}
    ===================================================================== */
 const sections = Array.from(document.querySelectorAll('.section'));
 const dots      = Array.from(document.querySelectorAll('.dot'));
-const names     = ['Overview','Current State','The Solution','The Result','Next Step'];
+const names     = ['Overview','Current State','The Payment Reminder','Full Scope','The Result','Next Step'];
 let current = 0;
 
 function go(i){
@@ -783,7 +1071,91 @@ function openReminder(){
   }, 1100);
 }
 
+// Drives only the email-preview modal (no dashboard button state) — reused by
+// the Command Center "Send Reminder" action.
+function showReminderModal(){
+  modal.classList.add('show');
+  modalStatus.classList.remove('done');
+  modalStatus.innerHTML = '<span class="spinner"></span> Sending reminder…';
+  setTimeout(()=>{
+    modalStatus.classList.add('done');
+    modalStatus.innerHTML = '✓ Reminder sent via QuickBooks';
+  }, 1100);
+}
+
 function closeReminder(){ modal.classList.remove('show'); }
+
+/* =======================================================================
+   SECTION 4 — COMMAND CENTER FEATURE EXPLORER
+   ===================================================================== */
+const featBtns   = Array.from(document.querySelectorAll('.exp-btn'));
+const featPanels = Array.from(document.querySelectorAll('.feat-panel'));
+function selectFeat(i){
+  featBtns.forEach((b,idx)=>b.classList.toggle('active', idx===i));
+  featPanels.forEach((p,idx)=>p.classList.toggle('active', idx===i));
+  if(i===2){ const bar=document.getElementById('covBar'); if(bar){ bar.style.width='0'; requestAnimationFrame(()=>{ bar.style.width='86%'; }); } }
+}
+
+/* Reminder cadence steps */
+const CAD = [
+  { tone:'Courtesy',     bg:'rgba(96,165,250,.16)', fg:'#93C5FD', msg:'"Heads-up — Invoice #2847 is due in one week. Just flagging it early so it doesn\'t sneak up on you."', meta:'Auto-sent 9:00 AM via Outlook · <b style="color:#86EFAC">before it\'s even late</b>' },
+  { tone:'Neutral',      bg:'rgba(96,165,250,.16)', fg:'#93C5FD', msg:'"A quick note that Invoice #2847 is due today. A copy is attached for your convenience."', meta:'Auto-sent 9:00 AM · the day it\'s due' },
+  { tone:'Gentle',       bg:'rgba(96,165,250,.16)', fg:'#93C5FD', msg:'"Friendly reminder — Invoice #2847 was due yesterday and is now showing as outstanding."', meta:'Auto-sent · 1 day past due' },
+  { tone:'Polite',       bg:'rgba(251,191,36,.16)', fg:'#FBBF24', msg:'"Following up on Invoice #2847, now 7 days past due. We\'d appreciate it being processed at your earliest convenience."', meta:'Auto-sent · 7 days past due' },
+  { tone:'Firm',         bg:'rgba(251,191,36,.16)', fg:'#FBBF24', msg:'"Second reminder: Invoice #2847 is now 14 days overdue. Please let us know if anything is holding up payment."', meta:'Auto-sent · 14 days past due' },
+  { tone:'Escalating',   bg:'rgba(249,115,22,.16)', fg:'#FB923C', msg:'"Invoice #2847 is now 21 days overdue. Please advise on expected payment timing — we\'d like to resolve this promptly."', meta:'Auto-sent · 21 days · <b style="color:#FB923C">flagged for your team to consider a call</b>' },
+  { tone:'Final notice', bg:'rgba(248,113,113,.16)', fg:'#F87171', msg:'"Final automated reminder: Invoice #2847 is 28 days overdue. This balance now needs direct attention."', meta:'Auto-sent · 28 days · <b style="color:#F87171">handed to your team for a personal call</b>' },
+];
+function cadStep(i){
+  document.querySelectorAll('#cadTrack .cad-node').forEach((n,idx)=>n.classList.toggle('active', idx===i));
+  const c = CAD[i];
+  const tone = document.getElementById('cadTone');
+  tone.textContent = c.tone; tone.style.background = c.bg; tone.style.color = c.fg;
+  document.getElementById('cadMsg').textContent = c.msg;
+  document.getElementById('cadMeta').innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ' + c.meta;
+}
+
+/* Risk-based timing */
+const RISK = {
+  lo:{ name:'Reliable payer (e.g. Alpine Snacks)',  avg:'Pays in ~22 days', body:'Light touch. A courtesy note before the due date and one gentle nudge if it slips — that\'s usually all it takes. We never pester the customers who already pay you well.' },
+  me:{ name:'Occasionally late (e.g. FreshMart Foods)', avg:'Pays in ~36 days', body:'The full standard cadence — steady, polite follow-ups from before the due date through about four weeks out. Consistent pressure, professional tone, no nagging.' },
+  hi:{ name:'Chronic late payer (e.g. Western Foods)', avg:'Pays in ~63 days', body:'Starts earlier and firms up sooner. The tone escalates faster, and at 21 days it\'s flagged for a personal call from your team — because with this one, email alone won\'t move it.' },
+};
+function riskSel(k){
+  document.querySelectorAll('.risk-chip').forEach(c=>c.classList.toggle('active', c.dataset.risk===k));
+  const r = RISK[k];
+  document.getElementById('rdName').textContent = r.name;
+  document.getElementById('rdAvg').textContent  = r.avg;
+  document.getElementById('rdBody').textContent = r.body;
+}
+
+function toggleNeeds(){
+  const l=document.getElementById('needsList'), b=document.getElementById('needsBtn');
+  b.textContent = l.classList.toggle('show') ? 'Hide' : 'Show what needs me →';
+}
+
+/* Per-invoice actions */
+const ACT = {
+  reminder:'Sends the next reminder in the sequence right now — formatted like your standard email, with the invoice PDF attached. <span style="color:var(--slate-500)">(Email preview opening…)</span>',
+  log:'Record the outcome of a call or email — "spoke with AP, promised payment Friday" — so the context lives with the invoice and nothing gets forgotten.',
+  task:'Hand the follow-up to a teammate with a due date. It lands on their list instead of getting lost in someone\'s inbox.',
+  snooze:'Customer committed to a date? Snooze the invoice out of the urgent queue until then — it reappears automatically if they miss it.',
+};
+function actSel(k){
+  document.querySelectorAll('.act-btn').forEach(b=>b.classList.toggle('active', b.dataset.act===k));
+  document.getElementById('actDetail').innerHTML = ACT[k];
+  if(k==='reminder') showReminderModal();
+}
+
+function toggleDispute(){
+  const w=document.getElementById('dispWhy'), b=document.getElementById('dispBtn');
+  b.textContent = w.classList.toggle('show') ? 'Hide explanation' : 'Why was this flagged? →';
+}
+
+// initialise feature defaults (no modal side-effects)
+cadStep(0);
+riskSel('lo');
+document.getElementById('actDetail').innerHTML = ACT.reminder.replace(' <span style="color:var(--slate-500)">(Email preview opening…)</span>','');
 
 go(0);
 </script>
