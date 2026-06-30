@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LunarLogic | Payment Reminder Walkthrough — Gualapack North America</title>
+<title>LunarLogic | Payment Reminder Walkthrough · Gualapack North America</title>
 <!--
   ============================================================================
-  GUALAPACK NORTH AMERICA — PAYMENT REMINDER DEMO
+  GUALAPACK NORTH AMERICA · PAYMENT REMINDER DEMO
   Self-contained interactive walkthrough. No external dependencies.
   Brand fonts (Nunito + Fraunces) are embedded as base64 below.
   ----------------------------------------------------------------------------
@@ -117,8 +117,10 @@ body::before{
 
 /* ============================ STAGE / SECTIONS ========================= */
 .stage{flex:1;position:relative;display:flex;align-items:flex-start;justify-content:center}
-.section{display:none;width:100%;max-width:var(--maxw);padding:1.1rem 1.5rem .8rem;margin:0 auto}
+.section{display:none;width:100%;max-width:var(--maxw);padding:1.1rem 1.5rem .8rem;margin:0 auto;text-align:center}
 .section.active{display:block;animation:fadeUp .5s cubic-bezier(.16,.84,.44,1) both}
+/* center the header band; keep block content left-aligned for readability */
+.two-col,.dash,.explorer,.compare,.timeline,.voiceover,.confirm-line,.feat-panel,.act-detail,.risk-detail,.cad-preview,.disp-card,.digest,.needs-item{text-align:left}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
 .eyebrow{
@@ -130,7 +132,7 @@ body::before{
 h1{font-family:var(--font-head);font-size:clamp(1.7rem,4.4vw,2.7rem);line-height:1.07;letter-spacing:-.01em;color:#F8FAFC;font-weight:700}
 h2{font-family:var(--font-head);font-size:clamp(1.35rem,3vw,1.95rem);line-height:1.14;letter-spacing:-.01em;color:#F8FAFC;font-weight:700}
 h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
-.lead{font-size:clamp(.92rem,1.5vw,1.02rem);color:var(--slate-400);margin-top:.4rem;line-height:1.45;max-width:54ch}
+.lead{font-size:clamp(.92rem,1.5vw,1.02rem);color:var(--slate-400);margin:.4rem auto 0;line-height:1.45;max-width:60ch;text-align:center}
 
 /* ============================ SECTION 1: TITLE ======================== */
 .title-slide{
@@ -359,6 +361,9 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
 .btn-ghost:disabled{opacity:.4;cursor:not-allowed}
 .btn-cta{background:var(--blue);color:#fff;font-size:1rem;padding:.85rem 1.9rem;box-shadow:0 10px 28px rgba(59,130,246,.45)}
 .btn-cta:hover{filter:brightness(1.08);transform:translateY(-2px)}
+.pilot-confirm{display:none;margin:.9rem auto 0;max-width:46ch;font-size:.86rem;line-height:1.45;color:#86EFAC;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:.6rem .95rem}
+.pilot-confirm.show{display:block;animation:fadeUp .35s both}
+.pilot-confirm b{color:#BBF7D0}
 
 .icon{width:1em;height:1em;display:inline-block;vertical-align:-.12em}
 
@@ -548,7 +553,7 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
           A 90-Day Solution
         </div>
         <h1>Getting Paid<br>Sooner, Consistently</h1>
-        <p class="lead" style="margin-left:auto;margin-right:auto">When follow-up is manual, payments arrive late and your cash stays tied up. Here's how automated reminders bring it in faster — without adding to your team's workload.</p>
+        <p class="lead" style="margin-left:auto;margin-right:auto">When follow-up is manual, payments arrive late and cash stays tied up. Automated reminders bring it in faster, and take the repetitive chasing off your team's plate.</p>
 
         <div class="manual-visual" aria-hidden="true">
           <div class="mv-icon tired" title="Spreadsheet">
@@ -567,20 +572,20 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
 
     <!-- ===================== SECTION 2: CURRENT STATE ===================== -->
     <section class="section" id="s1">
-      <div class="eyebrow">Section 1 — The cost of waiting</div>
+      <div class="eyebrow">Section 1 · The cost of waiting</div>
       <h2>Where Cash Gets Stuck</h2>
-      <p class="lead">Right now, following up on overdue invoices happens by hand. It works — but it's slow and uneven, and the cost shows up directly in your cash flow.</p>
+      <p class="lead">Following up on overdue invoices is done by hand today. Even done well, manual chasing is repetitive and hard to keep perfectly consistent, and the cost shows up directly in your cash flow.</p>
 
       <div class="two-col">
         <!-- LEFT: process -->
         <div class="card">
           <h3 style="margin-bottom:.5rem">Today's process</h3>
           <ul class="process-list">
-            <li><span class="x">›</span><span>Overdue invoices are tracked by hand in a spreadsheet</span></li>
-            <li><span class="x">›</span><span>Each follow-up is written and sent one at a time</span></li>
-            <li><span class="x">›</span><span>Reminders go out when there's time — not on a set schedule</span></li>
-            <li><span class="x">›</span><span>Some invoices get chased; others quietly slip</span></li>
-            <li><span class="x">›</span><span>No single view of what's outstanding or what's been done</span></li>
+            <li><span class="x">›</span><span>Every overdue invoice has to be tracked by hand</span></li>
+            <li><span class="x">›</span><span>Each reminder is written and sent one at a time</span></li>
+            <li><span class="x">›</span><span>Following up competes with everything else on the to-do list</span></li>
+            <li><span class="x">›</span><span>Chasing payments is repetitive, and thankless even when it works</span></li>
+            <li><span class="x">›</span><span>There's no single view of what's outstanding or already handled</span></li>
           </ul>
 
           <div class="mock-wrap">
@@ -598,11 +603,11 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
             <div class="mock" aria-label="Outlook inbox mockup">
               <div class="mock-head out">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
-                Sent — Outlook
+                Sent · Outlook
               </div>
-              <div class="out-item"><b>RE: Invoice past due</b>Acme Foods <span class="cc">sent late</span></div>
-              <div class="out-item"><b>Friendly reminder…</b>Bell Pkg. <span class="cc">sent late</span></div>
-              <div class="out-item"><b>Following up again</b>Delta Mfg. <span class="cc">not sent yet</span></div>
+              <div class="out-item"><b>RE: Invoice past due</b>Acme Foods <span class="cc">sent by hand</span></div>
+              <div class="out-item"><b>Friendly reminder</b>Bell Pkg. <span class="cc">sent by hand</span></div>
+              <div class="out-item"><b>Following up again</b>Delta Mfg. <span class="cc">still to send</span></div>
             </div>
           </div>
         </div>
@@ -619,11 +624,11 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
           </div>
           <div class="callout">
             <div class="num">$295K</div>
-            <div class="lbl">Spare-parts AR — earned, billed, not yet collected</div>
+            <div class="lbl">Spare-parts AR: earned, billed, not yet collected</div>
           </div>
           <div class="card card-accent" style="border-radius:12px;padding:.85rem 1.1rem">
             <div style="font-size:.88rem;line-height:1.5;color:var(--slate-300)">
-              That works out to about <b class="grad" style="font-weight:800">$810 a day</b> of your own cash financing customers' late payments. The money is earned — it's just sitting in someone else's account.
+              That works out to about <b class="grad" style="font-weight:800">$810 a day</b> of your own cash covering customers' late payments. The money is earned. It's just sitting in someone else's account.
             </div>
           </div>
         </div>
@@ -632,9 +637,9 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
 
     <!-- ===================== SECTION 3: THE SOLUTION ===================== -->
     <section class="section" id="s2">
-      <div class="eyebrow">Section 2 — Reminders on autopilot</div>
+      <div class="eyebrow">Section 2 · Reminders on autopilot</div>
       <h2>Follow-Up That Runs Itself</h2>
-      <p class="lead">Every open invoice is followed up automatically, on a set schedule — same professional message each time, invoice attached. Nothing gets skipped, and no one has to remember.</p>
+      <p class="lead">Every open invoice is followed up automatically, on a set schedule. Same professional message each time, invoice attached. Nothing gets skipped, and no one has to remember.</p>
 
       <div class="dash" role="region" aria-label="AR dashboard demo">
         <div class="dash-stats">
@@ -648,7 +653,7 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
             <div>Invoice</div><div class="col-cust">Customer</div><div class="col-due">Status</div><div>Amount</div><div class="col-act">Follow-up</div>
           </div>
 
-          <!-- FEATURED invoice — the one the system is about to auto-send -->
+          <!-- FEATURED invoice: the one the system is about to auto-send -->
           <div class="inv-row feature" id="featureRow">
             <div class="id">#2847</div>
             <div class="col-cust">Acme Foods</div>
@@ -670,7 +675,7 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
 
         <div class="feature-spot">
           <span class="tag">▶</span>
-          <span><b style="color:#F1F5F9">See it in action:</b> Invoice #2847 is due for its next reminder. Click <b style="color:var(--green)">Watch it send</b> to see exactly what goes out — automatically, with no one touching it.</span>
+          <span><b style="color:#F1F5F9">See it in action:</b> Invoice #2847 is due for its next reminder. Click <b style="color:var(--green)">Watch it send</b> to see exactly what goes out, automatically, with no one touching it.</span>
         </div>
       </div>
 
@@ -678,21 +683,21 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
       <div class="confirm-line" id="confirmLine">
         <div class="check">✓</div>
         <div>
-          Sent automatically via QuickBooks — Invoice #2847, Acme Foods.
+          Sent automatically via QuickBooks. Invoice #2847, Acme Foods.
           <small>No one wrote it or remembered to send it. The system did, on schedule, and logged it for your records.</small>
         </div>
       </div>
 
       <div class="voiceover">
         <span class="vo-label">What you're seeing</span>
-        This went out on its own — same professional wording every time, invoice attached, sent to the right contact.
+        This went out on its own. Same professional wording every time, invoice attached, sent to the right contact.
         No one wrote it or has to remember the next one. The dashboard just keeps the record of what's been sent and what's still open.
       </div>
     </section>
 
     <!-- ===================== SECTION 4: THE FULL PICTURE / COMMAND CENTER ===================== -->
     <section class="section" id="s3">
-      <div class="eyebrow">Section 3 — The full picture</div>
+      <div class="eyebrow">Section 3 · The full picture</div>
       <h2>What Runs in the Background</h2>
       <p class="lead">Reminders are one piece. The same system tracks every open invoice, adapts to each customer, and surfaces only the few that need a person. Click any feature to see how it works.</p>
 
@@ -728,10 +733,10 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
         <!-- RIGHT STAGE -->
         <div class="exp-stage">
 
-          <!-- FEAT 0 — Reminder Sequence -->
+          <!-- FEAT 0: Reminder Sequence -->
           <div class="feat-panel active" id="feat-0">
             <h3>Automated Reminder Sequence</h3>
-            <p class="feat-intro">The moment an invoice is issued, it's placed on a consistent schedule — a courtesy note before it's due, then steady, professional follow-ups if it slips. Every message goes out automatically. Tap a step to see what's sent.</p>
+            <p class="feat-intro">The moment an invoice is issued, it's placed on a consistent schedule: a courtesy note before it's due, then steady, professional follow-ups if it slips. Every message goes out automatically. Tap a step to see what's sent.</p>
             <div class="cad-track" id="cadTrack">
               <div class="cad-node active" data-cad="0" onclick="cadStep(0)"><div class="cd">−7d</div><div class="cl">Pre-due</div></div>
               <div class="cad-node" data-cad="1" onclick="cadStep(1)"><div class="cd">Due</div><div class="cl">Day 0</div></div>
@@ -746,13 +751,13 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
               <div class="msg" id="cadMsg"></div>
               <div class="meta" id="cadMeta"></div>
             </div>
-            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> No invoice slips through, and the follow-up is consistent every time. Customers on a steady reminder cadence tend to pay about <b>40% faster</b> — which is exactly the gap that's tying up your cash today.</span></div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> No invoice slips through, and the follow-up is consistent every time. Customers on a steady reminder cadence tend to pay about <b>40% faster</b>, which is exactly the gap that's tying up your cash today.</span></div>
           </div>
 
-          <!-- FEAT 1 — Risk-Based Timing -->
+          <!-- FEAT 1: Risk-Based Timing -->
           <div class="feat-panel" id="feat-1">
             <h3>Risk-Based Timing</h3>
-            <p class="feat-intro">The system reads each customer's real payment history and adjusts the timing on its own — gentle with reliable payers, earlier and firmer with the chronic late ones. No one sets rules per account. Pick a payer type:</p>
+            <p class="feat-intro">The system reads each customer's real payment history and adjusts the timing on its own: gentle with reliable payers, earlier and firmer with the chronic late ones. No one sets rules per account. Pick a payer type:</p>
             <div class="risk-chips">
               <button class="risk-chip lo active" data-risk="lo" onclick="riskSel('lo')">Reliable payer</button>
               <button class="risk-chip me" data-risk="me" onclick="riskSel('me')">Occasionally late</button>
@@ -762,13 +767,13 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
               <div class="rd-top"><span class="rd-name" id="rdName"></span><span class="rd-avg" id="rdAvg"></span></div>
               <div class="rd-body" id="rdBody"></div>
             </div>
-            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> Your best customers are never pestered, and the slow payers get the steady pressure they need — automatically, without anyone deciding who to chase or when.</span></div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> Your best customers are never pestered, and the slow payers get the steady pressure they need, automatically, without anyone deciding who to chase or when.</span></div>
           </div>
 
-          <!-- FEAT 2 — Automation Coverage -->
+          <!-- FEAT 2: Automation Coverage -->
           <div class="feat-panel" id="feat-2">
             <h3>Automation Coverage</h3>
-            <p class="feat-intro">The routine follow-up is automated — so most of your open AR runs without anyone touching it. The dashboard shows exactly how much is hands-free versus the short list that genuinely needs a person.</p>
+            <p class="feat-intro">The routine follow-up is automated, so most of your open AR runs without anyone touching it. The dashboard shows exactly how much is hands-free versus the short list that genuinely needs a person.</p>
             <div class="cov-row">
               <div class="cov-num">86%</div>
               <div class="cov-barwrap">
@@ -778,16 +783,16 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
             </div>
             <button class="disp-toggle" style="margin-top:1rem;color:#FBBF24;background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35)" onclick="toggleNeeds()" id="needsBtn">Show what needs me →</button>
             <div class="needs-list" id="needsList">
-              <div class="needs-item"><span>Western Foods · #2851 · $8,200 — sequence complete, still unpaid</span><span class="nf">Call recommended</span></div>
-              <div class="needs-item"><span>Bell Packaging · #2864 · $8,200 — opened but unpaid</span><span class="nf">Possible dispute</span></div>
+              <div class="needs-item"><span>Western Foods · #2851 · $8,200 · sequence complete, still unpaid</span><span class="nf">Call recommended</span></div>
+              <div class="needs-item"><span>Bell Packaging · #2864 · $8,200 · opened but unpaid</span><span class="nf">Possible dispute</span></div>
             </div>
-            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> No one re-reads the whole AR list every day. The system handles the routine 12 and points to the 2 that actually need attention — so effort goes only where it changes the outcome.</span></div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> No one re-reads the whole AR list every day. The system handles the routine 12 and points to the 2 that actually need attention, so effort goes only where it changes the outcome.</span></div>
           </div>
 
-          <!-- FEAT 3 — Exceptions only -->
+          <!-- FEAT 3: Exceptions only -->
           <div class="feat-panel" id="feat-3">
             <h3>When a Person Is Needed</h3>
-            <p class="feat-intro">The routine chasing is already automated — these aren't for everyday follow-up. They're for the handful of moments that call for judgment: a promised date, a dispute, a call worth recording. Tap one:</p>
+            <p class="feat-intro">The routine chasing is already automated, so these aren't for everyday follow-up. They're for the handful of moments that call for judgment: a promised date, a dispute, a call worth recording. Tap one:</p>
             <div class="act-grid">
               <button class="act-btn primary active" data-act="log" onclick="actSel('log')"><div class="al">Log a Call</div><div class="as">Record the outcome</div></button>
               <button class="act-btn" data-act="snooze" onclick="actSel('snooze')"><div class="al">Promise-to-Pay</div><div class="as">Hold until a date</div></button>
@@ -795,13 +800,13 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
               <button class="act-btn" data-act="reminder" onclick="actSel('reminder')"><div class="al">One-off Nudge</div><div class="as">Rarely needed</div></button>
             </div>
             <div class="act-detail" id="actDetail"></div>
-            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> The system does the repetitive sending. People step in only for the exceptions — so the work that needs a human gets a human, and nothing else takes their time.</span></div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> The system does the repetitive sending. People step in only for the exceptions, so the work that needs a human gets a human, and nothing else takes their time.</span></div>
           </div>
 
-          <!-- FEAT 4 — Dispute & Aging Radar -->
+          <!-- FEAT 4: Dispute & Aging Radar -->
           <div class="feat-panel" id="feat-4">
             <h3>Dispute &amp; Aging Radar</h3>
-            <p class="feat-intro">LunarLogic watches for invoices that are overdue in ways that don't match the customer's history — a sign of a billing question or dispute, not just slowness. It surfaces them while they're still easy to fix.</p>
+            <p class="feat-intro">LunarLogic watches for invoices that are overdue in ways that don't match the customer's history, a sign of a billing question or dispute, not just slowness. It surfaces them while they're still easy to fix.</p>
             <div class="disp-card">
               <div class="disp-top">
                 <div>
@@ -810,34 +815,34 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
                     <span style="color:var(--slate-500);font-size:.82rem">#2864</span>
                     <span class="disp-flag">Possible dispute</span>
                   </div>
-                  <div style="color:var(--slate-400);font-size:.86rem">Opened the invoice 9 days ago — still unpaid</div>
+                  <div style="color:var(--slate-400);font-size:.86rem">Opened the invoice 9 days ago, still unpaid</div>
                 </div>
                 <div style="text-align:right"><div class="disp-amt">$8,200</div><div style="color:#C4B5FD;font-size:.78rem">15d overdue</div></div>
               </div>
               <button class="disp-toggle" onclick="toggleDispute()" id="dispBtn">Why was this flagged? →</button>
-              <div class="disp-why" id="dispWhy">This customer normally pays in <b style="color:#F1F5F9">28 days</b>. This invoice was <b style="color:#F1F5F9">viewed but left unpaid</b> well past due — outside their normal pattern. That usually means a billing question or internal approval delay, not a cash problem. A two-minute call now clears it, before it ages into bad debt.</div>
+              <div class="disp-why" id="dispWhy">This customer normally pays in <b style="color:#F1F5F9">28 days</b>. This invoice was <b style="color:#F1F5F9">viewed but left unpaid</b> well past due, outside their normal pattern. That usually means a billing question or internal approval delay, not a cash problem. A two-minute call now clears it, before it ages into bad debt.</div>
             </div>
-            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> Disputes left unresolved become write-offs. Catching the one invoice that's actually stuck — early — protects real dollars. Recovery drops below 50% once an invoice passes 90 days.</span></div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> Disputes left unresolved become write-offs. Catching the one invoice that's actually stuck, caught early, protects real dollars. Recovery drops below 50% once an invoice passes 90 days.</span></div>
           </div>
 
-          <!-- FEAT 5 — Daily Recap -->
+          <!-- FEAT 5: Daily Recap -->
           <div class="feat-panel" id="feat-5">
             <h3>Your Daily Recap</h3>
-            <p class="feat-intro">Every morning, a plain-language recap lands in Slack and your team's inbox — what the system did overnight, and the one or two things that need a person. A five-minute read, then on with the day.</p>
+            <p class="feat-intro">Every morning, a plain-language recap lands in Slack and your team's inbox: what the system did overnight, and the one or two things that need a person. A five-minute read, then on with the day.</p>
             <div class="digest">
               <div class="digest-head">
                 <svg class="icon" style="width:16px;height:16px;color:var(--blue-light)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
-                <span class="dh-title">Your AR — Morning Recap</span>
+                <span class="dh-title">Your AR · Morning Recap</span>
                 <span class="dh-time">Today · 9:00 AM</span>
               </div>
               <div class="digest-body">
-                <div class="digest-row"><span class="dr-ic" style="background:rgba(96,165,250,.15);color:var(--blue-light)">✉</span><span><b>7 reminders sent</b> — $43,200 in invoices followed up, hands-free</span></div>
+                <div class="digest-row"><span class="dr-ic" style="background:rgba(96,165,250,.15);color:var(--blue-light)">✉</span><span><b>7 reminders sent</b> · $43,200 in invoices followed up, hands-free</span></div>
                 <div class="digest-row"><span class="dr-ic" style="background:rgba(74,222,128,.15);color:var(--green)">✓</span><span><b>2 customers promised to pay</b> this week</span></div>
-                <div class="digest-row"><span class="dr-ic" style="background:rgba(251,191,36,.15);color:#FBBF24">!</span><span><b>1 invoice needs your call</b> — Western Foods, 47 days</span></div>
-                <div class="digest-row"><span class="dr-ic" style="background:rgba(129,140,248,.15);color:var(--indigo)">↓</span><span><b>DSO trending down</b> — 60 → 54 → 49 days</span></div>
+                <div class="digest-row"><span class="dr-ic" style="background:rgba(251,191,36,.15);color:#FBBF24">!</span><span><b>1 invoice needs your call</b> · Western Foods, 47 days</span></div>
+                <div class="digest-row"><span class="dr-ic" style="background:rgba(129,140,248,.15);color:var(--indigo)">↓</span><span><b>DSO trending down</b> · 60 to 54 to 49 days</span></div>
               </div>
             </div>
-            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> Your team <b>monitors progress without managing it</b>. The collections work still gets done — consistently — while their time shifts to the calls and relationships that actually need a person.</span></div>
+            <div class="feat-help"><span class="hi">✓</span><span><b>How it helps:</b> Your team <b>monitors progress without managing it</b>. The collections work still gets done, consistently, while their time shifts to the calls and relationships that actually need a person.</span></div>
           </div>
 
         </div>
@@ -846,16 +851,16 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
       <div class="voiceover">
         <span class="vo-label">The full scope</span>
         Reminders are the start. The same system tracks every open invoice, adapts to each customer, flags the few that need attention,
-        and recaps it all each morning — automatically. It doesn't replace anyone; it takes the repetitive 80% off your team's plate
+        and recaps it all each morning, automatically. It doesn't replace anyone; it takes the repetitive 80% off your team's plate
         so their time goes to the relationships and decisions that actually need a person.
       </div>
     </section>
 
     <!-- ===================== SECTION 5: THE RESULT ===================== -->
     <section class="section" id="s4">
-      <div class="eyebrow">Section 4 — What changes in 90 days</div>
+      <div class="eyebrow">Section 4 · What changes in 90 days</div>
       <h2>The Result</h2>
-      <p class="lead">Same team, same customers — invoices simply get paid sooner. Here's what consistent, automated follow-up typically moves in a quarter.</p>
+      <p class="lead">Same team, same customers. Invoices simply get paid sooner. Here's what consistent, automated follow-up typically moves in a quarter.</p>
 
       <div class="compare">
         <div class="panel before">
@@ -871,21 +876,20 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
 
         <div class="panel after">
           <h3><span class="badge">After 90 days</span></h3>
-          <div class="metric"><div class="ml">DSO</div><div class="mv hl">38–42 days</div></div>
+          <div class="metric"><div class="ml">DSO</div><div class="mv hl">38 to 42 days</div></div>
           <div class="metric"><div class="ml">Cash tied up</div><div class="mv">$215K</div></div>
           <div class="metric"><div class="ml">Follow-up / week</div><div class="mv">&lt; 1 hour</div></div>
         </div>
       </div>
 
       <div class="result-box">
-        <div class="big">Working Capital Released: <span>$65K–$85K</span></div>
+        <div class="big">Working Capital Released: <span>$65K to $85K</span></div>
         <p class="proof">
-          Proof: <b>Kaptain Clean</b>, a similar business, went from 52 to 33 DSO in 90 days —
-          unlocking $65K in working capital and cutting follow-up time by 84%.
+          A conservative projection for your AR profile. Bringing DSO down by roughly 18 to 22 days releases the cash that's currently sitting past terms, without changing a single customer relationship.
         </p>
         <div class="adv">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m13 2-3 7h6l-3 13"/></svg>
-          Your advantage: <b>14-day terms</b>&nbsp;vs their 30-day terms = faster recovery
+          Your advantage: <b>14-day terms</b>&nbsp;recover cash faster than typical 30-day-term businesses
         </div>
       </div>
 
@@ -894,9 +898,9 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
     <!-- ===================== SECTION 6: CTA ===================== -->
     <section class="section" id="s5">
       <div class="cta-slide">
-        <div class="eyebrow" style="margin-left:auto;margin-right:auto">Section 5 — The Next Step</div>
+        <div class="eyebrow" style="margin-left:auto;margin-right:auto">Section 5 · The Next Step</div>
         <h2>A 90-Day Pilot</h2>
-        <p class="lead" style="margin-left:auto;margin-right:auto">A focused trial on a handful of your slowest-paying accounts. Low risk, fully measurable — and you only scale it if the numbers move.</p>
+        <p class="lead" style="margin-left:auto;margin-right:auto">A focused trial on a handful of your slowest-paying accounts. Low risk, fully measurable, and you only scale it if the numbers move.</p>
 
         <div class="timeline">
           <div class="tl-step">
@@ -907,13 +911,13 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
           </div>
           <div class="tl-step">
             <div class="nodecirc">2</div>
-            <div class="wk">Weeks 2–4</div>
+            <div class="wk">Weeks 2 to 4</div>
             <div class="ti">Live Reminders</div>
             <div class="td">Reminders go out automatically. We tune timing and tone together.</div>
           </div>
           <div class="tl-step">
             <div class="nodecirc">3</div>
-            <div class="wk">Weeks 5–13</div>
+            <div class="wk">Weeks 5 to 13</div>
             <div class="ti">Measure Results</div>
             <div class="td">Track DSO, cash collected, and hours saved against your baseline.</div>
           </div>
@@ -921,16 +925,19 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
             <div class="nodecirc">4</div>
             <div class="wk">Week 13</div>
             <div class="ti">Expand or Iterate</div>
-            <div class="td">Roll out to the full AR book — or adjust and keep refining.</div>
+            <div class="td">Roll out to the full AR book, or adjust and keep refining.</div>
           </div>
         </div>
 
-        <a class="btn btn-cta" href="#" onclick="return false" role="button">
+        <a class="btn btn-cta" id="pilotBtn" href="mailto:jrodriguez@lunarlogic.ai?subject=Gualapack%20North%20America%3A%2090-Day%20Pilot&body=We%20would%20like%20to%20start%20a%2090-day%20payment%20reminder%20pilot." onclick="pilotClick()" role="button">
           Start the Pilot
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
+        <div class="pilot-confirm" id="pilotConfirm" role="status">
+          <b>Thanks.</b> This opens an email to LunarLogic so we can set up your 90 day pilot. Prefer a call? Reach us at jrodriguez@lunarlogic.ai.
+        </div>
         <p style="margin-top:1rem;color:var(--slate-500);font-size:.86rem">
-          <span class="grad" style="font-weight:800">lunarlogic</span><span style="color:var(--slate-400)">.ai</span> — AR automation for professional services &nbsp;·&nbsp; jrodriguez@lunarlogic.ai
+          <span class="grad" style="font-weight:800">lunarlogic</span><span style="color:var(--slate-400)">.ai</span> · AR automation for professional services &nbsp;·&nbsp; jrodriguez@lunarlogic.ai
         </p>
       </div>
     </section>
@@ -943,7 +950,7 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
       Back
     </button>
-    <div class="nav-meta"><b id="stepNum">1</b> of 6 — <span id="stepName">Overview</span></div>
+    <div class="nav-meta"><b id="stepNum">1</b> of 6 · <span id="stepName">Overview</span></div>
     <button class="btn btn-primary" id="nextBtn" onclick="go(current+1)">
       Next
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -972,7 +979,7 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
       <div class="email-body">
         <p>Hi Acme Foods team,</p>
         <p>I hope you're doing well. This is a friendly reminder that Invoice <b>#2847</b> for <b>$12,500.00</b> was due on <b>May 31, 2026</b> and is now showing as outstanding.</p>
-        <p>I've attached a copy for your convenience. If payment is already on its way, please disregard this note — otherwise, we'd appreciate it being processed at your earliest convenience.</p>
+        <p>I've attached a copy for your convenience. If payment is already on its way, please disregard this note. Otherwise, we'd appreciate it being processed at your earliest convenience.</p>
         <p>Thank you for your continued partnership.</p>
         <p style="margin-top:1rem">Best regards,<br><b>Gualapack North America</b><br>Accounts Receivable</p>
 
@@ -1066,7 +1073,7 @@ function openReminder(){
   }, 1100);
 }
 
-// Drives only the email-preview modal (no dashboard button state) — reused by
+// Drives only the email-preview modal (no dashboard button state), reused by
 // the Command Center "Send Reminder" action.
 function showReminderModal(){
   modal.classList.add('show');
@@ -1080,8 +1087,11 @@ function showReminderModal(){
 
 function closeReminder(){ modal.classList.remove('show'); }
 
+// CTA: reveal a confirmation alongside the mailto link
+function pilotClick(){ const c=document.getElementById('pilotConfirm'); if(c) c.classList.add('show'); }
+
 /* =======================================================================
-   SECTION 4 — COMMAND CENTER FEATURE EXPLORER
+   SECTION 4 · COMMAND CENTER FEATURE EXPLORER
    ===================================================================== */
 const featBtns   = Array.from(document.querySelectorAll('.exp-btn'));
 const featPanels = Array.from(document.querySelectorAll('.feat-panel'));
@@ -1093,12 +1103,12 @@ function selectFeat(i){
 
 /* Reminder cadence steps */
 const CAD = [
-  { tone:'Courtesy',     bg:'rgba(96,165,250,.16)', fg:'#93C5FD', msg:'"Heads-up — Invoice #2847 is due in one week. Just flagging it early so it doesn\'t sneak up on you."', meta:'Auto-sent 9:00 AM via Outlook · <b style="color:#86EFAC">before it\'s even late</b>' },
+  { tone:'Courtesy',     bg:'rgba(96,165,250,.16)', fg:'#93C5FD', msg:'"Heads-up: Invoice #2847 is due in one week. Just flagging it early so it doesn\'t sneak up on you."', meta:'Auto-sent 9:00 AM via Outlook · <b style="color:#86EFAC">before it\'s even late</b>' },
   { tone:'Neutral',      bg:'rgba(96,165,250,.16)', fg:'#93C5FD', msg:'"A quick note that Invoice #2847 is due today. A copy is attached for your convenience."', meta:'Auto-sent 9:00 AM · the day it\'s due' },
-  { tone:'Gentle',       bg:'rgba(96,165,250,.16)', fg:'#93C5FD', msg:'"Friendly reminder — Invoice #2847 was due yesterday and is now showing as outstanding."', meta:'Auto-sent · 1 day past due' },
+  { tone:'Gentle',       bg:'rgba(96,165,250,.16)', fg:'#93C5FD', msg:'"Friendly reminder: Invoice #2847 was due yesterday and is now showing as outstanding."', meta:'Auto-sent · 1 day past due' },
   { tone:'Polite',       bg:'rgba(251,191,36,.16)', fg:'#FBBF24', msg:'"Following up on Invoice #2847, now 7 days past due. We\'d appreciate it being processed at your earliest convenience."', meta:'Auto-sent · 7 days past due' },
   { tone:'Firm',         bg:'rgba(251,191,36,.16)', fg:'#FBBF24', msg:'"Second reminder: Invoice #2847 is now 14 days overdue. Please let us know if anything is holding up payment."', meta:'Auto-sent · 14 days past due' },
-  { tone:'Escalating',   bg:'rgba(249,115,22,.16)', fg:'#FB923C', msg:'"Invoice #2847 is now 21 days overdue. Please advise on expected payment timing — we\'d like to resolve this promptly."', meta:'Auto-sent · 21 days · <b style="color:#FB923C">flagged for your team to consider a call</b>' },
+  { tone:'Escalating',   bg:'rgba(249,115,22,.16)', fg:'#FB923C', msg:'"Invoice #2847 is now 21 days overdue. Please advise on expected payment timing, and we\'d like to resolve this promptly."', meta:'Auto-sent · 21 days · <b style="color:#FB923C">flagged for your team to consider a call</b>' },
   { tone:'Final notice', bg:'rgba(248,113,113,.16)', fg:'#F87171', msg:'"Final automated reminder: Invoice #2847 is 28 days overdue. This balance now needs direct attention."', meta:'Auto-sent · 28 days · <b style="color:#F87171">handed to your team for a personal call</b>' },
 ];
 function cadStep(i){
@@ -1112,9 +1122,9 @@ function cadStep(i){
 
 /* Risk-based timing */
 const RISK = {
-  lo:{ name:'Reliable payer (e.g. Alpine Snacks)',  avg:'Pays in ~22 days', body:'Light touch. A courtesy note before the due date and one gentle nudge if it slips — that\'s usually all it takes. We never pester the customers who already pay you well.' },
-  me:{ name:'Occasionally late (e.g. FreshMart Foods)', avg:'Pays in ~36 days', body:'The full standard cadence — steady, polite follow-ups from before the due date through about four weeks out. Consistent pressure, professional tone, no nagging.' },
-  hi:{ name:'Chronic late payer (e.g. Western Foods)', avg:'Pays in ~63 days', body:'Starts earlier and firms up sooner. The tone escalates faster, and at 21 days it\'s flagged for a personal call from your team — because with this one, email alone won\'t move it.' },
+  lo:{ name:'Reliable payer (e.g. Alpine Snacks)',  avg:'Pays in ~22 days', body:'Light touch. A courtesy note before the due date and one gentle nudge if it slips, and that\'s usually all it takes. We never pester the customers who already pay you well.' },
+  me:{ name:'Occasionally late (e.g. FreshMart Foods)', avg:'Pays in ~36 days', body:'The full standard cadence: steady, polite follow-ups from before the due date through about four weeks out. Consistent pressure, professional tone, no nagging.' },
+  hi:{ name:'Chronic late payer (e.g. Western Foods)', avg:'Pays in ~63 days', body:'Starts earlier and firms up sooner. The tone escalates faster, and at 21 days it\'s flagged for a personal call from your team, because with this one, email alone won\'t move it.' },
 };
 function riskSel(k){
   document.querySelectorAll('.risk-chip').forEach(c=>c.classList.toggle('active', c.dataset.risk===k));
@@ -1131,10 +1141,10 @@ function toggleNeeds(){
 
 /* Per-invoice actions */
 const ACT = {
-  log:'Record what happened on a call — "spoke with AP, payment promised Friday" — so the note lives with the invoice. The automatic sequence keeps running underneath.',
+  log:'Record what happened on a call, like "spoke with AP, payment promised Friday," so the note lives with the invoice. The automatic sequence keeps running underneath.',
   snooze:'A customer has committed to a date? Hold the invoice until then. It steps out of the active queue and comes back on its own if they miss it.',
-  task:'Hand one invoice to a specific teammate to handle directly — for the rare case that genuinely needs a personal touch.',
-  reminder:'Sends one extra reminder right now, on top of the automatic schedule. You\'ll rarely reach for this — the routine reminders already go out on their own. <span style="color:var(--slate-500)">(Email preview opening…)</span>',
+  task:'Hand one invoice to a specific teammate to handle directly, for the rare case that genuinely needs a personal touch.',
+  reminder:'Sends one extra reminder right now, on top of the automatic schedule. You\'ll rarely reach for this, since the routine reminders already go out on their own. <span style="color:var(--slate-500)">(Email preview opening…)</span>',
 };
 function actSel(k){
   document.querySelectorAll('.act-btn').forEach(b=>b.classList.toggle('active', b.dataset.act===k));
