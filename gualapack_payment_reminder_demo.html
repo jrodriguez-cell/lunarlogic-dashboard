@@ -1088,11 +1088,20 @@ function showReminderModal(){
 function closeReminder(){ modal.classList.remove('show'); }
 
 // CTA: notify support@lunarlogic.ai in the background (no mail app opens), then confirm.
-// Posts to the project's Resend-backed serverless function (api/pilot-notify.js),
-// mirroring how the rest of the site sends mail. PILOT_NOTIFY_URL must be an
-// absolute URL because this demo is a standalone file. Point it at wherever the
-// function is deployed. The confirmation shows regardless of network result.
-const PILOT_NOTIFY_URL = 'https://lunarlogic-dashboard.vercel.app/api/pilot-notify';
+//
+// PILOT_NOTIFY_URL points at the LunarLogic website's live Resend-backed contact
+// endpoint (the one described in the email-integration reference, which already
+// has RESEND_API_KEY set and already emails support@lunarlogic.ai). Because this
+// demo is a standalone file, the URL must be absolute. >>> Confirm the domain:
+// if your site is www.lunarlogic.ai or a different path, change this one line. <<<
+//
+// The request deliberately uses a "simple" CORS request (no JSON content-type
+// header, plain text body) so the browser does NOT send a preflight OPTIONS.
+// A downloaded file is a cross-origin caller; a preflight would be rejected by a
+// standard route handler and no email would send. The route still parses the
+// JSON body. The response is opaque to us by design; the confirmation shows
+// regardless of the network result.
+const PILOT_NOTIFY_URL = 'https://lunarlogic.ai/api/contact';
 function pilotClick(){
   const c = document.getElementById('pilotConfirm'); if(c) c.classList.add('show');
   const lbl = document.getElementById('pilotBtnLabel'); if(lbl) lbl.textContent = 'Request sent';
@@ -1100,8 +1109,14 @@ function pilotClick(){
   try {
     fetch(PILOT_NOTIFY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ company: 'Gualapack North America' }),
+      // No custom headers => simple request => no CORS preflight.
+      body: JSON.stringify({
+        name: 'Pilot CTA',
+        email: 'support@lunarlogic.ai',
+        company: 'Gualapack North America',
+        message: 'Clicked "Start the Pilot" in the Gualapack payment reminder demo.',
+      }),
+      keepalive: true,
     }).catch(()=>{});
   } catch(e){}
 }
