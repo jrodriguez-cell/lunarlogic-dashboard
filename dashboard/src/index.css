@@ -1,33 +1,42 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:         #07101c;
-  --bg-card:    #0c1828;
-  --bg-hover:   #0f1f34;
+  --bg:         #0F172A;  /* brand navy */
+  --bg-card:    rgba(30, 41, 59, 0.4);   /* slate-800/40 */
+  --bg-hover:   rgba(30, 41, 59, 0.65);
   --bg-row:     rgba(255,255,255,0.03);
-  --border:     #1a2c42;
-  --border-mid: #243d5c;
-  --text:       #ddeeff;   /* slightly softer white — less eye strain */
-  --text-dim:   #8aaac8;   /* mid-level labels, secondary values */
-  --muted:      #4e6a88;   /* de-emphasised chrome only — not data */
-  --teal:       #00d4e8;
-  --teal-dim:   rgba(0,212,232,0.10);
-  --teal-glow:  rgba(0,212,232,0.20);
-  --green:      #22c55e;
+  --border:     #334155;  /* slate-700 */
+  --border-mid: #475569;  /* slate-600 */
+  --text:       #e2e8f0;  /* slate-200 */
+  --text-dim:   #cbd5e1;  /* slate-300 */
+  --muted:      #64748b;  /* slate-500 */
+  --teal:       #60A5FA;  /* brand blue-light (kept var name for low-diff swap) */
+  --teal-dim:   rgba(96,165,250,0.10);
+  --teal-glow:  rgba(96,165,250,0.20);
+  --brand-blue:   #3B82F6;
+  --brand-indigo: #818CF8;
+  --brand-gradient: linear-gradient(90deg, #60A5FA 0%, #818CF8 100%);
+  --green:      #4ade80;  /* green-400 */
   --yellow:     #f59e0b;
   --orange:     #f97316;
   --red:        #ef4444;
   --sidebar-w:  220px;
+  --font-body: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Fraunces', Georgia, serif;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+}
+
+h1, h2, .dso-value, .ph-value {
+  font-family: var(--font-heading);
 }
 
 /* ── Layout ─────────────────────────────────────── */
@@ -74,10 +83,35 @@ body {
 }
 
 .sidebar-wordmark {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
   font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: var(--teal);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.sidebar-wordmark-icon {
+  flex-shrink: 0;
+  margin-right: 7px;
+}
+
+.sidebar-wordmark-name {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.sidebar-wordmark-text {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sidebar-wordmark-suffix {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: rgba(255,255,255,0.70);
 }
 
 .sidebar-tagline {
@@ -931,8 +965,8 @@ body {
 .btn-primary {
   flex: 1;
   padding: 10px;
-  background: var(--teal);
-  color: #07101c;
+  background: var(--brand-blue);
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-size: 13px;
@@ -1037,11 +1071,18 @@ body {
 }
 
 .login-wordmark {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
   font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: var(--teal);
+  font-weight: 700;
+  letter-spacing: 0.025em;
   margin-bottom: 4px;
+}
+
+.login-wordmark svg {
+  flex-shrink: 0;
+  margin-right: 8px;
 }
 
 .login-subtitle {
@@ -1082,8 +1123,8 @@ body {
 .login-btn {
   width: 100%;
   padding: 12px;
-  background: var(--teal);
-  color: #07101c;
+  background: var(--brand-blue);
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-size: 14px;

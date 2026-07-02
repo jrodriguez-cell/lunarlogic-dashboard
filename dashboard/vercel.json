@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/gualapack-demo",       "destination": "/gualapack-demo.html" },
     { "source": "/gualapack-diagnostic", "destination": "/gualapack-diagnostic.html" },
+    { "source": "/api/(.*)",             "destination": "/api/$1" },
     { "source": "/(.*)",                 "destination": "/index.html" }
   ]
 }
