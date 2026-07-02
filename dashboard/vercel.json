@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/gualapack-demo",       "destination": "/gualapack-demo.html" },
+    { "source": "/gualapack-diagnostic", "destination": "/gualapack-diagnostic.html" },
+    { "source": "/(.*)",                 "destination": "/index.html" }
+  ]
 }
