@@ -595,6 +595,80 @@ nav {
   </div>
 </section>
 
+<!-- DEMO VIDEO -->
+<section class="demo-video-section z1">
+  <div class="wrap">
+    <div class="section-header centered">
+      <h2>See it working in real time</h2>
+      <p>Live AR dashboard — Slack to QuickBooks in 90 seconds. DSO falling, cash flowing.</p>
+    </div>
+    <div class="demo-video-wrap">
+      <video
+        title="LunarLogic AR Automation Demo"
+        class="demo-video"
+        preload="metadata"
+        poster="assets/video/lunarlogic-demo-poster.png"
+        loop
+        muted
+        playsinline
+        autoplay>
+        <source src="assets/video/lunarlogic-demo.webm" type="video/webm">
+        Your browser does not support the video tag.
+      </video>
+      <div class="demo-video-badge">Live AR Dashboard</div>
+    </div>
+  </div>
+</section>
+
+<style>
+.demo-video-section {
+  padding:3rem 2rem 5rem;
+  border-bottom:1px solid var(--border);
+}
+.demo-video-wrap {
+  position:relative;
+  max-width:960px;
+  margin:0 auto;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid var(--border2);
+  box-shadow:
+    0 0 0 1px rgba(77,208,225,0.08),
+    0 8px 40px rgba(0,0,0,0.5),
+    0 0 60px rgba(77,208,225,0.08);
+}
+.demo-video {
+  display:block;
+  width:100%;
+  height:auto;
+  border-radius:14px;
+}
+.demo-video-badge {
+  position:absolute;
+  top:16px; right:16px;
+  display:flex; align-items:center; gap:.45rem;
+  font-family:'Comfortaa',sans-serif; font-size:.65rem; font-weight:700;
+  color:#20e87a; text-transform:uppercase; letter-spacing:.1em;
+  background:rgba(10,14,26,0.85);
+  border:1px solid rgba(32,232,122,0.3);
+  padding:.35rem .8rem; border-radius:100px;
+  backdrop-filter:blur(6px);
+}
+.demo-video-badge::before {
+  content:'';
+  width:6px; height:6px; border-radius:50%;
+  background:#20e87a;
+  box-shadow:0 0 6px #20e87a;
+  animation:pulseBadge 2s ease-in-out infinite;
+}
+@keyframes pulseBadge {
+  0%,100% { opacity:1; } 50% { opacity:.4; }
+}
+@media(max-width:560px) {
+  .demo-video-section { padding:2rem 1.5rem 3rem; }
+}
+</style>
+
 <!-- PLATFORM OVERVIEW -->
 <section class="platform-overview z1">
   <div class="wrap">
