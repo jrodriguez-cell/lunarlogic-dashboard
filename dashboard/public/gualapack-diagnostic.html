@@ -1174,7 +1174,7 @@
           <label class="field-label">Current AR Balance</label>
           <div class="field-with-prefix">
             <span class="prefix">$</span>
-            <input class="field-input" type="number" id="inputAR" value="520000" step="1000">
+            <input class="field-input" type="number" id="inputAR" value="295000" step="1000">
           </div>
         </div>
 
@@ -1182,7 +1182,7 @@
           <label class="field-label">Total Annual Revenue (enter live on the call)</label>
           <div class="field-with-prefix">
             <span class="prefix">$</span>
-            <input class="field-input" type="number" id="inputRevenue" value="" step="10000" placeholder="Enter Gualapack's actual figure">
+            <input class="field-input" type="number" id="inputRevenue" value="1800000" step="10000" placeholder="Enter Gualapack's actual figure">
           </div>
         </div>
 
@@ -1206,6 +1206,7 @@
           <label class="field-label">Primary Payment Terms</label>
           <div class="terms-options">
             <button type="button" class="term-btn" data-term="7">Net 7</button>
+            <button type="button" class="term-btn" data-term="14">Net 14</button>
             <button type="button" class="term-btn" data-term="21">Net 21</button>
             <button type="button" class="term-btn" data-term="30">Net 30</button>
             <button type="button" class="term-btn" data-term="60">Net 60</button>
@@ -1406,7 +1407,7 @@
     };
 
     var termButtons = document.querySelectorAll('.term-btn');
-    var activeTerm = 7;
+    var activeTerm = 14;
 
     function setActiveTerm(term) {
       activeTerm = term;
