@@ -1,0 +1,9 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/api/contact",
+      "destination": "https://lunarlogic-dashboard.vercel.app/api/contact"
+    }
+  ]
+}
