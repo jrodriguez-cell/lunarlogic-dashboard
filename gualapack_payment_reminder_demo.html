@@ -488,6 +488,27 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
 .digest-row .dr-ic{width:22px;height:22px;border-radius:7px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem}
 .digest-row b{color:#F1F5F9}
 
+/* ===================== SECTION 5: FREED CASH / ROI ==================== */
+.impact-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-top:1rem}
+@media(max-width:640px){.impact-row{grid-template-columns:1fr}}
+.impact-tile{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.85rem 1rem;text-align:center;backdrop-filter:blur(4px)}
+.impact-tile .it-num{font-size:1.5rem;font-weight:900;color:#F8FAFC;letter-spacing:-.02em;line-height:1}
+.impact-tile .it-num.grad2{background:var(--grad-h);-webkit-background-clip:text;background-clip:text;color:transparent}
+.impact-tile .it-num span{font-size:.85rem;color:var(--slate-500);font-weight:700}
+.impact-tile .it-lbl{font-size:.76rem;color:var(--slate-400);margin-top:.3rem;line-height:1.35}
+.oppcost{margin-top:.8rem;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:11px;padding:.75rem 1rem;color:var(--slate-300);font-size:.88rem;line-height:1.5;text-align:left}
+.oppcost b{color:#F1F5F9}
+.oppcost .amt{background:var(--grad-h);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+.invest{margin-top:.9rem}
+.invest-label{font-size:.72rem;color:var(--slate-500);text-transform:uppercase;letter-spacing:.09em;font-weight:800;margin-bottom:.5rem;text-align:center}
+.invest-opts{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.65rem;justify-content:center}
+.invest-opt{cursor:pointer;font-family:inherit;font-weight:800;font-size:.8rem;border-radius:999px;padding:.4rem .85rem;background:var(--navy-deep);border:1px solid var(--border);color:var(--slate-400);transition:all .18s}
+.invest-opt:hover{border-color:rgba(96,165,250,.4)}
+.invest-opt.active{border-color:var(--blue-light);background:rgba(96,165,250,.12);color:#F1F5F9}
+.invest-detail{background:var(--navy-deep);border:1px solid var(--border);border-left:3px solid var(--blue-light);border-radius:9px;padding:.8rem 1rem;color:var(--slate-300);font-size:.88rem;line-height:1.5;text-align:left}
+.invest-detail b{color:#F1F5F9}
+.invest-detail .amt{background:var(--grad-h);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+
 /* ============================ PRINT ================================== */
 @media print{
   .topbar,.nav{display:none!important}
@@ -530,7 +551,8 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
       <span class="dot" data-go="2" title="The Payment Reminder"></span>
       <span class="dot" data-go="3" title="Full Scope"></span>
       <span class="dot" data-go="4" title="The Result"></span>
-      <span class="dot" data-go="5" title="Next Step"></span>
+      <span class="dot" data-go="5" title="Freed Cash"></span>
+      <span class="dot" data-go="6" title="Next Step"></span>
     </nav>
   </header>
 
@@ -895,10 +917,43 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
 
     </section>
 
-    <!-- ===================== SECTION 6: CTA ===================== -->
+    <!-- ===================== SECTION 6: FREED CASH / ROI ===================== -->
     <section class="section" id="s5">
+      <div class="eyebrow">Section 5 · Beyond the recovery</div>
+      <h2>What the Freed Cash Does</h2>
+      <p class="lead">Releasing the cash is only the start. Here's what that money, and the time it frees, is actually worth once it's back in the business. (Illustrative figures for your profile, easy to refine.)</p>
+
+      <div class="impact-row">
+        <div class="impact-tile"><div class="it-num">$65K-$85K</div><div class="it-lbl">One-time cash released back into the business</div></div>
+        <div class="impact-tile"><div class="it-num grad2">~$25K<span> /yr</span></div><div class="it-lbl">Recurring value, every year after</div></div>
+        <div class="impact-tile"><div class="it-num">~5 weeks</div><div class="it-lbl">Of your AR person's year, returned</div></div>
+      </div>
+
+      <div class="oppcost">
+        <b>The cost of leaving it stuck:</b> while roughly $75K sits in customers' accounts, at a 10% cost of capital it drains about <span class="amt">$7,500 a year</span> in foregone return. That's your cash financing their late payments instead of funding your own growth.
+      </div>
+
+      <div class="invest">
+        <div class="invest-label">Where that cash can go, once it's yours again</div>
+        <div class="invest-opts">
+          <button class="invest-opt active" data-inv="0" onclick="investSel(0)">Fund a sales hire</button>
+          <button class="invest-opt" data-inv="1" onclick="investSel(1)">Capture supplier discounts</button>
+          <button class="invest-opt" data-inv="2" onclick="investSel(2)">Stock more inventory</button>
+          <button class="invest-opt" data-inv="3" onclick="investSel(3)">Pay down the credit line</button>
+        </div>
+        <div class="invest-detail" id="investDetail"></div>
+      </div>
+
+      <div class="feat-help" style="text-align:left;margin-top:.8rem">
+        <span class="hi">✓</span>
+        <span><b>Plus the time back:</b> about 4 hours a week off manual follow-up, roughly <b>208 hours (5 work-weeks)</b> and <span style="color:#86EFAC;font-weight:800">$7,300</span> of reallocated labor a year. Your accounting staff move from chasing invoices to cash forecasting, negotiating vendor terms, and protecting customer relationships.</span>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 7: CTA ===================== -->
+    <section class="section" id="s6">
       <div class="cta-slide">
-        <div class="eyebrow" style="margin-left:auto;margin-right:auto">Section 5 · The Next Step</div>
+        <div class="eyebrow" style="margin-left:auto;margin-right:auto">Section 6 · The Next Step</div>
         <h2>A 90-Day Pilot</h2>
         <p class="lead" style="margin-left:auto;margin-right:auto">A focused trial on a handful of your slowest-paying accounts. Low risk, fully measurable, and you only scale it if the numbers move.</p>
 
@@ -950,7 +1005,7 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
       Back
     </button>
-    <div class="nav-meta"><b id="stepNum">1</b> of 6 · <span id="stepName">Overview</span></div>
+    <div class="nav-meta"><b id="stepNum">1</b> of 7 · <span id="stepName">Overview</span></div>
     <button class="btn btn-primary" id="nextBtn" onclick="go(current+1)">
       Next
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -1007,7 +1062,7 @@ h3{font-size:1.02rem;color:#F1F5F9;font-weight:800}
    ===================================================================== */
 const sections = Array.from(document.querySelectorAll('.section'));
 const dots      = Array.from(document.querySelectorAll('.dot'));
-const names     = ['Overview','Current State','The Payment Reminder','Full Scope','The Result','Next Step'];
+const names     = ['Overview','Current State','The Payment Reminder','Full Scope','The Result','Freed Cash','Next Step'];
 let current = 0;
 
 function go(i){
@@ -1188,10 +1243,23 @@ function toggleDispute(){
   b.textContent = w.classList.toggle('show') ? 'Hide explanation' : 'Why was this flagged? →';
 }
 
+/* Section 5 · reinvestment options for the freed cash (illustrative figures) */
+const INVEST = [
+  'The freed cash plus your follow-up labor savings (about <b>$82K</b>) covers most of a spare-parts sales rep\'s first year. One rep adding <span class="amt">~$300K</span> in annual sales lifts revenue about <b>17%</b> on a $1.8M base. A growth hire funded by money that was just sitting in receivables.',
+  'With cash on hand you can take early-pay terms (2/10 net 30). On roughly $500K of annual purchases, a 2% discount is about <span class="amt">$10,000 a year</span>, straight to margin, and it repeats every year.',
+  'Put <b>$50K</b> into your fastest-moving spare-parts SKUs. Fewer stockouts means fewer lost orders. Inventory that turns 4 to 6 times a year works far harder than cash sitting in receivables.',
+  'Apply about <b>$75K</b> against a line of credit at ~10% and save roughly <span class="amt">$7,500 a year</span> in interest. A guaranteed, zero-risk return the day the cash lands.',
+];
+function investSel(i){
+  document.querySelectorAll('.invest-opt').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+  document.getElementById('investDetail').innerHTML = INVEST[i];
+}
+
 // initialise feature defaults (no modal side-effects)
 cadStep(0);
 riskSel('lo');
 document.getElementById('actDetail').innerHTML = ACT.log;
+investSel(0);
 
 go(0);
 </script>
