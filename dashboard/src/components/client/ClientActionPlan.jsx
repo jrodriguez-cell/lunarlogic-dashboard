@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import SourceTag from '../SourceTag';
 
 function fmtK(v) {
@@ -432,7 +432,7 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
 }
 
 // AI Dispute Monitor panel
-function DisputeMonitor({ disputes, isMobile, onAction, onDrill }) {
+function DisputeMonitor({ disputes, isMobile, onAction }) {
   const [expanded, setExpanded] = useState(null);
   const [draftOpen, setDraftOpen] = useState(null);
 
@@ -566,7 +566,6 @@ function DisputeMonitor({ disputes, isMobile, onAction, onDrill }) {
 
 function ActionRow({ inv, isMobile, onClick, onAction }) {
   const color = URGENCY_COLOR[inv.urgency];
-  const isAutomated = inv.urgency === 'low';
   return (
     <div style={{ background: 'var(--bg-card)', border: `1px solid ${['critical','high'].includes(inv.urgency) ? color+'44' : 'var(--border)'}`, borderLeft: `3px solid ${color}`, borderRadius: 8, overflow: 'hidden' }}>
       <div onClick={onClick} style={{ padding: '12px 14px', cursor: 'pointer', transition: 'background 0.1s' }}

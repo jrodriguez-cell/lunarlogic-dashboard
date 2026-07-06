@@ -33,6 +33,11 @@ const INV_COLS = [
   { key: 'status',      label: 'Status' },
 ];
 
+function SortIcon({ col, sortCol, sortDir }) {
+  if (sortCol !== col) return <span style={{ opacity: 0.25, marginLeft: 3, fontSize: 9 }}>↕</span>;
+  return <span style={{ color: 'var(--teal)', marginLeft: 3, fontSize: 9 }}>{sortDir === -1 ? '↓' : '↑'}</span>;
+}
+
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
@@ -100,11 +105,6 @@ export default function ARAgingChart({ invoices = [], paymentBehavior = [], sele
     const av = a[sortCol] ?? 0, bv = b[sortCol] ?? 0;
     return typeof av === 'string' ? sortDir * av.localeCompare(bv) : sortDir * (av - bv);
   });
-
-  function SortIcon({ col }) {
-    if (sortCol !== col) return <span style={{ opacity: 0.25, marginLeft: 3, fontSize: 9 }}>↕</span>;
-    return <span style={{ color: 'var(--teal)', marginLeft: 3, fontSize: 9 }}>{sortDir === -1 ? '↓' : '↑'}</span>;
-  }
 
   function drillBucket(b) {
     const rows = open.filter(i => b.test(i.daysOverdue));
@@ -218,15 +218,15 @@ export default function ARAgingChart({ invoices = [], paymentBehavior = [], sele
           <table style={{ width: '100%', minWidth: 400, borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={th('customer', 'left')} onClick={() => handleSort('customer')}>Customer <SortIcon col="customer" /></th>
-                <th style={th('riskLevel')} onClick={() => handleSort('riskLevel')}>Risk <SortIcon col="riskLevel" /></th>
-                <th style={th('avgDays')} onClick={() => handleSort('avgDays')}>Avg Days <SortIcon col="avgDays" /></th>
+                <th style={th('customer', 'left')} onClick={() => handleSort('customer')}>Customer <SortIcon col="customer" sortCol={sortCol} sortDir={sortDir} /></th>
+                <th style={th('riskLevel')} onClick={() => handleSort('riskLevel')}>Risk <SortIcon col="riskLevel" sortCol={sortCol} sortDir={sortDir} /></th>
+                <th style={th('avgDays')} onClick={() => handleSort('avgDays')}>Avg Days <SortIcon col="avgDays" sortCol={sortCol} sortDir={sortDir} /></th>
                 {BUCKETS.map(b => (
                   <th key={b.key} style={{ ...th(b.key), color: b.color }} onClick={() => handleSort(b.key)}>
-                    {b.label} <SortIcon col={b.key} />
+                    {b.label} <SortIcon col={b.key} sortCol={sortCol} sortDir={sortDir} />
                   </th>
                 ))}
-                <th style={{ ...th('balance'), color: 'var(--teal)' }} onClick={() => handleSort('balance')}>Total <SortIcon col="balance" /></th>
+                <th style={{ ...th('balance'), color: 'var(--teal)' }} onClick={() => handleSort('balance')}>Total <SortIcon col="balance" sortCol={sortCol} sortDir={sortDir} /></th>
               </tr>
             </thead>
             <tbody>

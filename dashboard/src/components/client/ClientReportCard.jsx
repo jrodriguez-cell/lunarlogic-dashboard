@@ -68,6 +68,9 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
 
   useEffect(() => {
     let cancelled = false;
+    // Fetch the AI insight from the API (an external system) when the client
+    // changes; resetting loading/summary state before the request is intended.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAiLoading(true);
     setAiSummary(null);
 
@@ -264,6 +267,18 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
   );
 }
 
+function DSOChartTooltip({ active, payload, goLiveDate }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0]?.payload;
+  return (
+    <div style={{ background: '#141824', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 7, padding: '7px 11px', fontSize: 11, pointerEvents: 'none' }}>
+      <div style={{ color: '#6b7280', marginBottom: 2 }}>{d.date}</div>
+      <div style={{ color: '#00d4e8', fontWeight: 700 }}>{d.dso.toFixed(1)}d DSO</div>
+      <div style={{ color: d.date >= goLiveDate ? '#22c55e' : '#6b7280', fontSize: 10 }}>{d.date >= goLiveDate ? 'Post go-live' : 'Pre go-live'}</div>
+    </div>
+  );
+}
+
 function DSOTrendChart({ trend, goLiveDate, preLiveDSO, currentDSO, isMobile, onDrill, DSO_COLS }) {
   if (!trend?.length) return null;
   const data = trend.map(p => ({
@@ -273,17 +288,6 @@ function DSOTrendChart({ trend, goLiveDate, preLiveDSO, currentDSO, isMobile, on
   }));
   const step = Math.max(1, Math.floor(trend.length / 5));
   const tickDates = trend.filter((_, i) => i % step === 0 || i === trend.length - 1).map(p => p.date);
-  const CustomTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0]?.payload;
-    return (
-      <div style={{ background: '#141824', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 7, padding: '7px 11px', fontSize: 11, pointerEvents: 'none' }}>
-        <div style={{ color: '#6b7280', marginBottom: 2 }}>{d.date}</div>
-        <div style={{ color: '#00d4e8', fontWeight: 700 }}>{d.dso.toFixed(1)}d DSO</div>
-        <div style={{ color: d.date >= goLiveDate ? '#22c55e' : '#6b7280', fontSize: 10 }}>{d.date >= goLiveDate ? 'Post go-live' : 'Pre go-live'}</div>
-      </div>
-    );
-  };
   return (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 16px 12px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
@@ -326,7 +330,7 @@ function DSOTrendChart({ trend, goLiveDate, preLiveDSO, currentDSO, isMobile, on
             label={{ value: 'Go-live', position: 'insideTopRight', fill: 'rgba(0,212,232,0.65)', fontSize: 9, fontWeight: 700 }} />
           <Area type="monotone" dataKey="pre"  stroke="#4b5563" strokeWidth={1.5} fill="url(#rcPreFill)"  dot={false} isAnimationActive={false} connectNulls={false} />
           <Area type="monotone" dataKey="post" stroke="#00d4e8" strokeWidth={2}   fill="url(#rcPostFill)" dot={false} isAnimationActive={false} connectNulls={false} />
-          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,212,232,0.15)', strokeWidth: 1 }} />
+          <Tooltip content={<DSOChartTooltip goLiveDate={goLiveDate} />} cursor={{ stroke: 'rgba(0,212,232,0.15)', strokeWidth: 1 }} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

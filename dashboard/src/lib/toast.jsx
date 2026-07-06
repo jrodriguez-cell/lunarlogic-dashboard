@@ -29,6 +29,9 @@ export function ToastProvider({ children }) {
   );
 }
 
+// Provider + hook intentionally co-located in this context module; the
+// fast-refresh "only export components" rule doesn't apply to a hook export.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {
   return useContext(ToastContext);
 }

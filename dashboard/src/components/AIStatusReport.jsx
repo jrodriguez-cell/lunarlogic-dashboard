@@ -16,12 +16,10 @@ function getSummaries(view, m = {}) {
     writeOffRisk = 0, writeOffCount = 0,
     expectedCashIn = 0, unappliedAmt = 0,
     autoMatchRate = 0, unappliedPayments = [],
-    clientName = 'your firm',
   } = m;
 
   const autoApplied   = payments.filter(p => p.status === 'Auto-Applied');
   const pendingCount  = payments.filter(p => p.status === 'Pending Review').length;
-  const totalReceived = payments.reduce((s, p) => s + p.amount, 0);
   const sentCount     = invoices.filter(i => i.status === 'Sent').length;
   const viewedCount   = invoices.filter(i => i.status === 'Viewed').length;
   const paidCount     = invoices.filter(i => i.status === 'Paid').length;
@@ -117,16 +115,25 @@ export default function AIStatusReport({ view, metrics }) {
   const [variant, setVariant]     = useState(0);
   const [displayed, setDisplayed] = useState('');
   const [loading, setLoading]     = useState(false);
+  const [prevView, setPrevView]   = useState(view);
+
+  // Reset to the first summary variant when the view changes. Adjusting state
+  // during render (rather than in an effect) is the React-recommended way to
+  // reset state in response to a prop change — it avoids an extra render pass.
+  if (prevView !== view) {
+    setPrevView(view);
+    setVariant(0);
+  }
 
   const summaries = getSummaries(view, metrics);
   const fullText  = summaries[variant % summaries.length];
 
   useEffect(() => {
-    setVariant(0);
-  }, [view]);
-
-  useEffect(() => {
     if (loading) return;
+    // Timer-driven typewriter animation: reset the visible text, then reveal
+    // `fullText` a few characters at a time. This effect subscribes to a timer
+    // (an external system), so the initial reset is intentional here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayed('');
     let i = 0;
     const id = setInterval(() => {

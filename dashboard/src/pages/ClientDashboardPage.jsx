@@ -48,6 +48,10 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [liveData, setLiveData] = useState(null);
 
   useEffect(() => {
+    // Clear stale data when the client changes, then fetch fresh figures from
+    // the QuickBooks-backed API. This effect synchronises with an external
+    // system, so the reset before the async fetch is intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLiveData(null);
     let cancelled = false;
     fetchDashboardData(session.clientId).then(d => { if (!cancelled) setLiveData(d); });
@@ -295,7 +299,7 @@ function StatCard({ label, value, sub, color, onClick, clickable, span }) {
 }
 
 // Shared column definitions used across all drill views
-export const INV_COLS = [
+const INV_COLS = [
   { key: 'id',          label: 'Invoice' },
   { key: 'customer',    label: 'Customer' },
   { key: 'amount',      label: 'Amount',       render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },

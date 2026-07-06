@@ -5,7 +5,7 @@
  * Fetches live data from QuickBooks and transforms it into dashboard format
  */
 
-import { getQBAccessToken, qbApiRequest } from './_lib/quickbooks.js';
+import { qbApiRequest } from './_lib/quickbooks.js';
 
 const GO_LIVE_DATE = '2026-03-17'; // Your actual go-live date
 

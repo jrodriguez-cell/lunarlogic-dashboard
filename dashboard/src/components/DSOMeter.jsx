@@ -1,4 +1,4 @@
-export default function DSOMeter({ current, delta, preLive, efficiency, onClick }) {
+export default function DSOMeter({ current, delta, preLive, onClick }) {
   return (
     <button className="dso-meter-btn" onClick={onClick}>
     <div className="dso-meter">

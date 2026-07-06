@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useToast } from '../../lib/toast';
-import { exportCSV } from '../../lib/csv';
 
 const TEAM = ['Jonathan Rodriguez', 'Sarah M. (Admin)', 'Unassigned'];
 

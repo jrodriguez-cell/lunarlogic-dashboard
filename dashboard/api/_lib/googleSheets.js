@@ -69,7 +69,7 @@ export async function logReminderToSheets(data) {
     console.log('Reminder logged to Google Sheets');
   } catch (error) {
     console.error('Error logging reminder to Sheets:', error);
-    throw new Error(`Failed to log reminder: ${error.message}`);
+    throw new Error(`Failed to log reminder: ${error.message}`, { cause: error });
   }
 }
 
@@ -109,7 +109,7 @@ export async function logActivityToSheets(data) {
     console.log('Activity logged to Google Sheets');
   } catch (error) {
     console.error('Error logging activity to Sheets:', error);
-    throw new Error(`Failed to log activity: ${error.message}`);
+    throw new Error(`Failed to log activity: ${error.message}`, { cause: error });
   }
 }
 
@@ -147,7 +147,7 @@ export async function getInvoicesFromSheets() {
     }));
   } catch (error) {
     console.error('Error reading invoices from Sheets:', error);
-    throw new Error(`Failed to get invoices: ${error.message}`);
+    throw new Error(`Failed to get invoices: ${error.message}`, { cause: error });
   }
 }
 

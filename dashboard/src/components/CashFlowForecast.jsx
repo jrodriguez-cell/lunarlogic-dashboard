@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip,
 } from 'recharts';
 import { exportXLSX } from '../lib/excel';
 import { FORECAST_TODAY as TODAY, addDays, enrichInvoices, forecastWithin } from '../lib/forecast';
@@ -14,12 +14,6 @@ function fmtM(v) {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
   if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
   return `$${v}`;
-}
-
-function riskColor(riskLevel) {
-  if (riskLevel === 'high')   return '#ef4444';
-  if (riskLevel === 'medium') return '#f59e0b';
-  return '#22c55e';
 }
 
 const EXPORT_COLS = [

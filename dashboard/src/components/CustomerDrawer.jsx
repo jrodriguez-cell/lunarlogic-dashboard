@@ -9,12 +9,6 @@ function initials(name) {
   return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
 }
 
-function riskColor(level) {
-  if (level === 'low')    return 'var(--green)';
-  if (level === 'medium') return 'var(--yellow)';
-  return 'var(--red)';
-}
-
 export default function CustomerDrawer({ customer, invoices, onClose, onOpenInvoice, onDrill }) {
   if (!customer) return null;
 
@@ -22,7 +16,6 @@ export default function CustomerDrawer({ customer, invoices, onClose, onOpenInvo
   const customerInvoices = allInvoices.filter(inv => inv.status !== 'Paid');
   const recentPaid = allInvoices.filter(inv => inv.status === 'Paid');
   const overdueCount = customerInvoices.filter(inv => inv.status === 'Overdue').length;
-  const totalOpen    = customerInvoices.reduce((s, inv) => s + inv.amount, 0);
 
   const trendAbs = Math.abs(customer.trend);
   const trendLabel = customer.trend < 0

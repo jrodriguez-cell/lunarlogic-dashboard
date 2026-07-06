@@ -69,7 +69,7 @@ function StatusItem({ label, status, detail, sub, color }) {
   );
 }
 
-export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate, isMobile, onDrill, onAction }) {
+export default function ClientOverview({ data, currentDSO, dsoChange, isMobile, onDrill, onAction }) {
   const [customerDrawer, setCustomerDrawer] = useState(null);
   const open     = data.invoices.filter(i => i.status !== 'Paid');
   const overdue  = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
@@ -93,7 +93,6 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
   const uncoveredInvs   = open.filter(i => !(i.reminders?.length > 0) && !i.nextReminder);
   const coveragePct     = open.length > 0 ? Math.round(coveredInvs.length / open.length * 100) : 100;
   const disputeSuspects = getDisputeSuspects(data.invoices, data.paymentBehavior);
-  const pbMap           = Object.fromEntries((data.paymentBehavior ?? []).map(p => [p.customer, p]));
 
   function drillInvoices(title, rows, sub) {
     onDrill({ title, subtitle: sub, source: 'Live invoice data from QuickBooks Online.', filename: title.toLowerCase().replace(/\s+/g,'_'), columns: INV_COLS, rows });
@@ -103,53 +102,6 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
     const rows = open.filter(i => i.daysOverdue >= minDays && i.daysOverdue <= maxDays);
     const amt  = rows.reduce((s, i) => s + i.amount, 0);
     drillInvoices(`AR Aging — ${label}`, rows, `${fmtM(amt)} · ${rows.length} invoice${rows.length !== 1 ? 's' : ''}`);
-  }
-
-  function drillCustomer(pb) {
-    const rows = open.filter(i => i.customer === pb.customer);
-    onDrill({
-      title: `${pb.customer} — Open Invoices`,
-      subtitle: `${fmtM(pb.openAmount)} outstanding · avg ${pb.avgDays}d to pay · ${pb.riskLevel} risk`,
-      source: 'Historical payment pattern based on past invoices. Risk level drives reminder frequency.',
-      filename: `customer_${pb.customer.toLowerCase().replace(/\s+/g,'_')}`,
-      columns: INV_COLS,
-      rows,
-    });
-  }
-
-  function drillFollowUp() {
-    const rows = data.invoices
-      .filter(i => i.status !== 'Paid')
-      .map(inv => {
-        const pb = pbMap[inv.customer];
-        return {
-          ...inv,
-          remindersCount:   inv.reminders?.length ?? 0,
-          lastReminder:     inv.reminders?.length > 0 ? inv.reminders[inv.reminders.length - 1] : 'None sent',
-          nextReminderDate: inv.nextReminder ?? 'Sequence complete',
-          customerAvg:      pb?.avgDays ?? '?',
-          riskLevel:        pb?.riskLevel ?? '—',
-        };
-      })
-      .sort((a, b) => b.remindersCount - a.remindersCount);
-    onDrill({
-      title: 'Follow-Up Cadence — All Open Invoices',
-      subtitle: `${rows.length} invoices · ${rows.filter(r => r.remindersCount > 0).length} in active sequences`,
-      source: 'Reminder schedule: −7d before due, then +1, +7, +14, +21, +28 days after due. Sent via LunarLogic through Outlook to the customer contact.',
-      filename: 'followup_cadence',
-      columns: [
-        { key: 'customer',         label: 'Customer' },
-        { key: 'id',               label: 'Invoice' },
-        { key: 'amount',           label: 'Amount',            render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
-        { key: 'daysOverdue',      label: 'Status',            render: (v, row) => v > 0 ? `${v}d overdue` : `Due ${row.due}` },
-        { key: 'remindersCount',   label: 'Reminders Sent',    render: v => v > 0 ? `${v} sent` : 'None yet' },
-        { key: 'lastReminder',     label: 'Last Reminder' },
-        { key: 'nextReminderDate', label: 'Next Reminder' },
-        { key: 'customerAvg',      label: 'Customer Avg Pay',  render: v => `${v}d` },
-        { key: 'riskLevel',        label: 'Risk' },
-      ],
-      rows,
-    });
   }
 
   function drillUnapplied() {
@@ -171,67 +123,6 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
       rows: pending,
     });
   }
-
-  function drillDisputes() {
-    const rows = disputeSuspects.map(inv => {
-      const pb = pbMap[inv.customer];
-      const reason = inv.status === 'Viewed' && inv.daysOverdue > 7
-        ? 'Invoice viewed but not paid — billing question likely stalling payment'
-        : `${inv.daysOverdue}d overdue vs ${pb?.avgDays ?? '?'}d customer average — anomalous behavior`;
-      const actionsTaken = inv.reminders?.length > 0
-        ? `${inv.reminders.length} reminder${inv.reminders.length !== 1 ? 's' : ''} sent — ${inv.reminders.join(', ')}`
-        : 'No reminders sent yet';
-      return {
-        ...inv,
-        disputeReason: reason,
-        actionsTaken,
-        nextStep: inv.nextReminder
-          ? `Reminder scheduled ${inv.nextReminder} — consider calling before then`
-          : 'Automated sequence complete — direct call recommended',
-        customerAvg: pb?.avgDays ?? '?',
-      };
-    });
-
-    if (rows.length === 0) {
-      const atRisk = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45);
-      onDrill({
-        title: 'Aging Risk — 45+ Days Overdue',
-        subtitle: `${atRisk.length} invoice${atRisk.length !== 1 ? 's' : ''} at recovery risk`,
-        source: 'Invoices over 90 days past due have under 50% average recovery. Escalation recommended.',
-        filename: 'aging_risk',
-        columns: INV_COLS,
-        rows: atRisk,
-      });
-      return;
-    }
-
-    onDrill({
-      title: 'Dispute Detection — Anomalous Payment Behavior',
-      subtitle: `${rows.length} invoice${rows.length !== 1 ? 's' : ''} flagged · direct contact recommended`,
-      source: 'Flagged when a low/medium-risk customer pays later than their own average, or when an invoice was viewed but not paid after the due date.',
-      filename: 'dispute_flags',
-      columns: [
-        { key: 'customer',      label: 'Customer' },
-        { key: 'id',            label: 'Invoice' },
-        { key: 'amount',        label: 'Amount',           render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
-        { key: 'daysOverdue',   label: 'Days Overdue',     render: v => `${v}d` },
-        { key: 'customerAvg',   label: 'Customer Avg Pay', render: v => `${v}d` },
-        { key: 'disputeReason', label: 'Anomaly Flag' },
-        { key: 'actionsTaken',  label: 'Actions Taken' },
-        { key: 'nextStep',      label: 'Recommended Next Step' },
-      ],
-      rows,
-    });
-  }
-
-  const atRisk45Count  = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45).length;
-  const disputeColor   = disputeSuspects.length > 0 ? '#a78bfa' : (atRisk45Count > 0 ? '#f97316' : '#22c55e');
-  const disputeStatus  = disputeSuspects.length > 0 ? 'attention' : (atRisk45Count > 0 ? 'attention' : 'resolved');
-  const disputeDetail  = disputeSuspects.length > 0
-    ? `${disputeSuspects.length} invoice${disputeSuspects.length !== 1 ? 's' : ''} showing anomalous payment behavior — possible dispute or billing question`
-    : atRisk45Count > 0
-      ? `${atRisk45Count} invoice${atRisk45Count !== 1 ? 's' : ''} 45+ days overdue — escalation recommended`
-      : 'No invoices at dispute or aging risk';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

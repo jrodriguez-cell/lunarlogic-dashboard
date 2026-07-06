@@ -72,21 +72,6 @@ function deriveInvoicesAsOf(rawInvoices, asOfDate) {
     });
 }
 
-function computeARAgingFromInvoices(adjInvoices) {
-  const open = adjInvoices.filter(i => i.status !== 'Paid');
-  return [
-    { bucket: 'Current', key: 'current', min: 0,   max: 0          },
-    { bucket: '1–30',    key: '1-30',    min: 1,   max: 30         },
-    { bucket: '31–60',   key: '31-60',   min: 31,  max: 60         },
-    { bucket: '61–90',   key: '61-90',   min: 61,  max: 90         },
-    { bucket: '90+',     key: '90+',     min: 91,  max: Infinity   },
-  ].map(b => ({
-    bucket: b.bucket, key: b.key,
-    amount: open.filter(i => i.daysOverdue >= b.min && i.daysOverdue <= b.max).reduce((s,i) => s+i.amount, 0),
-    count:  open.filter(i => i.daysOverdue >= b.min && i.daysOverdue <= b.max).length,
-  }));
-}
-
 function fmtAsOf(iso) {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -128,6 +113,10 @@ export default function DashboardPage({ session, onLogout }) {
   }, [session.clientId]);
 
   useEffect(() => {
+    // Fetch on mount and poll every REFRESH_MS. `load` synchronises the page
+    // with an external system (the QuickBooks API), which is the intended use
+    // of an effect; the setState it performs happens after the async fetch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     const timer = setInterval(load, REFRESH_MS);
     return () => clearInterval(timer);
@@ -152,11 +141,10 @@ export default function DashboardPage({ session, onLogout }) {
     );
   }
 
-  const { dsoTrend: rawDSOTrend, arAging: rawARaging, invoices: rawInvoices, paymentBehavior, goLiveDate, preLiveDSO, collectionEfficiency, payments } = data;
+  const { dsoTrend: rawDSOTrend, invoices: rawInvoices, paymentBehavior, goLiveDate, preLiveDSO, collectionEfficiency, payments } = data;
 
   // Derive all data relative to the selected as-of date
   const invoices  = deriveInvoicesAsOf(rawInvoices, asOfDate);
-  const arAging   = computeARAgingFromInvoices(invoices);
   const dsoTrend  = rawDSOTrend.filter(p => p.date <= asOfDate);
 
   const dsoEntry    = dsoTrend.length > 0 ? dsoTrend[dsoTrend.length - 1] : rawDSOTrend[rawDSOTrend.length - 1];
@@ -174,9 +162,6 @@ export default function DashboardPage({ session, onLogout }) {
   const expectedCashIn   = forecast30Rows.reduce((s, i) => s + i.amount, 0);
 
   const pendingPayments  = payments ? payments.filter(p => p.status === 'Pending Review').length : 0;
-  const autoApplied      = payments ? payments.filter(p => p.status === 'Auto-Applied') : [];
-  const autoMatchRate    = payments ? Math.round((autoApplied.length / payments.length) * 100) : 0;
-  const totalAppliedAmt  = autoApplied.reduce((s, p) => s + p.amount, 0);
   const avgApplyMinutes  = 8;
 
   const cashCustomers = payments
