@@ -15,6 +15,7 @@
  */
 
 import { kv } from '@vercel/kv';
+import { verifyClient, sendAuthError } from './_lib/clerkAuth.js';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-3-5-haiku-20241022';
@@ -34,10 +35,19 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' });
   }
 
-  const { clientId, clientName, metrics } = req.body || {};
+  // clientId is bound to the verified session — the cache is keyed by it, so it
+  // must not be spoofable via the request body.
+  let clientId;
+  try {
+    ({ clientId } = await verifyClient(req));
+  } catch (err) {
+    return sendAuthError(res, err);
+  }
 
-  if (!clientId || !metrics) {
-    return res.status(400).json({ error: 'clientId and metrics are required' });
+  const { clientName, metrics } = req.body || {};
+
+  if (!metrics) {
+    return res.status(400).json({ error: 'metrics are required' });
   }
 
   const key = cacheKey(clientId);

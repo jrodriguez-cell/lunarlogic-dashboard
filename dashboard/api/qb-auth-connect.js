@@ -6,6 +6,12 @@
  * the user approves, qb-auth-callback.js exchanges the code for tokens
  * and saves them (encrypted) via tokenStore.js. After that, all refreshes
  * happen automatically in quickbooks.js.
+ *
+ * This is an internal onboarding tool: it initiates an OAuth flow that binds
+ * a QuickBooks company to a clientId, so it must not be publicly callable.
+ * Because it's opened as a top-level browser redirect (no Authorization header
+ * possible), it's gated by a shared admin secret rather than a Clerk session:
+ *   /api/qb-auth-connect?clientId=<id>&key=<ADMIN_SETUP_SECRET>
  */
 
 import crypto from 'crypto';
@@ -15,6 +21,11 @@ const QB_AUTH_URL = 'https://appcenter.intuit.com/connect/oauth2';
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const setupSecret = process.env.ADMIN_SETUP_SECRET;
+  if (!setupSecret || req.query.key !== setupSecret) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
 
   const clientId = req.query.clientId || 'default';

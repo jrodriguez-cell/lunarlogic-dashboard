@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import SourceTag from '../SourceTag';
+import { authedFetch } from '../../lib/api';
 
 const TODAY_ISO = '2026-06-11';
 
@@ -90,10 +91,10 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
       remindersSentTotal: totalRemindersSent,
     };
 
-    fetch('/api/ar-insights', {
+    authedFetch('/api/ar-insights', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId, clientName: data.name, metrics }),
+      body: JSON.stringify({ clientName: data.name, metrics }),
     })
       .then(res => { if (!res.ok) throw new Error(`status ${res.status}`); return res.json(); })
       .then(json => { if (!cancelled) setAiSummary(json.insight); })

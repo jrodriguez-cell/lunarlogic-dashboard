@@ -1,5 +1,3 @@
-import { logout } from '../lib/auth';
-
 const Icons = {
   overview: () => (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor">
@@ -68,7 +66,6 @@ const NAV_PAYMENTS = [
 
 export default function Sidebar({ activeView, onNav, session, onLogout, pendingPayments }) {
   function handleLogout() {
-    logout();
     onLogout();
   }
 

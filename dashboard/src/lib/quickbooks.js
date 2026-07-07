@@ -1,4 +1,5 @@
 import { getClientData } from '../data/mockData';
+import { authedFetch } from './api';
 
 // Clients with a live QuickBooks connection (token seeded via /api/qb-auth-connect).
 // Everything else still runs on mock data until onboarded the same way.
@@ -13,9 +14,12 @@ export async function fetchDashboardData(clientId) {
   }
 
   try {
+    // No clientId in the URL — the server resolves it from the verified session
+    // token attached by authedFetch, so the browser can't request another
+    // client's data.
     const [dashRes, statusRes] = await Promise.all([
-      fetch(`/api/dashboard-data?clientId=${encodeURIComponent(clientId)}`),
-      fetch(`/api/automation-status`).catch(() => null),
+      authedFetch(`/api/dashboard-data`),
+      authedFetch(`/api/automation-status`).catch(() => null),
     ]);
     if (!dashRes.ok) throw new Error(`dashboard-data request failed: ${dashRes.status}`);
     const live = await dashRes.json();

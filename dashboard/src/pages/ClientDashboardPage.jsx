@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { fetchDashboardData } from '../lib/quickbooks';
 import { useMobile } from '../lib/useMobile';
@@ -77,7 +76,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
     };
   }, [base, liveData]);
 
-  function handleLogout() { logout(); onLogout(); }
+  function handleLogout() { onLogout(); }
 
   const currentDSOEntry = data.dsoTrend[data.dsoTrend.length - 1];
   const currentDSO  = currentDSOEntry?.dso ?? 0;

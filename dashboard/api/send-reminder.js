@@ -7,6 +7,7 @@
 
 import { getInvoice, sendInvoiceEmail } from './_lib/quickbooks.js';
 import { logReminderToSheets } from './_lib/googleSheets.js';
+import { verifyClient, sendAuthError } from './_lib/clerkAuth.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -14,9 +15,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // The client is whoever the verified session says — the request body cannot
+  // choose which client's QuickBooks to send email from.
+  let clientId;
   try {
-    const { invoice_id, client_id } = req.body;
-    const clientId = client_id || 'default';
+    ({ clientId } = await verifyClient(req));
+  } catch (err) {
+    return sendAuthError(res, err);
+  }
+
+  try {
+    const { invoice_id } = req.body;
 
     if (!invoice_id) {
       return res.status(400).json({ error: 'invoice_id is required' });

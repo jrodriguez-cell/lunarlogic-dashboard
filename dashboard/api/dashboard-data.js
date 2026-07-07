@@ -6,6 +6,7 @@
  */
 
 import { getQBAccessToken, qbApiRequest } from './_lib/quickbooks.js';
+import { verifyClient, sendAuthError } from './_lib/clerkAuth.js';
 
 const GO_LIVE_DATE = '2026-03-17'; // Your actual go-live date
 
@@ -15,7 +16,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const clientId = req.query.clientId || 'default';
+  // Identity comes from the verified Clerk session — NOT req.query — so a
+  // caller can only ever read their own client's data.
+  let clientId;
+  try {
+    ({ clientId } = await verifyClient(req));
+  } catch (err) {
+    return sendAuthError(res, err);
+  }
 
   try {
     // Fetch unpaid invoices (any age) and last 365 days of invoices for

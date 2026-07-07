@@ -10,17 +10,22 @@ const QB_BASE_URL =
     ? 'https://quickbooks.api.intuit.com'
     : 'https://sandbox-quickbooks.api.intuit.com';
 
+// Fallback company id for the shared sandbox only. Real clients resolve their
+// own realm_id from the stored token (see getQBAuth) so that one client's
+// access token is never pointed at another client's QuickBooks company.
 const QB_COMPANY_ID = process.env.QB_COMPANY_ID || '9341456702590433';
 
 /**
- * Get valid QuickBooks access token for a given client.
- * Automatically refreshes if expired.
+ * Get a valid QuickBooks access token AND the company (realm) id for a client.
+ * Automatically refreshes an expired access token. Returns { accessToken, realmId }.
  */
-export async function getQBAccessToken(clientId = 'default') {
+export async function getQBAuth(clientId = 'default') {
   const token = await getQBToken(clientId);
   if (!token) {
     throw new Error(`No QB token stored for client "${clientId}" — connect this client via OAuth first`);
   }
+
+  const realmId = token.realm_id || QB_COMPANY_ID;
 
   // Check if token is expired (with 5-minute buffer)
   const expiresAt = new Date(token.expires_at).getTime();
@@ -30,21 +35,32 @@ export async function getQBAccessToken(clientId = 'default') {
   if (now + buffer < expiresAt) {
     // Token still valid
     console.log('Using existing QB token');
-    return token.access_token;
+    return { accessToken: token.access_token, realmId };
   }
 
   // Token expired or about to expire - refresh it
   console.log('QB token expired, refreshing...');
   const newToken = await refreshQBToken(token.refresh_token);
 
-  // Save new token back, encrypted, for this client
+  // Save new token back, encrypted, for this client. Preserve realm_id — Intuit
+  // does not return it on a refresh, and losing it would break company scoping.
   await saveQBToken(clientId, {
     access_token: newToken.access_token,
     refresh_token: newToken.refresh_token,
     expires_at: new Date(Date.now() + newToken.expires_in * 1000).toISOString(),
+    realm_id: realmId,
   });
 
-  return newToken.access_token;
+  return { accessToken: newToken.access_token, realmId };
+}
+
+/**
+ * Get valid QuickBooks access token for a given client.
+ * Automatically refreshes if expired.
+ */
+export async function getQBAccessToken(clientId = 'default') {
+  const { accessToken } = await getQBAuth(clientId);
+  return accessToken;
 }
 
 /**
@@ -78,12 +94,12 @@ async function refreshQBToken(refreshToken) {
  * Automatically handles OAuth token and company ID
  */
 export async function qbApiRequest(endpoint, options = {}, clientId = 'default') {
-  const accessToken = await getQBAccessToken(clientId);
+  const { accessToken, realmId } = await getQBAuth(clientId);
 
-  // Build full URL
+  // Build full URL — scope to THIS client's company (realm), not a global id.
   const url = endpoint.startsWith('/v3/')
     ? `${QB_BASE_URL}${endpoint}`
-    : `${QB_BASE_URL}/v3/company/${QB_COMPANY_ID}${endpoint}`;
+    : `${QB_BASE_URL}/v3/company/${realmId}${endpoint}`;
 
   console.log('QB API Request:', url);
 

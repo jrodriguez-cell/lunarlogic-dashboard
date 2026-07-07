@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useToast } from '../../lib/toast';
 import { exportCSV } from '../../lib/csv';
+import { authedFetch } from '../../lib/api';
 
 const TEAM = ['Jonathan Rodriguez', 'Sarah M. (Admin)', 'Unassigned'];
 
@@ -70,10 +71,10 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
     }
     setSending(true);
     try {
-      const res = await fetch('/api/send-reminder', {
+      const res = await authedFetch('/api/send-reminder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoice_id: inv.qbId, client_id: clientId }),
+        body: JSON.stringify({ invoice_id: inv.qbId }),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || result.error || 'Send failed');
