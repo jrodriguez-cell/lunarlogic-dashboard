@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useToast } from '../lib/toast';
 
 const FORECAST_TODAY = '2026-05-19';
 
@@ -28,6 +29,7 @@ function makeLineItem() {
 }
 
 export default function InvoiceComposer({ invoices, paymentBehavior, onClose }) {
+  const toast = useToast();
   const customers = paymentBehavior ? paymentBehavior.map(c => c.customer) : [];
 
   const [customer, setCustomer] = useState('');
@@ -79,16 +81,15 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose }) 
   const resolvedCustomer = isNewCustomer ? newCustomerName : customer;
 
   function handleSaveDraft() {
-    alert('Invoice saved as draft. (Will sync to ERP in production.)');
+    if (!resolvedCustomer) { toast('Select or enter a customer first', 'error'); return; }
+    toast(`Draft saved for ${resolvedCustomer} · ${invoiceNum}`, 'info');
     onClose();
   }
 
   function handleSend() {
-    if (!resolvedCustomer) {
-      alert('Please select or enter a customer.');
-      return;
-    }
-    alert(`Invoice sent to ${resolvedCustomer} via Outlook. (Wired to WF1B in production.)`);
+    if (!resolvedCustomer) { toast('Select or enter a customer first', 'error'); return; }
+    if (total <= 0) { toast('Add at least one line item with an amount', 'error'); return; }
+    toast(`Invoice ${invoiceNum} sent to ${resolvedCustomer}`);
     onClose();
   }
 
