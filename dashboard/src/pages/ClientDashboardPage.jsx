@@ -12,6 +12,7 @@ import ClientCashApplication from '../components/client/ClientCashApplication';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientInvoices from '../components/client/ClientInvoices';
 import ClientReportCard from '../components/client/ClientReportCard';
+import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
 const DSO_BENCHMARKS = [
@@ -59,6 +60,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [actionPlanSort, setActionPlanSort] = useState(null);
   const isMobile = useMobile();
   const base = useMemo(() => getClientData(session.clientId), [session.clientId]);
@@ -308,6 +310,26 @@ export default function ClientDashboardPage({ session, onLogout }) {
         {activeTab === 'invoices'  && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'report'    && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
       </div>
+
+      {/* AI assistant — always available */}
+      {!assistantOpen && (
+        <button
+          onClick={() => setAssistantOpen(true)}
+          title="Ask the AR assistant"
+          style={{
+            position: 'fixed', bottom: 20, right: 20, zIndex: 1000,
+            display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px',
+            borderRadius: 24, border: '1px solid var(--teal)', background: 'var(--bg-card)',
+            color: 'var(--teal)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
+          }}
+        >
+          <span style={{ fontSize: 15 }}>✨</span> Ask AI
+        </button>
+      )}
+      {assistantOpen && (
+        <AIAssistant data={data} currentDSO={currentDSO} clientId={session.clientId} isLive={data.isLive} onClose={() => setAssistantOpen(false)} />
+      )}
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
       {actionInv && (
