@@ -243,7 +243,7 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose, is
           {/* AI draft */}
           <div style={{ background: 'rgba(0,212,232,0.05)', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 8, padding: 12, marginBottom: 18 }}>
             <label className="drawer-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ color: 'var(--teal)' }}>✨</span> Draft with AI
+              Draft with AI
             </label>
             <textarea
               className="composer-input"
@@ -258,7 +258,7 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose, is
               disabled={drafting}
               style={{ padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: drafting ? 'default' : 'pointer', border: '1px solid var(--teal)', background: 'rgba(0,212,232,0.12)', color: 'var(--teal)', opacity: drafting ? 0.6 : 1 }}
             >
-              {drafting ? 'Drafting…' : '✨ Draft invoice'}
+              {drafting ? 'Drafting…' : 'Draft invoice'}
             </button>
             <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 10 }}>Fills the fields below — you review before sending.</span>
           </div>

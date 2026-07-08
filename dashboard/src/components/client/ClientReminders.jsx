@@ -1,7 +1,22 @@
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useToast } from '../../lib/toast';
 import { AutomationHeader, Card, StatTile, fmtM, fmtRunTime, tileGridStyle } from './automationKit';
+
+const CADENCE = [
+  { at: '−7d', label: 'Friendly heads-up' },
+  { at: '+1d', label: 'Payment due' },
+  { at: '+7d', label: 'First follow-up' },
+  { at: '+14d', label: 'Second follow-up' },
+  { at: '+21d', label: 'Firm reminder' },
+  { at: '+28d', label: 'Final notice' },
+];
+
+function RiskDot({ level }) {
+  if (!level) return null;
+  const color = level === 'high' ? '#ef4444' : level === 'medium' ? '#f59e0b' : '#22c55e';
+  const label = level === 'high' ? 'High' : level === 'medium' ? 'Med' : 'Low';
+  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />{label} risk</span>;
+}
 
 function localReminderDraft(inv, companyName) {
   const sent = inv.reminders?.length ?? 0;
@@ -9,70 +24,56 @@ function localReminderDraft(inv, companyName) {
   const amt = `$${inv.amount.toLocaleString()}`;
   const who = inv.customer;
   const sig = `\n\nThank you,\n${companyName || 'Accounts Receivable'}`;
-  if (stage === 'friendly') {
-    return {
-      subject: `Friendly reminder — invoice ${inv.id}`,
-      body: `Hi ${who},\n\nJust a friendly reminder that invoice ${inv.id} for ${amt} ${inv.daysOverdue > 0 ? `was due on ${inv.due}` : `is due ${inv.due}`}. If it's already on its way, thank you — please disregard this note.\n\nHappy to resend the invoice or answer any questions.${sig}`,
-    };
-  }
-  if (stage === 'firm') {
-    return {
-      subject: `Payment overdue — invoice ${inv.id} (${inv.daysOverdue}d)`,
-      body: `Hi ${who},\n\nOur records show invoice ${inv.id} for ${amt} is now ${inv.daysOverdue} days past due (due ${inv.due}). Could you let us know the expected payment date, or flag any issue holding it up?\n\nWe're glad to help resolve anything on our end.${sig}`,
-    };
-  }
+  if (stage === 'friendly') return {
+    subject: `Friendly reminder — invoice ${inv.id}`,
+    body: `Hi ${who},\n\nJust a friendly reminder that invoice ${inv.id} for ${amt} ${inv.daysOverdue > 0 ? `was due on ${inv.due}` : `is due ${inv.due}`}. If it's already on its way, thank you — please disregard.\n\nHappy to resend the invoice or answer any questions.${sig}`,
+  };
+  if (stage === 'firm') return {
+    subject: `Payment overdue — invoice ${inv.id} (${inv.daysOverdue}d)`,
+    body: `Hi ${who},\n\nOur records show invoice ${inv.id} for ${amt} is now ${inv.daysOverdue} days past due (due ${inv.due}). Could you let us know the expected payment date, or flag anything holding it up?${sig}`,
+  };
   return {
     subject: `Final notice — invoice ${inv.id}, ${inv.daysOverdue}d overdue`,
     body: `Hi ${who},\n\nInvoice ${inv.id} for ${amt} is now ${inv.daysOverdue} days past due despite prior reminders. Please arrange payment within 5 business days, or reply so we can discuss a plan before this escalates further.${sig}`,
   };
 }
 
-const CADENCE = [
-  { at: '−7d', label: 'Friendly heads-up', note: 'before due' },
-  { at: '+1d', label: 'Payment due', note: 'day after due' },
-  { at: '+7d', label: 'First follow-up', note: '' },
-  { at: '+14d', label: 'Second follow-up', note: '' },
-  { at: '+21d', label: 'Firm reminder', note: '' },
-  { at: '+28d', label: 'Final notice', note: 'before escalation' },
-];
-const CADENCE_N = CADENCE.length;
-
-function RiskDot({ level }) {
-  const color = level === 'high' ? '#ef4444' : level === 'medium' ? '#f59e0b' : '#22c55e';
-  const label = level === 'high' ? 'High' : level === 'medium' ? 'Med' : 'Low';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color, flexShrink: 0 }}>
-      <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />{label}
-    </div>
-  );
-}
-
-function weekStartISO(iso) {
-  const [y, m, d] = iso.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  const dow = (dt.getDay() + 6) % 7; // Monday = 0
-  dt.setDate(dt.getDate() - dow);
-  return dt.toISOString().split('T')[0];
-}
-function weekLabel(iso) {
-  const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function FreqTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="chart-tooltip">
-      <div className="tooltip-title">Week of {label}</div>
-      <div className="tooltip-row"><span>Reminders sent</span><span style={{ color: 'var(--teal)' }}>{payload[0].value}</span></div>
-    </div>
-  );
-}
-
-export default function ClientReminders({ data, clientId, isMobile, onDrill, onAction }) {
+export default function ClientReminders({ data, clientId, isMobile, onDrill }) {
   const toast = useToast();
-  const [draft, setDraft] = useState(null);        // { invoice, subject, body }
-  const [drafting, setDrafting] = useState(null);   // invoice id being drafted
+  const [draft, setDraft] = useState(null);
+  const [drafting, setDrafting] = useState(null);
+
+  const connected = data.isLive ? data.automationStatus?.wf2?.connected === true : true;
+  const statusColor = connected ? 'var(--green)' : 'var(--muted)';
+
+  const open = data.invoices.filter(i => i.status !== 'Paid');
+  const reminderDataAvailable = open.some(i => i.reminders !== undefined || i.nextReminder !== undefined);
+  const covered = open.filter(i => (i.reminders?.length > 0) || i.nextReminder);
+  const coveragePct = open.length > 0 ? Math.round((covered.length / open.length) * 100) : 100;
+  const totalReminders = data.automationStats?.remindersSentTotal ?? null;
+  const lastRun = data.isLive ? data.automationStatus?.wf2?.lastRun : data.wf2LastRun;
+  const nextRun = data.isLive ? null : data.wf2NextRun;
+
+  // ── Follow-up organized by customer ───────────────────────────────────
+  const pbMap = Object.fromEntries((data.paymentBehavior ?? []).map(p => [p.customer, p]));
+  const collectedBy = {};
+  (data.payments ?? []).filter(p => p.status === 'Auto-Applied' || p.status === 'Manual')
+    .forEach(p => { collectedBy[p.matchedCustomer] = (collectedBy[p.matchedCustomer] || 0) + p.amount; });
+
+  const byCustomer = Object.values(open.reduce((acc, inv) => {
+    const c = acc[inv.customer] || (acc[inv.customer] = { customer: inv.customer, outstanding: 0, reminders: 0, overdue: 0, oldestInv: null });
+    c.outstanding += inv.amount;
+    c.reminders += inv.reminders?.length ?? 0;
+    if (inv.daysOverdue > 0) c.overdue += inv.amount;
+    if (!c.oldestInv || inv.daysOverdue > c.oldestInv.daysOverdue) c.oldestInv = inv;
+    return acc;
+  }, {})).map(c => ({
+    ...c,
+    collected: collectedBy[c.customer] || 0,
+    risk: pbMap[c.customer]?.riskLevel,
+    avgDays: pbMap[c.customer]?.avgDays,
+  })).sort((a, b) => b.outstanding - a.outstanding);
+  const maxOut = Math.max(...byCustomer.map(c => c.outstanding), 1);
 
   async function handleDraftReminder(inv) {
     setDrafting(inv.id);
@@ -92,44 +93,22 @@ export default function ClientReminders({ data, clientId, isMobile, onDrill, onA
     setDrafting(null);
   }
 
-  const connected = data.isLive ? data.automationStatus?.wf2?.connected === true : true;
-  const statusColor = connected ? 'var(--green)' : 'var(--muted)';
-
-  const open = data.invoices.filter(i => i.status !== 'Paid');
-  const reminderDataAvailable = open.some(i => i.reminders !== undefined || i.nextReminder !== undefined);
-  const covered   = open.filter(i => (i.reminders?.length > 0) || i.nextReminder);
-  const uncovered = open.filter(i => !((i.reminders?.length > 0) || i.nextReminder));
-  const coveragePct = open.length > 0 ? Math.round((covered.length / open.length) * 100) : 100;
-  const totalReminders = data.automationStats?.remindersSentTotal ?? null;
-
-  const lastRun = data.isLive ? data.automationStatus?.wf2?.lastRun : data.wf2LastRun;
-  const nextRun = data.isLive ? null : data.wf2NextRun;
-
-  // Outcomes among reminded / open invoices
-  const opened     = open.filter(i => i.status === 'Viewed').length;   // engaged after outreach
-  const chasing    = open.filter(i => i.status === 'Overdue').length;  // still overdue
-  const paidPeriod = data.invoices.filter(i => i.status === 'Paid').length;
-
-  // Reminder frequency by week (from delivered reminder dates on open invoices)
-  const freqData = (() => {
-    const counts = {};
-    open.forEach(i => (i.reminders ?? []).forEach(r => { const w = weekStartISO(r); counts[w] = (counts[w] ?? 0) + 1; }));
-    const weeks = Object.keys(counts).sort();
-    if (weeks.length === 0) return [];
-    const out = [];
-    const [sy, sm, sd] = weeks[0].split('-').map(Number);
-    const cur = new Date(sy, sm - 1, sd);
-    const end = new Date(...weeks[weeks.length - 1].split('-').map((v, i) => i === 1 ? v - 1 : Number(v)));
-    while (cur <= end) {
-      const iso = cur.toISOString().split('T')[0];
-      out.push({ week: weekLabel(iso), count: counts[iso] ?? 0 });
-      cur.setDate(cur.getDate() + 7);
-    }
-    return out;
-  })();
-
-  // Per-invoice reminder sequences, most-overdue first
-  const sequences = covered.slice().sort((a, b) => b.daysOverdue - a.daysOverdue);
+  function drillCustomer(c) {
+    onDrill({
+      title: `${c.customer} — Open Invoices`,
+      subtitle: `${fmtM(c.outstanding)} outstanding · ${c.reminders} reminder${c.reminders !== 1 ? 's' : ''} sent${c.avgDays ? ` · avg ${c.avgDays}d to pay` : ''}`,
+      source: 'Open invoices for this customer, with LunarLogic reminder activity. Collected = payments applied to this customer this period.',
+      filename: `followup_${c.customer.toLowerCase().replace(/\s+/g, '_')}`,
+      columns: [
+        { key: 'id', label: 'Invoice' },
+        { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: r => r.amount },
+        { key: 'due', label: 'Due' },
+        { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—' },
+        { key: 'remindersCount', label: 'Reminders', render: (_, r) => `${r.reminders?.length ?? 0}` },
+      ],
+      rows: open.filter(i => i.customer === c.customer),
+    });
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -137,7 +116,7 @@ export default function ClientReminders({ data, clientId, isMobile, onDrill, onA
         title="Payment Reminders"
         status={connected ? 'Operational' : 'Not connected'}
         statusColor={statusColor}
-        blurb="Every open invoice is enrolled in an escalating reminder sequence, delivered by email on your behalf — so nothing slips and you never have to make the awkward first call. Frequency adapts to each customer's payment history."
+        blurb="Every open invoice is enrolled in an escalating email sequence sent on your behalf, so nothing slips and you never make the awkward first call. It pauses automatically the moment a payment lands."
         meta={[
           { label: 'Last run', value: fmtRunTime(lastRun) },
           ...(nextRun ? [{ label: 'Next run', value: fmtRunTime(nextRun) }] : []),
@@ -148,145 +127,68 @@ export default function ClientReminders({ data, clientId, isMobile, onDrill, onA
       <div style={tileGridStyle(isMobile, 3)}>
         <StatTile label="Reminders sent" color="var(--teal)"
           value={totalReminders ?? '—'} sub={totalReminders != null ? 'hands-free, since go-live' : 'not yet tracked'}
-          source="Total outbound reminder emails sent via the automated sequence since go-live. Sent automatically — no calls or manual emails from your team." />
+          source="Total reminder emails sent automatically since go-live. No calls or manual emails from your team." />
         <StatTile label="Coverage" color={coveragePct >= 80 ? 'var(--green)' : '#f59e0b'}
           value={reminderDataAvailable ? `${coveragePct}%` : '—'} sub={reminderDataAvailable ? `${covered.length} of ${open.length} open invoices` : 'reminder logging not linked yet'}
-          source="Share of open invoices currently enrolled in the reminder sequence (at least one reminder scheduled or delivered)." />
-        <StatTile label="In active sequence" color="var(--text)"
-          value={reminderDataAvailable ? covered.length : '—'} sub={reminderDataAvailable ? 'being followed up automatically' : 'not yet tracked'}
-          source="Open invoices with at least one reminder delivered or scheduled — LunarLogic is actively chasing these." />
+          source="Share of open invoices currently in the reminder sequence." />
+        <StatTile label="Balances followed up" color="var(--text)"
+          value={byCustomer.filter(c => c.reminders > 0).length} sub={`of ${byCustomer.length} customers with open balances`}
+          source="Customers with at least one reminder sent on an open invoice." />
       </div>
 
-      {reminderDataAvailable && (
-        <Card title="Automation coverage" hint="Which open invoices LunarLogic is handling vs. those that still need you.">
-          <div style={{ height: 10, background: 'var(--bg-hover)', borderRadius: 5, overflow: 'hidden', marginBottom: 8 }}>
-            <div style={{ width: `${coveragePct}%`, height: '100%', background: coveragePct >= 80 ? '#22c55e' : '#f59e0b', borderRadius: 5 }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--muted)' }}>
-            <span>{covered.length} handled by LunarLogic</span>
-            <span>{uncovered.length} need manual attention</span>
-          </div>
-          {uncovered.length > 0 && (
-            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Outside coverage — needs you</div>
-              {uncovered.map(inv => (
-                <div key={inv.id} onClick={() => onAction(inv)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, padding: '4px 6px', margin: '0 -6px', borderRadius: 6, cursor: 'pointer' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <span style={{ color: 'var(--text-dim)' }}>{inv.customer} — {inv.id}</span>
-                  <span style={{ fontWeight: 700, color: 'var(--text)' }}>{fmtM(inv.amount)}</span>
+      {/* Follow-up by customer — the core view */}
+      <Card title="Follow-up by customer"
+        hint="What LunarLogic is chasing, and what's come in. Bar = amount outstanding · below each: reminders sent and payments collected this period.">
+        {byCustomer.length === 0 ? (
+          <div style={{ fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>No open balances — everything's collected.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {byCustomer.map(c => (
+              <div key={c.customer}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                  <button onClick={() => drillCustomer(c)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{c.customer}</button>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', flexShrink: 0 }}>{fmtM(c.outstanding)}</span>
                 </div>
-              ))}
+                <div style={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', background: 'var(--bg-hover)' }}>
+                  <div style={{ width: `${(c.outstanding / maxOut) * 100}%`, background: c.overdue > 0 ? '#f59e0b' : 'var(--teal)', borderRadius: 4 }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 10.5, color: 'var(--muted)' }}>
+                    <span>{c.reminders} reminder{c.reminders !== 1 ? 's' : ''} sent</span>
+                    {c.collected > 0 && <span style={{ color: 'var(--green)', fontWeight: 600 }}>{fmtM(c.collected)} collected</span>}
+                    <RiskDot level={c.risk} />
+                  </div>
+                  {c.oldestInv && (
+                    <button onClick={() => handleDraftReminder(c.oldestInv)} disabled={drafting === c.oldestInv.id}
+                      style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--teal)', background: 'rgba(0,212,232,0.1)', border: '1px solid rgba(0,212,232,0.3)', borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0 }}>
+                      {drafting === c.oldestInv.id ? 'Drafting…' : 'Draft reminder'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card title="Reminder cadence" hint="The escalating sequence each invoice follows, relative to its due date. Stops automatically when paid.">
+        <div style={{ display: 'flex', gap: isMobile ? 8 : 4, flexWrap: 'wrap' }}>
+          {CADENCE.map((c, i) => (
+            <div key={c.at} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 4 }}>
+              <div style={{ textAlign: 'center', padding: '2px 4px' }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--teal)' }}>{c.at}</div>
+                <div style={{ fontSize: 9.5, color: 'var(--muted)', maxWidth: 78 }}>{c.label}</div>
+              </div>
+              {i < CADENCE.length - 1 && !isMobile && <div style={{ width: 16, height: 1, background: 'var(--border)' }} />}
             </div>
-          )}
-        </Card>
-      )}
-
-      {/* Reminder activity — outcomes + frequency */}
-      {reminderDataAvailable && (
-        <Card title="Reminder activity & outcomes" hint="Volume of reminders going out, and how invoices respond.">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 14 }}>
-            <OutcomeTile label="Opened after outreach" value={opened} color="#a78bfa" sub="viewed, engaged" />
-            <OutcomeTile label="Still chasing" value={chasing} color="#f59e0b" sub="overdue, sequence active" />
-            <OutcomeTile label="Paid this period" value={paidPeriod} color="#22c55e" sub="resolved" />
-          </div>
-          {freqData.length > 0 && (
-            <>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Reminders sent per week</div>
-              <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={freqData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="week" tick={{ fill: '#4e6a88', fontSize: 9 }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(freqData.length / 7))} />
-                  <YAxis tick={{ fill: '#4e6a88', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip content={<FreqTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                  <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={26} isAnimationActive={false}>
-                    {freqData.map((d, i) => <Cell key={i} fill={d.count > 0 ? '#00d4e8' : '#26364a'} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </>
-          )}
-        </Card>
-      )}
-
-      {/* Per-invoice reminder sequences */}
-      {sequences.length > 0 && (
-        <Card title="Active reminder sequences" hint="Where each open invoice sits in its cadence. Filled = sent · amber ring = next scheduled.">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {sequences.map(inv => {
-              const sent = inv.reminders?.length ?? 0;
-              return (
-                <div key={inv.id} onClick={() => onAction(inv)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 6px', margin: '0 -6px', borderRadius: 6, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</div>
-                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>
-                      {!isMobile && <span style={{ fontFamily: 'monospace', marginRight: 6 }}>{inv.id}</span>}
-                      {inv.daysOverdue > 0 ? <span style={{ color: '#f59e0b', fontWeight: 600 }}>{inv.daysOverdue}d overdue</span> : <span>due {inv.due}</span>}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
-                    {Array.from({ length: CADENCE_N }).map((_, i) => {
-                      const isSent = i < sent;
-                      const isNext = i === sent && inv.nextReminder;
-                      return <div key={i} title={CADENCE[i].label} style={{ width: 9, height: 9, borderRadius: '50%', background: isSent ? 'var(--teal)' : 'transparent', border: isSent ? 'none' : isNext ? '1.5px solid #f59e0b' : '1.5px solid var(--border)' }} />;
-                    })}
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', flexShrink: 0, width: 64, textAlign: 'right' }}>{fmtM(inv.amount)}</span>
-                  <button
-                    onClick={e => { e.stopPropagation(); handleDraftReminder(inv); }}
-                    disabled={drafting === inv.id}
-                    title="Draft a reminder email with AI"
-                    style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: 'var(--teal)', background: 'rgba(0,212,232,0.1)', border: '1px solid rgba(0,212,232,0.3)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer' }}
-                  >{drafting === inv.id ? '…' : '✨ Draft'}</button>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
+          ))}
+        </div>
+      </Card>
 
       {draft && (
-        <ReminderDraftModal draft={draft} isLive={data.isLive} onClose={() => setDraft(null)} onCopy={() => { navigator.clipboard?.writeText(`Subject: ${draft.subject}\n\n${draft.body}`); toast('Reminder copied to clipboard'); }} />
+        <ReminderDraftModal draft={draft} isLive={data.isLive} onClose={() => setDraft(null)}
+          onCopy={() => { navigator.clipboard?.writeText(`Subject: ${draft.subject}\n\n${draft.body}`); toast('Reminder copied to clipboard'); }} />
       )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
-        <Card title="Reminder cadence" hint="The escalating sequence each invoice follows, relative to its due date.">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {CADENCE.map((c, i) => (
-              <div key={c.at} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < CADENCE.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--teal)', width: 34, flexShrink: 0 }}>{c.at}</span>
-                <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>{c.label}</span>
-                {c.note && <span style={{ fontSize: 10, color: 'var(--muted)' }}>{c.note}</span>}
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card title="Customer payment risk" hint="Reminder frequency adapts automatically to each customer's history.">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {(data.paymentBehavior ?? []).map(pb => (
-              <div key={pb.customer} onClick={() => onDrill({
-                title: `${pb.customer} — Open Invoices`,
-                subtitle: `${fmtM(pb.openAmount)} outstanding · avg ${pb.avgDays}d to pay · ${pb.riskLevel} risk`,
-                source: 'Historical payment pattern from past invoices. Risk level drives reminder frequency.',
-                filename: `customer_${pb.customer.toLowerCase().replace(/\s+/g, '_')}`,
-                columns: [
-                  { key: 'id', label: 'Invoice' }, { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: r => r.amount },
-                  { key: 'due', label: 'Due' }, { key: 'status', label: 'Status' }, { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—' },
-                ],
-                rows: open.filter(i => i.customer === pb.customer),
-              })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '6px', margin: '0 -6px', borderRadius: 6, cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <span style={{ fontSize: 12, color: 'var(--text-dim)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pb.customer}</span>
-                <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>{pb.avgDays}d avg</span>
-                <RiskDot level={pb.riskLevel} />
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
     </div>
   );
 }
@@ -298,7 +200,7 @@ function ReminderDraftModal({ draft, isLive, onClose, onCopy }) {
       <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 'min(520px, calc(100vw - 32px))', maxHeight: '80vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, zIndex: 1101, padding: 18, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: 'var(--teal)' }}>✨</span> Reminder draft</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>Reminder draft</div>
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{draft.invoice.customer} · {draft.invoice.id}{isLive ? '' : ' · demo'}</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18 }}>×</button>
@@ -313,15 +215,5 @@ function ReminderDraftModal({ draft, isLive, onClose, onCopy }) {
         </div>
       </div>
     </>
-  );
-}
-
-function OutcomeTile({ label, value, color, sub }) {
-  return (
-    <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-      <div style={{ fontSize: 24, fontWeight: 900, color, letterSpacing: -1, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-dim)', marginTop: 4 }}>{label}</div>
-      <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 1 }}>{sub}</div>
-    </div>
   );
 }
