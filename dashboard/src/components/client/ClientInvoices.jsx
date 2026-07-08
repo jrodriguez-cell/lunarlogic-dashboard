@@ -40,14 +40,22 @@ const EXPORT_COLS = [
   { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: r => r.daysOverdue > 0 ? r.daysOverdue : '' },
 ];
 
-export default function ClientInvoices({ invoices, paymentBehavior, isMobile, onDrill, onAction }) {
-  const [query, setQuery]     = useState('');
-  const [status, setStatus]   = useState('All');
-  const [aging, setAging]     = useState('all');
-  const [sortKey, setSortKey] = useState('daysOverdue');
-  const [sortDir, setSortDir] = useState('desc');
+export default function ClientInvoices({ invoices, isMobile, onDrill, onAction }) {
+  const [query, setQuery]       = useState('');
+  const [status, setStatus]     = useState('All');
+  const [aging, setAging]       = useState('all');
+  const [customer, setCustomer] = useState('All');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo]     = useState('');
+  const [sortKey, setSortKey]   = useState('daysOverdue');
+  const [sortDir, setSortDir]   = useState('desc');
 
-  const pbMap = useMemo(() => Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p])), [paymentBehavior]);
+  const customers = useMemo(() => [...new Set(invoices.map(i => i.customer))].sort(), [invoices]);
+  const anyFilter = query || status !== 'All' || aging !== 'all' || customer !== 'All' || dateFrom || dateTo;
+
+  function clearAll() {
+    setQuery(''); setStatus('All'); setAging('all'); setCustomer('All'); setDateFrom(''); setDateTo('');
+  }
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -55,7 +63,10 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
     const col = COLUMNS.find(c => c.key === sortKey);
     const filtered = invoices.filter(inv => {
       if (status !== 'All' && inv.status !== status) return false;
+      if (customer !== 'All' && inv.customer !== customer) return false;
       if (agingDef?.test && !agingDef.test(inv.daysOverdue)) return false;
+      if (dateFrom && inv.issued < dateFrom) return false;
+      if (dateTo && inv.issued > dateTo) return false;
       if (q && !inv.id.toLowerCase().includes(q) && !inv.customer.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -64,7 +75,7 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
       return sortDir === 'asc' ? r : -r;
     });
     return filtered;
-  }, [invoices, query, status, aging, sortKey, sortDir]);
+  }, [invoices, query, status, aging, customer, dateFrom, dateTo, sortKey, sortDir]);
 
   const totalAmt = results.reduce((s, i) => s + i.amount, 0);
 
@@ -86,6 +97,14 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
     flex: 1, minWidth: 160, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8,
     padding: '8px 12px 8px 32px', fontSize: 13, color: 'var(--text)', outline: 'none',
   };
+  const selectStyle = {
+    background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8,
+    padding: '8px 10px', fontSize: 12, color: 'var(--text-dim)', cursor: 'pointer', maxWidth: 200,
+  };
+  const dateStyle = {
+    background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8,
+    padding: '6px 10px', fontSize: 12, color: 'var(--text-dim)', cursor: 'pointer', colorScheme: 'dark',
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -100,10 +119,25 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
             <button onClick={() => setQuery('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>×</button>
           )}
         </div>
-        <select value={aging} onChange={e => setAging(e.target.value)} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', fontSize: 12, color: 'var(--text-dim)', cursor: 'pointer' }}>
+        <select value={customer} onChange={e => setCustomer(e.target.value)} style={selectStyle} title="Filter by customer">
+          <option value="All">All customers</option>
+          {customers.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={aging} onChange={e => setAging(e.target.value)} style={selectStyle} title="Filter by age">
           {AGING_FILTERS.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
         </select>
         <button onClick={exportCurrent} style={{ padding: '8px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)' }}>Export ↗</button>
+      </div>
+
+      {/* Date range (by issue date) */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>Issued between</span>
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={dateStyle} />
+        <span style={{ fontSize: 11, color: 'var(--muted)' }}>and</span>
+        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={dateStyle} />
+        {anyFilter && (
+          <button onClick={clearAll} style={{ marginLeft: 'auto', padding: '6px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', flexShrink: 0 }}>Clear filters ×</button>
+        )}
       </div>
 
       {/* Status chips */}
