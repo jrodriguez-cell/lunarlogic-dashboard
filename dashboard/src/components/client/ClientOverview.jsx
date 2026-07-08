@@ -243,7 +243,7 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
           {data.isLive ? (
             <>
               <StatusItem
-                label="WF1 — Invoice AI"
+                label="Invoice AI"
                 status={data.automationStatus?.wf1?.connected ? (data.automationStatus.wf1.stale ? 'Stale' : 'Operational') : 'Not connected'}
                 detail={data.automationStatus?.wf1?.connected
                   ? `Last run: ${fmtRunTime(data.automationStatus.wf1.lastRun)} · ${data.automationStatus.wf1.invoicesCreated7d} invoices created (7d)`
@@ -252,7 +252,7 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
                 color={data.automationStatus?.wf1?.connected ? (data.automationStatus.wf1.stale ? '#f59e0b' : 'var(--green)') : 'var(--muted)'}
               />
               <StatusItem
-                label="WF2 — Payment Reminders"
+                label="Payment Reminders"
                 status={data.automationStatus?.wf2?.connected ? (data.automationStatus.wf2.stale ? 'Stale' : 'Operational') : 'Not connected'}
                 detail={data.automationStatus?.wf2?.connected
                   ? `Last run: ${fmtRunTime(data.automationStatus.wf2.lastRun)} · ${data.automationStatus.wf2.remindersSent7d} reminders sent (7d)`
@@ -261,7 +261,7 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
                 color={data.automationStatus?.wf2?.connected ? (data.automationStatus.wf2.stale ? '#f59e0b' : 'var(--green)') : 'var(--muted)'}
               />
               <StatusItem
-                label="WF3 — Cash Application"
+                label="Cash Application"
                 status={data.automationStatus?.wf3?.connected ? (data.automationStatus.wf3.stale ? 'Stale' : 'Active') : 'Not connected'}
                 detail={data.automationStatus?.wf3?.connected
                   ? `${data.automationStatus.wf3.paymentsApplied} applied · ${data.automationStatus.wf3.pending} pending of ${data.automationStatus.wf3.linksSent} links sent`
@@ -273,21 +273,21 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
           ) : (
             <>
               <StatusItem
-                label="WF1 — Invoice AI"
+                label="Invoice AI"
                 status="Operational"
                 detail={`Last run: ${fmtRunTime(data.wf1LastRun)}`}
                 sub="Slack → QuickBooks · AI invoice creation"
                 color="var(--green)"
               />
               <StatusItem
-                label="WF2 — Payment Reminders"
+                label="Payment Reminders"
                 status="Operational"
                 detail={`Last: ${fmtRunTime(data.wf2LastRun)} · Next: ${fmtNextRun(data.wf2NextRun)}`}
                 sub="Daily 9AM M–F · Outlook email sequences"
                 color="var(--green)"
               />
               <StatusItem
-                label="WF3 — Cash Application"
+                label="Cash Application"
                 status="Active"
                 detail="Plaid bank feed · Auto-matching payments"
                 sub={`Confidence threshold: 90% · ${autoApplied.length} matched`}
