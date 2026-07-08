@@ -17,8 +17,12 @@
  */
 
 const WEBHOOKS = {
-  invoice_create: process.env.N8N_WEBHOOK_INVOICE_CREATE,
-  invoice_draft:  process.env.N8N_WEBHOOK_INVOICE_DRAFT,
+  invoice_create:    process.env.N8N_WEBHOOK_INVOICE_CREATE,
+  invoice_draft:     process.env.N8N_WEBHOOK_INVOICE_DRAFT,
+  ai_invoice_draft:  process.env.N8N_WEBHOOK_AI_INVOICE_DRAFT,
+  ai_payment_match:  process.env.N8N_WEBHOOK_AI_PAYMENT_MATCH,
+  ai_reminder_draft: process.env.N8N_WEBHOOK_AI_REMINDER_DRAFT,
+  ai_assistant:      process.env.N8N_WEBHOOK_AI_ASSISTANT,
 };
 
 export function isWorkflowConfigured(key) {
