@@ -15,6 +15,7 @@
  * Required env var: CLERK_SECRET_KEY
  */
 import { verifyToken, createClerkClient } from '@clerk/backend';
+import { clientIdForEmail } from './clientDomains.js';
 
 const secretKey = process.env.CLERK_SECRET_KEY;
 
@@ -36,6 +37,16 @@ function bearerToken(req) {
   const header = req.headers.authorization || req.headers.Authorization || '';
   const match = /^Bearer\s+(.+)$/i.exec(header.trim());
   return match ? match[1] : null;
+}
+
+// Returns the user's primary email only if it is verified — an unverified
+// address must never be trusted for domain-based auto-linking.
+function verifiedPrimaryEmail(user) {
+  const primary = user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId);
+  if (primary && primary.verification?.status === 'verified') {
+    return primary.emailAddress;
+  }
+  return null;
 }
 
 /**
@@ -60,11 +71,32 @@ export async function verifyClient(req) {
   }
 
   const user = await clerk().users.getUser(claims.sub);
-  const clientId = user.publicMetadata?.clientId;
   const role = user.publicMetadata?.role || 'client';
+  let clientId = user.publicMetadata?.clientId;
 
-  // A signed-in user with no clientId is authenticated but not yet provisioned
-  // for any client — deny rather than falling back to a shared default.
+  // Not explicitly provisioned (invite / manual) — try to auto-link by the
+  // verified email domain (self-service signup). The domain map is the gate,
+  // and only a verified address can match it.
+  if (!clientId) {
+    const email = verifiedPrimaryEmail(user);
+    const derived = email ? clientIdForEmail(email) : null;
+    if (derived) {
+      clientId = derived;
+      // Persist so it shows up in the Clerk dashboard and later requests skip
+      // this lookup. Best-effort — a write failure must not deny an otherwise
+      // valid request, since clientId is already resolved for this call.
+      try {
+        await clerk().users.updateUserMetadata(claims.sub, {
+          publicMetadata: { ...user.publicMetadata, clientId: derived, role },
+        });
+      } catch (err) {
+        console.error('Failed to persist auto-linked clientId:', err.message);
+      }
+    }
+  }
+
+  // Authenticated but not linked to any client — deny rather than falling back
+  // to a shared default.
   if (!clientId) {
     throw new AuthError(403, 'Your account is not linked to a client yet');
   }

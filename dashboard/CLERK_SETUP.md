@@ -23,10 +23,43 @@ data API uses to return *only that client's* AR data.
    For local dev, put `VITE_CLERK_PUBLISHABLE_KEY` in `dashboard/.env` and
    `CLERK_SECRET_KEY` in `dashboard/api/.env` (both are gitignored).
 4. **Configure sign-in options** in Clerk → User & Authentication. Email + password
-   works; email magic-link is recommended for non-technical finance users (nothing
-   to forget). Turn on "Restrict sign-ups" so only invited clients can create accounts.
+   works; email magic-link is also fine. **Email verification must stay ON** —
+   domain auto-linking (below) only trusts verified addresses.
 5. **Set the redirect/allowed origins** to your dashboard domain (e.g.
    `https://app.lunarlogic.ai`).
+6. **(Recommended) Lock signup to client domains.** In Clerk → *Restrictions*, use
+   the **Allowlist** and add each client's email domain (e.g. `gualapack.com`).
+   Then only people with a client work-email can create an account at all, which
+   pairs with the domain auto-linking below. Leave the allowlist empty only if you
+   want anyone to be able to create a (data-less) account.
+
+## Self-service signup (domain auto-linking)
+
+The login page has a **"Create an account"** action. A client can sign up with their
+work email and land straight on their dashboard — no manual step — as long as their
+email **domain** is mapped to a clientId in **both**:
+
+- `src/lib/clientDomains.js` (frontend — decides which view to show)
+- `api/_lib/clientDomains.js` (backend — the security gate; re-derives from the
+  verified session token)
+
+Add each client like this (same entry in both files):
+
+```js
+const DOMAIN_TO_CLIENT = {
+  'gualapack.com': 'gualapack',
+  'kaptainclean.com': 'kaptain',
+};
+```
+
+Only a **verified** primary email can match, so a spoofed address can't grant
+access. On first authenticated request the server writes the resolved `clientId`
+back to the user's Clerk public metadata, so it then shows up in the dashboard and
+behaves like a provisioned user. A signup whose domain isn't mapped gets an
+"account not linked yet" screen (no data) until you link them manually.
+
+> `role: admin` is never granted by domain — set it by hand in Clerk for
+> LunarLogic staff.
 
 ## Provisioning a client (do this per client)
 

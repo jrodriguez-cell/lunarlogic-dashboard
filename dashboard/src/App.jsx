@@ -1,5 +1,6 @@
 import { SignedIn, SignedOut, useUser, useClerk } from '@clerk/clerk-react';
 import { ToastProvider } from './lib/toast';
+import { clientIdForEmail } from './lib/clientDomains';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ClientDashboardPage from './pages/ClientDashboardPage';
@@ -13,7 +14,14 @@ function AuthedApp() {
 
   if (!isLoaded) return null;
 
-  const clientId = user.publicMetadata?.clientId;
+  // Prefer an explicitly provisioned clientId (invite / manual / already
+  // auto-linked); otherwise derive it from the verified work-email domain so a
+  // fresh self-signup routes to their dashboard on the first render. The server
+  // re-derives and enforces this independently — this is view routing only.
+  const primaryEmail = user.primaryEmailAddress;
+  const emailVerified = primaryEmail?.verification?.status === 'verified';
+  const derivedClientId = emailVerified ? clientIdForEmail(primaryEmail?.emailAddress) : null;
+  const clientId = user.publicMetadata?.clientId || derivedClientId;
   const role = user.publicMetadata?.role || 'client';
   const onLogout = () => signOut();
 

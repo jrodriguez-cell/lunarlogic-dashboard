@@ -1,4 +1,5 @@
-import { SignIn } from '@clerk/clerk-react';
+import { useState } from 'react';
+import { SignIn, SignUp } from '@clerk/clerk-react';
 
 // Clerk owns the actual credential handling (password, magic link, reset, MFA,
 // lockout). We keep the LunarLogic wordmark + dark shell around it so the sign-in
@@ -28,7 +29,19 @@ const clerkAppearance = {
   },
 };
 
+const toggleLinkStyle = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--teal, #00d4e8)',
+  cursor: 'pointer',
+  fontSize: 13,
+  padding: 0,
+  fontWeight: 500,
+};
+
 export default function LoginPage() {
+  const [mode, setMode] = useState('sign-in');
+
   return (
     <div className="login-page">
       <div className="login-card">
@@ -46,7 +59,24 @@ export default function LoginPage() {
         </div>
         <div className="login-subtitle">AR Client Portal</div>
 
-        <SignIn routing="virtual" appearance={clerkAppearance} />
+        {mode === 'sign-in'
+          ? <SignIn routing="virtual" appearance={clerkAppearance} />
+          : <SignUp routing="virtual" appearance={clerkAppearance} />}
+
+        {/* Self-service signup: a new client can create their own account here.
+            Sign up with your work email — you'll land on your dashboard once your
+            email domain is recognized. */}
+        <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16, textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
+          {mode === 'sign-in' ? (
+            <>New client?{' '}
+              <button style={toggleLinkStyle} onClick={() => setMode('sign-up')}>Create an account</button>
+            </>
+          ) : (
+            <>Already have an account?{' '}
+              <button style={toggleLinkStyle} onClick={() => setMode('sign-in')}>Sign in</button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
