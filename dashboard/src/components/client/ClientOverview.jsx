@@ -1,5 +1,6 @@
 import SourceTag from '../SourceTag';
 import DSOProjection from './DSOProjection';
+import { getPromises, isBroken } from '../../lib/promises';
 
 function fmtM(v) {
   if (!v) return '$0';
@@ -35,7 +36,7 @@ function daysToDue(dueStr) {
   return Math.round((new Date(dueStr) - TODAY) / 86400000);
 }
 
-export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dsoGapDollars, onNavigate, isMobile, onDrill }) {
+export default function ClientOverview({ data, clientId, currentDSO, dsoChange, bpdso, dsoGapDollars, onNavigate, isMobile, onDrill }) {
   const open    = data.invoices.filter(i => i.status !== 'Paid');
   const overdue = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
   const totalOpen    = open.reduce((s, i) => s + i.amount, 0);
@@ -85,6 +86,10 @@ export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dso
     ? uncoveredInvs.filter(i => i.daysOverdue > 0 && !disputeSet.has(i.id) && !agingSet.has(i.id))
     : [];
 
+  // Broken promises to pay — a customer committed to a date that has now passed.
+  const promises = getPromises(clientId);
+  const brokenPromiseInvs = open.filter(i => isBroken(promises[i.id]));
+
   function drillInvoices(title, rows, sub) {
     onDrill({ title, subtitle: sub, source: 'Invoice data from QuickBooks Online.', filename: title.toLowerCase().replace(/\s+/g, '_'), columns: INV_COLS, rows });
   }
@@ -111,6 +116,12 @@ export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dso
     key: 'pending', color: '#f59e0b', tag: 'Confirm', weight: 100, amount: pendingAmt,
     title: `Confirm ${pending.length} payment${pending.length !== 1 ? 's' : ''}`,
     detail: `${fmtM(pendingAmt)} received but AI match was below 90% — tell LunarLogic which invoice it belongs to`, onClick: drillUnapplied,
+  });
+  if (brokenPromiseInvs.length > 0) actionItems.push({
+    key: 'broken-promises', color: '#ef4444', tag: 'Follow up', weight: 95, amount: sumAmt(brokenPromiseInvs),
+    title: `Chase ${brokenPromiseInvs.length} broken promise${brokenPromiseInvs.length !== 1 ? 's' : ''} to pay`,
+    detail: `${fmtM(sumAmt(brokenPromiseInvs))} — the promised pay date has passed and the invoice is still open`,
+    onClick: () => drillInvoices('Broken Promises to Pay', brokenPromiseInvs, `${fmtM(sumAmt(brokenPromiseInvs))} · ${brokenPromiseInvs.length} invoice${brokenPromiseInvs.length !== 1 ? 's' : ''}`),
   });
   if (disputeSuspects.length > 0) actionItems.push({
     key: 'disputes', color: '#a78bfa', tag: 'Call', weight: 90, amount: sumAmt(disputeSuspects),
