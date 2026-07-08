@@ -12,9 +12,50 @@ const PMT_COLS = [
   { key: 'status', label: 'Status' },
 ];
 
-export default function ClientCashApplication({ data, isMobile, onDrill }) {
+export default function ClientCashApplication({ data, clientId, isMobile, onDrill }) {
   const toast = useToast();
   const [resolved, setResolved] = useState({}); // txId -> { action, label }
+  const [suggestions, setSuggestions] = useState({}); // txId -> { invoiceId, reason }
+  const [suggesting, setSuggesting] = useState({});
+
+  function parseCandidate(c) {
+    const id = c.match(/^(\S+)/)?.[1] ?? c;
+    const amt = c.match(/\$([\d,]+(?:\.\d+)?)/);
+    return { id, amount: amt ? parseFloat(amt[1].replace(/,/g, '')) : null };
+  }
+  function localSuggest(p) {
+    if (p.matchedInvoice) return { invoiceId: p.matchedInvoice, reason: 'Name and amount align with this invoice.' };
+    const cands = (p.candidates || []).map(parseCandidate);
+    if (cands.length === 0) return { invoiceId: null, reason: 'No candidate invoices — likely a new or partial payment; confirm manually.' };
+    let best = cands[0];
+    for (const c of cands) {
+      if (c.amount != null && Math.abs(c.amount - p.amount) < Math.abs((best.amount ?? Infinity) - p.amount)) best = c;
+    }
+    const exact = best.amount != null && Math.abs(best.amount - p.amount) < 0.5;
+    const reason = exact
+      ? `Amount matches ${best.id} exactly.`
+      : best.amount != null
+        ? `Closest match — ${p.amount < best.amount ? 'partial payment toward' : 'nearest to'} ${best.id} ($${best.amount.toLocaleString()}).`
+        : `Best available candidate.`;
+    return { invoiceId: best.id, reason };
+  }
+  async function handleSuggest(p) {
+    setSuggesting(s => ({ ...s, [p.txId]: true }));
+    let suggestion = null;
+    try {
+      if (data.isLive) {
+        const resp = await fetch('/api/ai-payment-match', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId, payment: p }),
+        });
+        const json = await resp.json().catch(() => ({}));
+        if (resp.ok && json.ok && json.suggestion) suggestion = json.suggestion;
+      }
+    } catch { /* fall through */ }
+    if (!suggestion) suggestion = localSuggest(p);
+    setSuggestions(s => ({ ...s, [p.txId]: suggestion }));
+    setSuggesting(s => ({ ...s, [p.txId]: false }));
+  }
 
   const connected = data.isLive ? data.automationStatus?.wf3?.connected === true : true;
   const statusColor = connected ? 'var(--teal)' : 'var(--muted)';
@@ -48,7 +89,7 @@ export default function ClientCashApplication({ data, isMobile, onDrill }) {
   }
 
   function resolve(p, action) {
-    const target = p.matchedInvoice ?? p.candidates?.[0]?.split(' ')[0] ?? null;
+    const target = suggestions[p.txId]?.invoiceId ?? p.matchedInvoice ?? p.candidates?.[0]?.split(' ')[0] ?? null;
     const label = action === 'applied' ? (target ?? 'invoice') : 'reviewed';
     setResolved(r => ({ ...r, [p.txId]: { action, label } }));
     toast(action === 'applied' ? `${fmtM(p.amount)} applied to ${target ?? 'invoice'}` : `${p.txId} marked reviewed`);
@@ -131,7 +172,8 @@ export default function ClientCashApplication({ data, isMobile, onDrill }) {
                   </div>
                 );
               }
-              const target = p.matchedInvoice ?? p.candidates?.[0]?.split(' ')[0];
+              const sug = suggestions[p.txId];
+              const target = sug?.invoiceId ?? p.matchedInvoice ?? p.candidates?.[0]?.split(' ')[0];
               return (
                 <div key={p.txId} style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '10px 12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
@@ -152,11 +194,21 @@ export default function ClientCashApplication({ data, isMobile, onDrill }) {
                       ))}
                     </div>
                   )}
+                  {sug && (
+                    <div style={{ fontSize: 11, color: 'var(--teal)', background: 'rgba(0,212,232,0.08)', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 6, padding: '6px 9px', marginBottom: 8, lineHeight: 1.4 }}>
+                      <span style={{ fontWeight: 700 }}>✨ AI:</span> {sug.invoiceId ? `apply to ${sug.invoiceId}` : 'needs manual review'} — {sug.reason}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => resolve(p, 'applied')} style={primaryBtn}>
                       {target ? `Apply to ${target}` : 'Mark applied'}
                     </button>
                     <button onClick={() => resolve(p, 'reviewed')} style={secondaryBtn}>Mark reviewed</button>
+                    {!sug && (
+                      <button onClick={() => handleSuggest(p)} disabled={suggesting[p.txId]} style={aiBtn}>
+                        {suggesting[p.txId] ? 'Analyzing…' : '✨ Suggest match'}
+                      </button>
+                    )}
                     <button onClick={() => drillPayment(p)} style={ghostBtn}>Details ↗</button>
                   </div>
                 </div>
@@ -197,3 +249,4 @@ export default function ClientCashApplication({ data, isMobile, onDrill }) {
 const primaryBtn   = { padding: '6px 12px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid #22c55e', background: 'rgba(34,197,94,0.12)', color: '#22c55e' };
 const secondaryBtn = { padding: '6px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--text-dim)' };
 const ghostBtn     = { padding: '5px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)' };
+const aiBtn        = { padding: '6px 12px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid rgba(0,212,232,0.4)', background: 'rgba(0,212,232,0.1)', color: 'var(--teal)' };
