@@ -81,10 +81,41 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose, is
   const total = lineItems.reduce((s, li) => s + lineAmount(li), 0);
   const resolvedCustomer = isNewCustomer ? newCustomerName : customer;
 
-  function handleSaveDraft() {
+  function invoicePayload(mode) {
+    return {
+      clientId, mode,
+      customer: resolvedCustomer,
+      docNumber: invoiceNum,
+      txnDate: issueDate,
+      dueDate,
+      notes,
+      lines: lineItems.map(li => ({ description: li.description, qty: li.qty, rate: li.rate })),
+    };
+  }
+
+  async function handleSaveDraft() {
     if (!resolvedCustomer) { toast('Select or enter a customer first', 'error'); return; }
-    toast(`Draft saved for ${resolvedCustomer} · ${invoiceNum}`, 'info');
-    onClose();
+
+    if (!isLive) {
+      toast(`Draft saved for ${resolvedCustomer} · ${invoiceNum}`, 'info');
+      onClose();
+      return;
+    }
+
+    setSending(true);
+    try {
+      const resp = await fetch('/api/create-invoice', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invoicePayload('draft')),
+      });
+      const json = await resp.json().catch(() => ({}));
+      if (!resp.ok || !json.ok) throw new Error(json.message || json.error || `Request failed (${resp.status})`);
+      toast(`Draft saved for ${resolvedCustomer}${json.via === 'n8n' ? ' via your workflow' : ''}`, 'info');
+      onClose();
+    } catch (e) {
+      toast(`Could not save draft: ${e.message}`, 'error');
+      setSending(false);
+    }
   }
 
   async function handleSend() {
@@ -98,25 +129,19 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose, is
       return;
     }
 
-    // Live-connected client (QB sandbox): create the invoice for real.
+    // Live-connected client (QB sandbox): create the invoice for real —
+    // routed to the n8n workflow when configured, else straight to QuickBooks.
     setSending(true);
     try {
       const resp = await fetch('/api/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId,
-          customer: resolvedCustomer,
-          docNumber: invoiceNum,
-          txnDate: issueDate,
-          dueDate,
-          notes,
-          lines: lineItems.map(li => ({ description: li.description, qty: li.qty, rate: li.rate })),
-        }),
+        body: JSON.stringify(invoicePayload('send')),
       });
       const json = await resp.json().catch(() => ({}));
       if (!resp.ok || !json.ok) throw new Error(json.message || json.error || `Request failed (${resp.status})`);
-      toast(`Invoice ${json.docNumber ?? invoiceNum} created in QuickBooks for ${resolvedCustomer}`);
+      const where = json.via === 'n8n' ? 'sent to your workflow' : 'created in QuickBooks';
+      toast(`Invoice ${json.docNumber ?? invoiceNum} ${where} for ${resolvedCustomer}`);
       onClose();
     } catch (e) {
       toast(`Could not create invoice: ${e.message}`, 'error');
