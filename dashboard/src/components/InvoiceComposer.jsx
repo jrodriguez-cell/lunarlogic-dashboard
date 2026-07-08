@@ -28,8 +28,9 @@ function makeLineItem() {
   return { id: lineIdCounter++, description: '', qty: 1, rate: '' };
 }
 
-export default function InvoiceComposer({ invoices, paymentBehavior, onClose }) {
+export default function InvoiceComposer({ invoices, paymentBehavior, onClose, isLive = false, clientId }) {
   const toast = useToast();
+  const [sending, setSending] = useState(false);
   const customers = paymentBehavior ? paymentBehavior.map(c => c.customer) : [];
 
   const [customer, setCustomer] = useState('');
@@ -86,11 +87,41 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose }) 
     onClose();
   }
 
-  function handleSend() {
+  async function handleSend() {
     if (!resolvedCustomer) { toast('Select or enter a customer first', 'error'); return; }
     if (total <= 0) { toast('Add at least one line item with an amount', 'error'); return; }
-    toast(`Invoice ${invoiceNum} sent to ${resolvedCustomer}`);
-    onClose();
+
+    // Demo clients never hit QuickBooks — just confirm locally.
+    if (!isLive) {
+      toast(`Invoice ${invoiceNum} sent to ${resolvedCustomer}`);
+      onClose();
+      return;
+    }
+
+    // Live-connected client (QB sandbox): create the invoice for real.
+    setSending(true);
+    try {
+      const resp = await fetch('/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          customer: resolvedCustomer,
+          docNumber: invoiceNum,
+          txnDate: issueDate,
+          dueDate,
+          notes,
+          lines: lineItems.map(li => ({ description: li.description, qty: li.qty, rate: li.rate })),
+        }),
+      });
+      const json = await resp.json().catch(() => ({}));
+      if (!resp.ok || !json.ok) throw new Error(json.message || json.error || `Request failed (${resp.status})`);
+      toast(`Invoice ${json.docNumber ?? invoiceNum} created in QuickBooks for ${resolvedCustomer}`);
+      onClose();
+    } catch (e) {
+      toast(`Could not create invoice: ${e.message}`, 'error');
+      setSending(false);
+    }
   }
 
   return (
@@ -100,7 +131,7 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose }) 
         <div className="drawer-header">
           <div>
             <div className="drawer-title">New Invoice</div>
-            <div className="drawer-sub">Compose and send an invoice</div>
+            <div className="drawer-sub">{isLive ? 'Creates a real invoice in QuickBooks' : 'Compose and send an invoice'}</div>
           </div>
           <button className="drawer-close" onClick={onClose}>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -310,8 +341,10 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose }) 
         </div>
 
         <div className="drawer-actions">
-          <button className="btn-secondary" onClick={handleSaveDraft}>Save Draft</button>
-          <button className="btn-primary" onClick={handleSend}>Send Invoice</button>
+          <button className="btn-secondary" onClick={handleSaveDraft} disabled={sending}>Save Draft</button>
+          <button className="btn-primary" onClick={handleSend} disabled={sending}>
+            {sending ? 'Creating…' : isLive ? 'Create in QuickBooks' : 'Send Invoice'}
+          </button>
         </div>
       </div>
     </>

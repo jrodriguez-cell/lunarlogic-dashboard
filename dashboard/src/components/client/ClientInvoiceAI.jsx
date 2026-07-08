@@ -49,7 +49,7 @@ function CreationSequence({ isMobile }) {
 
 const circleStyle = { width: 28, height: 28, borderRadius: '50%', background: 'var(--bg)', border: '1.5px solid var(--teal)', color: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0, position: 'relative' };
 
-export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
+export default function ClientInvoiceAI({ data, clientId, isMobile, onDrill }) {
   const [composing, setComposing] = useState(false);
   const stats     = data.automationStats;
   const tracked   = !!stats;
@@ -156,6 +156,8 @@ export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
         <InvoiceComposer
           invoices={data.invoices}
           paymentBehavior={data.paymentBehavior}
+          isLive={data.isLive}
+          clientId={clientId}
           onClose={() => setComposing(false)}
         />
       )}
