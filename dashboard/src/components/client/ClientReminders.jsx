@@ -1,5 +1,31 @@
+import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useToast } from '../../lib/toast';
 import { AutomationHeader, Card, StatTile, fmtM, fmtRunTime, tileGridStyle } from './automationKit';
+
+function localReminderDraft(inv, companyName) {
+  const sent = inv.reminders?.length ?? 0;
+  const stage = sent <= 1 ? 'friendly' : sent <= 3 ? 'firm' : 'final';
+  const amt = `$${inv.amount.toLocaleString()}`;
+  const who = inv.customer;
+  const sig = `\n\nThank you,\n${companyName || 'Accounts Receivable'}`;
+  if (stage === 'friendly') {
+    return {
+      subject: `Friendly reminder — invoice ${inv.id}`,
+      body: `Hi ${who},\n\nJust a friendly reminder that invoice ${inv.id} for ${amt} ${inv.daysOverdue > 0 ? `was due on ${inv.due}` : `is due ${inv.due}`}. If it's already on its way, thank you — please disregard this note.\n\nHappy to resend the invoice or answer any questions.${sig}`,
+    };
+  }
+  if (stage === 'firm') {
+    return {
+      subject: `Payment overdue — invoice ${inv.id} (${inv.daysOverdue}d)`,
+      body: `Hi ${who},\n\nOur records show invoice ${inv.id} for ${amt} is now ${inv.daysOverdue} days past due (due ${inv.due}). Could you let us know the expected payment date, or flag any issue holding it up?\n\nWe're glad to help resolve anything on our end.${sig}`,
+    };
+  }
+  return {
+    subject: `Final notice — invoice ${inv.id}, ${inv.daysOverdue}d overdue`,
+    body: `Hi ${who},\n\nInvoice ${inv.id} for ${amt} is now ${inv.daysOverdue} days past due despite prior reminders. Please arrange payment within 5 business days, or reply so we can discuss a plan before this escalates further.${sig}`,
+  };
+}
 
 const CADENCE = [
   { at: '−7d', label: 'Friendly heads-up', note: 'before due' },
@@ -43,7 +69,29 @@ function FreqTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientReminders({ data, isMobile, onDrill, onAction }) {
+export default function ClientReminders({ data, clientId, isMobile, onDrill, onAction }) {
+  const toast = useToast();
+  const [draft, setDraft] = useState(null);        // { invoice, subject, body }
+  const [drafting, setDrafting] = useState(null);   // invoice id being drafted
+
+  async function handleDraftReminder(inv) {
+    setDrafting(inv.id);
+    let content = null;
+    try {
+      if (data.isLive) {
+        const resp = await fetch('/api/ai-reminder-draft', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId, invoice: { id: inv.id, customer: inv.customer, amount: inv.amount, due: inv.due, daysOverdue: inv.daysOverdue, remindersSent: inv.reminders?.length ?? 0 } }),
+        });
+        const json = await resp.json().catch(() => ({}));
+        if (resp.ok && json.ok && json.draft?.body) content = json.draft;
+      }
+    } catch { /* fall through */ }
+    if (!content) content = localReminderDraft(inv, data.name);
+    setDraft({ invoice: inv, ...content });
+    setDrafting(null);
+  }
+
   const connected = data.isLive ? data.automationStatus?.wf2?.connected === true : true;
   const statusColor = connected ? 'var(--green)' : 'var(--muted)';
 
@@ -185,11 +233,21 @@ export default function ClientReminders({ data, isMobile, onDrill, onAction }) {
                     })}
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', flexShrink: 0, width: 64, textAlign: 'right' }}>{fmtM(inv.amount)}</span>
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDraftReminder(inv); }}
+                    disabled={drafting === inv.id}
+                    title="Draft a reminder email with AI"
+                    style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: 'var(--teal)', background: 'rgba(0,212,232,0.1)', border: '1px solid rgba(0,212,232,0.3)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer' }}
+                  >{drafting === inv.id ? '…' : '✨ Draft'}</button>
                 </div>
               );
             })}
           </div>
         </Card>
+      )}
+
+      {draft && (
+        <ReminderDraftModal draft={draft} isLive={data.isLive} onClose={() => setDraft(null)} onCopy={() => { navigator.clipboard?.writeText(`Subject: ${draft.subject}\n\n${draft.body}`); toast('Reminder copied to clipboard'); }} />
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
@@ -230,6 +288,31 @@ export default function ClientReminders({ data, isMobile, onDrill, onAction }) {
         </Card>
       </div>
     </div>
+  );
+}
+
+function ReminderDraftModal({ draft, isLive, onClose, onCopy }) {
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1100 }} />
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 'min(520px, calc(100vw - 32px))', maxHeight: '80vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, zIndex: 1101, padding: 18, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: 'var(--teal)' }}>✨</span> Reminder draft</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{draft.invoice.customer} · {draft.invoice.id}{isLive ? '' : ' · demo'}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18 }}>×</button>
+        </div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Subject</div>
+        <div style={{ fontSize: 13, color: 'var(--text)', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 11px', marginBottom: 12 }}>{draft.subject}</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Body</div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-dim)', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '11px', whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>{draft.body}</div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ padding: '7px 14px', fontSize: 12, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)' }}>Close</button>
+          <button onClick={onCopy} style={{ padding: '7px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--teal)', background: 'rgba(0,212,232,0.12)', color: 'var(--teal)' }}>Copy to clipboard</button>
+        </div>
+      </div>
+    </>
   );
 }
 
