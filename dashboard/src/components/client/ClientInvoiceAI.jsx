@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import InvoiceComposer from '../InvoiceComposer';
 import { AutomationHeader, Card, StatTile, BeforeAfter, fmtM, fmtRunTime, tileGridStyle } from './automationKit';
 
 const PRE_LIVE_MINUTES = 19; // manual data-entry baseline per invoice (pre-LunarLogic)
@@ -48,6 +50,7 @@ function CreationSequence({ isMobile }) {
 const circleStyle = { width: 28, height: 28, borderRadius: '50%', background: 'var(--bg)', border: '1.5px solid var(--teal)', color: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0, position: 'relative' };
 
 export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
+  const [composing, setComposing] = useState(false);
   const stats     = data.automationStats;
   const tracked   = !!stats;
   const connected = data.isLive ? data.automationStatus?.wf1?.connected === true : true;
@@ -103,7 +106,11 @@ export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
         />
       </div>
 
-      <Card title="How an invoice is created" hint="Every invoice runs this sequence automatically — from a Slack message to a sent QuickBooks invoice, same day.">
+      <Card
+        title="How an invoice is created"
+        hint="Every invoice runs this sequence automatically — from a Slack message to a sent QuickBooks invoice, same day. Need to raise one yourself? Create it here and it enters the same flow."
+        right={<button onClick={() => setComposing(true)} style={createBtn}>+ Create invoice</button>}
+      >
         <CreationSequence isMobile={isMobile} />
       </Card>
 
@@ -144,8 +151,17 @@ export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
           </div>
         )}
       </Card>
+
+      {composing && (
+        <InvoiceComposer
+          invoices={data.invoices}
+          paymentBehavior={data.paymentBehavior}
+          onClose={() => setComposing(false)}
+        />
+      )}
     </div>
   );
 }
 
 const exportBtn = { padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)' };
+const createBtn = { padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--teal)', background: 'rgba(0,212,232,0.12)', color: 'var(--teal)', whiteSpace: 'nowrap' };
