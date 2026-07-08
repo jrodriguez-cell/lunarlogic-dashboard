@@ -23,7 +23,7 @@ function localReminderDraft(inv, companyName) {
   const stage = sent <= 1 ? 'friendly' : sent <= 3 ? 'firm' : 'final';
   const amt = `$${inv.amount.toLocaleString()}`;
   const who = inv.customer;
-  const sig = `\n\nThank you,\n${companyName || 'Accounts Receivable'}`;
+  const sig = `\n\nPay online in one click: https://pay.lunarlogic.ai/i/${inv.id}\n\nThank you,\n${companyName || 'Accounts Receivable'}`;
   if (stage === 'friendly') return {
     subject: `Friendly reminder — invoice ${inv.id}`,
     body: `Hi ${who},\n\nJust a friendly reminder that invoice ${inv.id} for ${amt} ${inv.daysOverdue > 0 ? `was due on ${inv.due}` : `is due ${inv.due}`}. If it's already on its way, thank you — please disregard.\n\nHappy to resend the invoice or answer any questions.${sig}`,

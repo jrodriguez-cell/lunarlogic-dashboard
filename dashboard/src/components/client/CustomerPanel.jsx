@@ -31,8 +31,14 @@ function emailDraft(inv, companyName) {
     : 'Please let us know if you have any questions or if there is anything we can help with.';
   return {
     subject: `Invoice ${inv.id} — Payment Follow-Up`,
-    body: `Hi ${inv.customer},\n\nI wanted to follow up on Invoice ${inv.id} for $${inv.amount.toLocaleString()}, due ${inv.due}${d > 0 ? ` (${d} days overdue)` : ''}.\n\n${tone}\n\nIf payment has already been sent, please disregard this message — we may be experiencing a processing delay.\n\nThank you,\n${companyName}`,
+    body: `Hi ${inv.customer},\n\nI wanted to follow up on Invoice ${inv.id} for $${inv.amount.toLocaleString()}, due ${inv.due}${d > 0 ? ` (${d} days overdue)` : ''}.\n\n${tone}\n\nPay online in one click: ${payLink(inv)}\n\nIf payment has already been sent, please disregard this message — we may be experiencing a processing delay.\n\nThank you,\n${companyName}`,
   };
+}
+
+// Customer-facing payment link. In production this is the QuickBooks invoice
+// pay link; here it's a stable per-invoice URL placeholder.
+function payLink(inv) {
+  return `https://pay.lunarlogic.ai/i/${inv.id}`;
 }
 
 export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payments, companyName, clientId, isLive, onClose }) {
@@ -230,6 +236,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
               <SectionLabel>Take action</SectionLabel>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {[
+                  { id: 'pay',      label: 'Payment Link',   sub: 'Customer pays online', primary: true },
                   { id: 'reminder', label: 'Send Reminder',  sub: 'Email draft ready',    primary: true },
                   { id: 'log',      label: 'Log Contact',    sub: 'Call, email, meeting'               },
                   { id: 'task',     label: 'Assign Task',    sub: 'Delegate follow-up'                 },
@@ -247,6 +254,37 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                     <div style={{ fontSize: 10, color: 'var(--muted)' }}>{a.sub}</div>
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* PAY action — customer payment page preview */}
+          {action === 'pay' && (
+            <div style={{ padding: '14px 24px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <button onClick={() => setAction(null)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 12 }}>← Back</button>
+                <SectionLabel style={{ margin: 0 }}>Customer payment page</SectionLabel>
+              </div>
+              <div style={{ background: '#fff', borderRadius: 10, padding: '18px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#111', marginBottom: 2 }}>{companyName}</div>
+                <div style={{ fontSize: 11, color: '#666', marginBottom: 12 }}>Invoice {inv.id} · Billed to {inv.customer}</div>
+                <div style={{ fontSize: 12, color: inv.daysOverdue > 0 ? '#c0392b' : '#333', marginBottom: 12 }}>
+                  {inv.daysOverdue > 0 ? `$${inv.amount.toLocaleString()} past due` : `$${inv.amount.toLocaleString()} due ${inv.due}`}
+                </div>
+                <button onClick={() => toast('Payment page opened (demo) — production uses the live QuickBooks pay link')}
+                  style={{ width: '100%', padding: '11px', background: '#22c55e', border: 'none', borderRadius: 7, color: '#fff', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}>
+                  Pay ${inv.amount.toLocaleString()}
+                </button>
+                <div style={{ fontSize: 10, color: '#999', marginTop: 8 }}>Card or ACH · secure checkout</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button onClick={() => { navigator.clipboard?.writeText(payLink(inv)); toast('Payment link copied — paste it anywhere'); }}
+                  style={{ flex: 1, padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                  Copy payment link
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8, fontStyle: 'italic' }}>
+                The reminder emails LunarLogic sends include this same one-click pay link — the fastest path from reminded to paid.
               </div>
             </div>
           )}

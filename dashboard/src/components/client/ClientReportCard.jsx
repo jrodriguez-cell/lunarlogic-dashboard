@@ -54,6 +54,21 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
 
   const collEff = data.collectionEfficiency;
 
+  // Time to Pay — average days customers take to pay, across the base.
+  const avgTimeToPay = data.paymentBehavior?.length
+    ? Math.round(data.paymentBehavior.reduce((s, p) => s + p.avgDays, 0) / data.paymentBehavior.length)
+    : null;
+  // CEI (Collections Effectiveness Index) — simplified: of what was collectable
+  // this period (collected + still-overdue), how much was actually collected.
+  const overdueARnow    = openInvs.filter(i => i.daysOverdue > 0).reduce((s, i) => s + i.amount, 0);
+  const collectedPeriod = pmtsPeriod.reduce((s, p) => s + p.amount, 0);
+  const cei = paymentDataAvailable && (collectedPeriod + overdueARnow) > 0
+    ? Math.round((collectedPeriod / (collectedPeriod + overdueARnow)) * 100)
+    : null;
+  // Expected payments — open balances due or collectable within the next 30 days.
+  const _today = new Date(TODAY_ISO);
+  const expectedNext30 = openInvs.filter(i => Math.round((new Date(i.due) - _today) / 86400000) <= 30).reduce((s, i) => s + i.amount, 0);
+
   // Bad debt rate IS derivable from real QuickBooks data (badDebtAmt / annualRevenue)
   // even when automationStats (which requires WF1/2/3 telemetry) is unavailable.
   const badDebtRatePct = isLive
@@ -187,6 +202,30 @@ export default function ClientReportCard({ data, clientId, currentDSO, isMobile,
           detail={automationTelemetryAvailable ? `${Math.round((1 - (data.automationStats?.monthEndCloseDaysAfter ?? 3) / (data.automationStats?.monthEndCloseDaysBefore ?? 12)) * 100)}% faster close` : undefined}
           color={automationTelemetryAvailable ? 'var(--green)' : 'var(--muted)'}
           source="Days from period end to finalized books. Tracked via LunarLogic workflow completion timestamps vs. prior manual close process baseline."
+        />
+        <MetricTile
+          label="Time to Pay"
+          value={avgTimeToPay != null ? `${avgTimeToPay}d` : '—'}
+          sub="avg across your customers"
+          detail="Lower is better — measures how fast customers actually pay"
+          color={avgTimeToPay == null ? 'var(--muted)' : avgTimeToPay <= 30 ? 'var(--green)' : avgTimeToPay <= 45 ? 'var(--teal)' : '#f59e0b'}
+          source="Average days-to-pay across your customer base, from QuickBooks payment history. Complements DSO by showing typical customer behavior rather than the portfolio blend."
+        />
+        <MetricTile
+          label="Collections Effectiveness (CEI)"
+          value={cei != null ? `${cei}%` : 'Not yet tracked'}
+          sub={cei != null ? 'of collectable balance collected' : 'payment telemetry not wired in yet'}
+          detail={cei != null ? (cei >= 80 ? 'Strong' : cei >= 60 ? 'Healthy' : 'Room to improve') : undefined}
+          color={cei == null ? 'var(--muted)' : cei >= 80 ? 'var(--green)' : cei >= 60 ? 'var(--teal)' : '#f59e0b'}
+          source="Collections Effectiveness Index (simplified): payments collected this period ÷ (collected + still-overdue balance). A proxy for how effectively collectable AR is being converted to cash; the full CEI also factors beginning/ending AR."
+        />
+        <MetricTile
+          label="Expected Payments (30d)"
+          value={fmtM(expectedNext30)}
+          sub="due or collectable in the next 30 days"
+          detail="Open balances by due date; overdue counts as collectable now"
+          color="var(--teal)"
+          source="Sum of open invoice balances due within 30 days, plus overdue balances (collectable now). An estimate from due dates, not a guarantee."
         />
       </div>
 
