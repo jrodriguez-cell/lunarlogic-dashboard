@@ -129,6 +129,17 @@ export async function getInvoice(invoiceId, clientId = 'default') {
 }
 
 /**
+ * Get the customer-facing payment link for an invoice.
+ * QuickBooks returns InvoiceLink only when explicitly requested via
+ * include=invoiceLink, and only when the invoice has online payment /
+ * sharing enabled — otherwise it's absent (returns null here).
+ */
+export async function getInvoiceLink(invoiceId, clientId = 'default') {
+  const res = await qbApiRequest(`/invoice/${invoiceId}?include=invoiceLink&minorversion=73`, {}, clientId);
+  return res.Invoice?.InvoiceLink || null;
+}
+
+/**
  * Query unpaid invoices
  */
 export async function getUnpaidInvoices(clientId = 'default') {
