@@ -152,6 +152,25 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
 .ss-ph{border:1px dashed var(--border);border-radius:8px;color:var(--slate500);
   font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;text-align:center;padding:6px;margin-top:10px}
 
+/* ================= IN-THE-BOOKS (GAAP) STRIP ================= */
+.gaap{display:flex;align-items:baseline;gap:14px;background:rgba(129,140,248,0.05);
+  border:1px solid var(--border-soft);border-radius:12px;padding:11px 16px}
+.gaap .k{font-size:8px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--indigo);white-space:nowrap;padding-top:1px}
+.gaap p{font-size:9.5px;line-height:1.5;color:var(--slate400);margin:0}
+.gaap p b{color:var(--slate300);font-weight:700}
+
+/* ================= CENTERED TREATMENTS ================= */
+.section-title{text-align:center}
+.sec-head{text-align:center}
+.sec-head .section-intro{margin-left:auto;margin-right:auto}
+.uc-head{text-align:center}
+.uc-index{justify-content:center}
+.stat,.proof-card{text-align:center}
+.stat .l,.proof-card .l{margin-left:auto;margin-right:auto}
+.principle{display:flex;flex-direction:column;justify-content:center;text-align:center}
+.prob{align-items:center;text-align:center}
+.mission-stmt{text-align:center}
+
 /* ================= DSO PAGE ================= */
 .dso-body{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;gap:16px;justify-content:space-between;padding-bottom:4px}
 .formula{background:linear-gradient(160deg,rgba(30,41,59,0.5),rgba(17,24,48,0.35));
@@ -224,8 +243,8 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     <p class="cover-thesis">Four connected modules that move revenue from one column to another, from <em>outstanding</em> to <em>collected</em>, faster, more consistently, and without the owner chasing anyone. Built for owner-operated service firms on QuickBooks and Xero.</p>
     <div class="cover-proof">
       <div class="proof-card"><div class="n">84%</div><div class="l">Faster invoice<br>processing</div></div>
-      <div class="proof-card"><div class="n">19-day</div><div class="l">DSO<br>improvement</div></div>
-      <div class="anchor">Documented results from a live anchor client, achieved in under 90 days.</div>
+      <div class="proof-card"><div class="n">40%</div><div class="l">Average DSO<br>reduction</div></div>
+      <div class="anchor">Typical outcomes across the four-module AR suite, most within the first 90 days of go-live.</div>
     </div>
   </div>
 
@@ -246,7 +265,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     <div class="tag">Use Cases</div>
   </header>
 
-  <div style="position:relative;z-index:2;display:flex;flex-direction:column;flex:1">
+  <div class="sec-head" style="position:relative;z-index:2;display:flex;flex-direction:column;flex:1">
     <div class="eyebrow" style="margin-bottom:12px">Overview</div>
     <h2 class="section-title">The problems we're solving</h2>
     <p class="lead section-intro">For an 8-to-20-person firm, accounts receivable is death by a thousand manual steps. Four root problems quietly drain time and cash out of the business every single month.</p>
@@ -294,7 +313,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
   </header>
 
   <div class="dso-body">
-    <div>
+    <div class="sec-head">
       <div class="eyebrow" style="margin-bottom:12px">The Metric That Matters</div>
       <h2 class="section-title">Every one of those problems shows up as a single number</h2>
       <p class="lead section-intro" style="margin-bottom:0">It's called <b style="color:var(--slate300)">Days Sales Outstanding (DSO)</b>: the average number of days between earning revenue and collecting the cash. Revenue is a promise; cash is the reality. DSO is the gap between them, and it's the leading indicator of financial health, not a lagging one.</p>
@@ -332,15 +351,17 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
             <text x="500" y="24" fill="#f97316">BREAKDOWN</text>
             <text x="635" y="24" fill="#ef4444">CRISIS</text>
           </g>
-          <!-- Live-client before/after markers: 52 -> 33 -->
+          <!-- Before / with LunarLogic markers: 48 -> 22 (representative) -->
           <g font-family="Nunito,sans-serif">
-            <line x1="357" y1="44" x2="357" y2="98" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="3 3"/>
-            <circle cx="357" cy="52" r="5" fill="#0F172A" stroke="#94a3b8" stroke-width="2"/>
-            <line x1="238" y1="44" x2="238" y2="98" stroke="#4ade80" stroke-width="1.6"/>
-            <circle cx="238" cy="52" r="6" fill="#0F172A" stroke="#4ade80" stroke-width="2.5"/>
-            <path d="M349 92 h-95" stroke="#4ade80" stroke-width="1.6" marker-end="url(#arr1)"/>
-            <text x="405" y="95" fill="#cbd5e1" font-size="9" font-weight="700">52 → 33 days</text>
-            <text x="405" y="107" fill="#64748b" font-size="8">A live client, in &lt;90 days</text>
+            <line x1="332" y1="44" x2="332" y2="98" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="3 3"/>
+            <circle cx="332" cy="52" r="5" fill="#0F172A" stroke="#94a3b8" stroke-width="2"/>
+            <text x="332" y="112" fill="#64748b" font-size="7.5" text-anchor="middle">Before</text>
+            <line x1="169" y1="44" x2="169" y2="98" stroke="#4ade80" stroke-width="1.6"/>
+            <circle cx="169" cy="52" r="6" fill="#0F172A" stroke="#4ade80" stroke-width="2.5"/>
+            <text x="169" y="112" fill="#4ade80" font-size="7.5" text-anchor="middle" font-weight="700">With LunarLogic</text>
+            <path d="M324 92 h-147" stroke="#4ade80" stroke-width="1.6" marker-end="url(#arr1)"/>
+            <text x="410" y="90" fill="#cbd5e1" font-size="9.5" font-weight="700" text-anchor="middle">48 → 22 days</text>
+            <text x="410" y="103" fill="#64748b" font-size="8" text-anchor="middle">a 40% DSO reduction</text>
           </g>
         </svg>
       </div>
@@ -424,7 +445,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
           </g>
           <g>
             <rect x="575" y="34" width="130" height="56" rx="12" fill="#0F172A" stroke="#334155"/>
-            <text x="640" y="59" fill="#f1f5f9" font-size="12" font-weight="700" text-anchor="middle">Sent to Client</text>
+            <text x="640" y="59" fill="#f1f5f9" font-size="12" font-weight="700" text-anchor="middle">Sent to Customer</text>
             <text x="640" y="76" fill="#94a3b8" font-size="9" text-anchor="middle">via QuickBooks email</text>
           </g>
           <!-- arrows between -->
@@ -449,14 +470,17 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
       </div>
       <div class="block" style="flex:1.4;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
         <div class="lbl">Results</div>
-        <p class="results-narr">A live anchor client cut invoice processing time <b>84%</b> and every invoice now carries a complete, linkable audit trail back to its originating Slack message.</p>
+        <p class="results-narr">Invoice processing time drops <b>84%</b>, and every invoice posts to the books with a complete, linkable audit trail back to its originating Slack message.</p>
       </div>
     </div>
+
+    <div class="gaap"><span class="k">In the books · U.S. GAAP</span>
+      <p>Under accrual accounting, revenue is recognized when earned and the invoice is what posts that entry. Sending it in ~90 seconds instead of days keeps receivables current, cuts month-end WIP-to-revenue reclass entries, and standardizes GL coding at the moment of creation.</p></div>
 
     <div class="tb">
       <div class="tb-copy">
         <div class="lbl">Tangible benefits</div>
-        <p>A firm sending <b style="color:var(--slate300)">200 invoices a month</b> saves about 16 minutes on each one, roughly <b style="color:var(--slate300)">53 hours every month</b>, or 640+ hours a year of staff time redirected from data entry to client work. Same-day invoicing also starts the payment clock days earlier on every job.</p>
+        <p>A firm sending <b style="color:var(--slate300)">200 invoices a month</b> saves about 16 minutes on each one, roughly <b style="color:var(--slate300)">53 hours every month</b>, or 640+ hours a year of administrative and accounting staff time redirected from data entry to client work. Same-day invoicing also starts the payment clock days earlier on every job.</p>
         <p class="note">Illustrative figures based on a typical firm profile, not a guaranteed result.</p>
       </div>
       <div class="tb-figs">
@@ -547,9 +571,12 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
       </div>
       <div class="block" style="flex:1.4;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
         <div class="lbl">Results</div>
-        <p class="results-narr">Live for client <b>Gualapack</b>. Consistent escalation cut the bad-debt rate <b>70%</b> and drove a <b>40% DSO reduction</b>, cash arriving weeks sooner, with no added headcount.</p>
+        <p class="results-narr">Consistent escalation cuts the bad-debt rate <b>70%</b> and drives a <b>40% DSO reduction</b>, so cash arrives weeks sooner with no added collections headcount.</p>
       </div>
     </div>
+
+    <div class="gaap"><span class="k">In the books · U.S. GAAP</span>
+      <p>A disciplined reminder cadence produces a more accurate AR aging schedule, which feeds a lower, more defensible allowance for doubtful accounts, and a timestamped collection history on every invoice, the record accountants and auditors want before supporting a write-off.</p></div>
 
     <div class="tb">
       <div class="tb-copy">
@@ -638,6 +665,9 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
       </div>
     </div>
 
+    <div class="gaap"><span class="k">In the books · U.S. GAAP</span>
+      <p>The structured sales order is the reference point that traces revenue back to a customer commitment, reducing disputed and unbilled receivables and making correct deferred-revenue and percentage-of-completion recognition possible for firms that collect deposits or bill in progress.</p></div>
+
     <div class="tb">
       <div class="tb-copy">
         <div class="lbl">Tangible benefits</div>
@@ -723,7 +753,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
             stroke-dasharray="87 100" pathLength="100" transform="rotate(-90 360 180)"/>
           <text x="360" y="184" fill="#4ade80" font-size="11" font-weight="800" text-anchor="middle">87</text>
           <text x="390" y="176" fill="#cbd5e1" font-size="9" font-weight="700">On-time confidence</text>
-          <text x="390" y="190" fill="#64748b" font-size="8">Acme Co · pays in ~9 days</text>
+          <text x="390" y="190" fill="#64748b" font-size="8">Top account · pays in ~9 days</text>
 
           <!-- RIGHT BOTTOM 2: freshness -->
           <rect x="522" y="134" width="190" height="68" rx="12" fill="#0F172A" stroke="#1A2F4A"/>
@@ -743,9 +773,12 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
       </div>
       <div class="block" style="flex:1.4;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
         <div class="lbl">Results</div>
-        <p class="results-narr">Month-end close compressed from <b>14 days to 3</b>, with <b>87%</b>-accurate payment forecasts and a DSO line you can watch bend down against your go-live date in every renewal conversation.</p>
+        <p class="results-narr">Month-end close compresses from <b>14 days to 3</b>, with <b>87%</b>-accurate payment forecasts and a DSO line the whole team can watch bend down against the go-live date.</p>
       </div>
     </div>
+
+    <div class="gaap"><span class="k">In the books · U.S. GAAP</span>
+      <p>Hourly sync keeps the dashboard matching the general ledger, so at-risk receivables surface continuously and reserve adjustments and write-off candidates are handled through the month instead of during close, a major reason accounting closes AR 79% faster.</p></div>
 
     <div class="tb">
       <div class="tb-copy">
@@ -775,7 +808,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
   </header>
 
   <div class="dso-body">
-    <div>
+    <div class="sec-head">
       <div class="eyebrow" style="margin-bottom:12px">Beyond the Recovery</div>
       <h2 class="section-title">What the reclaimed time and cash make possible</h2>
       <p class="lead section-intro" style="margin-bottom:0">Recovering the hours and pulling the cash forward is the mechanism. What a business does with them is the point. For a representative $2.5M service firm, moving from a 48-day to a 22-day DSO reshapes what the business can actually do next.</p>
@@ -797,8 +830,8 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
         <p>At a 48-day DSO, every new job floats materials and labor for a month or more before payment lands. At 22 days that gap closes: hiring becomes a decision rather than a gamble, deferred equipment gets bought, and a large contract reads as an opportunity, not a liquidity risk.</p>
       </div>
       <div class="principle" style="padding:16px 18px">
-        <div class="h">Buy back time and certainty</div>
-        <p>500+ hours a year is roughly a full month of work handed back to the owner and the bookkeeper. Payroll becomes predictable. The Sunday-night cash anxiety fades. The recurring dollars keep compounding: about $85,000 a year in recovered revenue, labor, and bad debt on top of the one-time release.</p>
+        <div class="h">Give accounting its time back</div>
+        <p>Manual AR consumes 500+ hours a year; the suite cuts that to under 100, an 80% reduction. That is roughly a full month handed back to the bookkeeper and controller, and organization-wide it is capacity redeployed from data entry and reconciliation to advisory and growth work.</p>
       </div>
     </div>
 
@@ -806,7 +839,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
       <div class="t" style="font-size:10.5px"><b style="color:var(--slate300)">A fourth return, harder to put on a stat card: financial credibility.</b> A business with fast, consistent collections and an accurate aging schedule presents cleaner financials to a lender underwriting a line of credit, a bank financing equipment, or a buyer running diligence. Well-run collections are evidence of a well-run business, and that evidence shows up directly in the books.</div>
     </div>
 
-    <p class="pull" style="font-size:15px;padding:2px 20px">"About six weeks after going live, one owner wrote: I feel like I finally own my business again."</p>
+    <p class="pull" style="font-size:15px;padding:2px 20px">"The point isn't collecting faster. It's what the business builds with capital that is finally free."</p>
 
     <p style="font-size:8px;color:var(--slate500);font-style:italic;text-align:center;margin-top:-4px">Illustrative figures for a representative $2.5M service firm moving from a 48-day to a 22-day DSO. Not a guaranteed result.</p>
   </div>
@@ -826,7 +859,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
   </header>
 
   <div class="mission-body">
-    <div>
+    <div class="sec-head">
       <div class="eyebrow" style="margin-bottom:12px">Our Mission</div>
       <p class="mission-stmt">LunarLogic modernizes the accounting infrastructure of a business, module by module, starting with AR, until the entire financial operating layer runs <span class="g">automatically</span>: without manual intervention, and without a consultant.</p>
     </div>
