@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { fetchDashboardData } from '../lib/quickbooks';
@@ -30,6 +30,19 @@ function fmtK(v) {
   return `$${v}`;
 }
 
+// QuickBooks data is refreshed on this cadence (matches the copy shown in the UI).
+const REFRESH_MS = 15 * 60 * 1000;
+
+function timeAgo(date, nowMs) {
+  const secs = Math.max(0, Math.round((nowMs - date.getTime()) / 1000));
+  if (secs < 45) return 'just now';
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs !== 1 ? 's' : ''} ago`;
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
 const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'action',   label: 'Action Plan' },
@@ -46,13 +59,37 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const isMobile = useMobile();
   const base = useMemo(() => getClientData(session.clientId), [session.clientId]);
   const [liveData, setLiveData] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [refreshing, setRefreshing]   = useState(false);
+  const [now, setNow] = useState(Date.now());
+
+  // A monotonically-increasing request id guards against a slow fetch from a
+  // previous clientId (or a superseded refresh) landing after a newer one.
+  const reqRef = useRef(0);
+  const load = useCallback(async () => {
+    const myReq = ++reqRef.current;
+    setRefreshing(true);
+    try {
+      const d = await fetchDashboardData(session.clientId);
+      if (reqRef.current === myReq) { setLiveData(d); setLastUpdated(new Date()); }
+    } finally {
+      if (reqRef.current === myReq) setRefreshing(false);
+    }
+  }, [session.clientId]);
 
   useEffect(() => {
     setLiveData(null);
-    let cancelled = false;
-    fetchDashboardData(session.clientId).then(d => { if (!cancelled) setLiveData(d); });
-    return () => { cancelled = true; };
-  }, [session.clientId]);
+    setLastUpdated(null);
+    load();
+    const timer = setInterval(load, REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [load]);
+
+  // Re-render the "Updated X ago" label as time passes, without refetching.
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   // Live-connected clients (e.g. qbsandbox) overlay real QB numbers onto the
   // static metadata (name, industry) mock data still provides. preLiveDSO,
@@ -120,7 +157,20 @@ export default function ClientDashboardPage({ session, onLogout }) {
           <div style={{ fontSize: 13, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          {!isMobile && <div style={{ fontSize: 11, color: 'var(--muted)' }}>As of June 11, 2026</div>}
+          {!isMobile && lastUpdated && (
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>Updated {timeAgo(lastUpdated, now)}</span>
+          )}
+          <button
+            onClick={load}
+            disabled={refreshing}
+            title="Refresh from QuickBooks"
+            style={{ fontSize: 11, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 10px', cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 5 }}
+          >
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ animation: refreshing ? 'aiSpin 0.8s linear infinite' : 'none' }}>
+              <path d="M10 5.5A4.5 4.5 0 111.5 3M1.5 1v2h2" />
+            </svg>
+            {!isMobile && (refreshing ? 'Refreshing…' : 'Refresh')}
+          </button>
           <button onClick={handleLogout} style={{ fontSize: 11, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 10px', cursor: 'pointer' }}>
             Sign out
           </button>

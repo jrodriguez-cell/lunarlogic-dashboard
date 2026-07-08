@@ -233,8 +233,64 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
       ? `${atRisk45Count} invoice${atRisk45Count !== 1 ? 's' : ''} 45+ days overdue — escalation recommended`
       : 'No invoices at dispute or aging risk';
 
+  // ── "Needs you today" triage ──────────────────────────────────────────
+  // The few things that genuinely need a human decision, ranked by urgency.
+  // Each category answers a different question; we dedupe invoices across the
+  // aging/dispute/uncovered buckets so the same invoice isn't listed twice.
+  const sumAmt      = arr => arr.reduce((s, i) => s + i.amount, 0);
+  const disputeSet  = new Set(disputeSuspects.map(i => i.id));
+  const pendingAmt  = pending.reduce((s, p) => s + p.amount, 0);
+  const agingRiskInvs = data.invoices.filter(i =>
+    i.status === 'Overdue' && i.daysOverdue > 45 && !disputeSet.has(i.id));
+  const agingSet    = new Set(agingRiskInvs.map(i => i.id));
+  const overdueUncovered = reminderDataAvailable
+    ? uncoveredInvs.filter(i => i.daysOverdue > 0 && !disputeSet.has(i.id) && !agingSet.has(i.id))
+    : [];
+
+  const actionItems = [];
+  if (paymentDataAvailable && pending.length > 0) {
+    actionItems.push({
+      key: 'pending-payments', color: '#f59e0b', tag: 'Confirm', weight: 100, amount: pendingAmt,
+      title: `Confirm ${pending.length} payment${pending.length !== 1 ? 's' : ''}`,
+      detail: `${fmtM(pendingAmt)} received but AI match was below 90% — tell LunarLogic which invoice it belongs to`,
+      onClick: drillUnapplied,
+    });
+  }
+  if (disputeSuspects.length > 0) {
+    actionItems.push({
+      key: 'disputes', color: '#a78bfa', tag: 'Call', weight: 90, amount: sumAmt(disputeSuspects),
+      title: `Call ${disputeSuspects.length} customer${disputeSuspects.length !== 1 ? 's' : ''} about a possible dispute`,
+      detail: `${fmtM(sumAmt(disputeSuspects))} overdue off-pattern — a billing question may be stalling payment`,
+      onClick: drillDisputes,
+    });
+  }
+  if (agingRiskInvs.length > 0) {
+    actionItems.push({
+      key: 'aging-risk', color: '#f97316', tag: 'Escalate', weight: 80, amount: sumAmt(agingRiskInvs),
+      title: `Escalate ${agingRiskInvs.length} invoice${agingRiskInvs.length !== 1 ? 's' : ''} 45+ days overdue`,
+      detail: `${fmtM(sumAmt(agingRiskInvs))} at recovery risk — direct contact recommended before 90 days`,
+      onClick: () => drillInvoices('Aging Risk — 45+ Days Overdue', agingRiskInvs,
+        `${fmtM(sumAmt(agingRiskInvs))} · ${agingRiskInvs.length} invoice${agingRiskInvs.length !== 1 ? 's' : ''}`),
+    });
+  }
+  if (overdueUncovered.length > 0) {
+    actionItems.push({
+      key: 'uncovered', color: '#f59e0b', tag: 'Follow up', weight: 70, amount: sumAmt(overdueUncovered),
+      title: `Follow up on ${overdueUncovered.length} invoice${overdueUncovered.length !== 1 ? 's' : ''} outside automation`,
+      detail: `${fmtM(sumAmt(overdueUncovered))} overdue and not in an automated reminder sequence`,
+      onClick: () => drillInvoices('Overdue — Outside Automation', overdueUncovered,
+        `${fmtM(sumAmt(overdueUncovered))} · ${overdueUncovered.length} invoice${overdueUncovered.length !== 1 ? 's' : ''}`),
+    });
+  }
+  actionItems.sort((a, b) => b.weight - a.weight);
+  const visibleActions = actionItems.slice(0, 4);
+  const totalAtStake   = actionItems.reduce((s, i) => s + i.amount, 0);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Needs you today — triage strip */}
+      <NeedsToday items={visibleActions} totalItems={actionItems.length} totalAtStake={totalAtStake} isMobile={isMobile} />
 
       {/* Automation Status Strip */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px' }}>
@@ -691,6 +747,60 @@ export default function ClientOverview({ data, currentDSO, dsoChange, onNavigate
 
 function SectionLabel({ children }) {
   return <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>{children}</div>;
+}
+
+function NeedsToday({ items, totalItems, totalAtStake, isMobile }) {
+  const allClear = items.length === 0;
+  return (
+    <div style={{
+      background: allClear ? 'rgba(34,197,94,0.06)' : 'var(--bg-card)',
+      border: `1px solid ${allClear ? 'rgba(34,197,94,0.25)' : 'var(--border)'}`,
+      borderRadius: 12, padding: 16,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: allClear ? 0 : 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>Needs you today</div>
+          {!allClear && (
+            <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: '#ef4444', borderRadius: 10, padding: '1px 7px', lineHeight: 1.6 }}>{totalItems}</span>
+          )}
+        </div>
+        {!allClear && totalAtStake > 0 && (
+          <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+            <span style={{ fontWeight: 800, color: 'var(--text)' }}>{fmtM(totalAtStake)}</span> at stake
+          </div>
+        )}
+      </div>
+      {allClear ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e', fontSize: 13, fontWeight: 800, flexShrink: 0 }}>✓</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>You're all caught up</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>LunarLogic is handling everything — no action needed from you right now.</div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {items.map(item => (
+            <button key={item.key} onClick={item.onClick} style={{
+              display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
+              background: `${item.color}0d`, border: `1px solid ${item.color}30`, borderRadius: 8,
+              padding: isMobile ? '10px 12px' : '10px 14px', cursor: 'pointer', transition: 'background 0.12s, border-color 0.12s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${item.color}1a`; e.currentTarget.style.borderColor = `${item.color}55`; }}
+              onMouseLeave={e => { e.currentTarget.style.background = `${item.color}0d`; e.currentTarget.style.borderColor = `${item.color}30`; }}
+            >
+              <span style={{ fontSize: 9, fontWeight: 800, color: item.color, background: `${item.color}22`, borderRadius: 6, padding: '3px 7px', textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0, whiteSpace: 'nowrap' }}>{item.tag}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{item.title}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-dim)', lineHeight: 1.4 }}>{item.detail}</div>
+              </div>
+              <span style={{ fontSize: 16, color: item.color, flexShrink: 0, fontWeight: 700 }}>›</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Tile({ label, value, sub, color, onClick }) {
