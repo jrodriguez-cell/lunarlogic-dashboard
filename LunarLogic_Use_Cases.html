@@ -77,6 +77,8 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
 .cover h1{font-size:62px;font-weight:600;letter-spacing:-.02em;line-height:1.02}
 .cover h1 .g{background:var(--grad-h);-webkit-background-clip:text;background-clip:text;color:transparent}
 .cover .subtitle{font-size:15px;color:var(--slate400);margin-top:22px;max-width:5.6in;line-height:1.6}
+.cover-thesis{font-size:14.5px;color:var(--slate400);margin-top:22px;max-width:5.7in;line-height:1.62}
+.cover-thesis em{font-style:italic;color:var(--blue-light)}
 .cover-proof{position:relative;z-index:2;margin-top:34px;display:flex;gap:14px;flex-wrap:wrap}
 .proof-card{background:var(--card);border:1px solid var(--border);border-radius:14px;
   padding:16px 20px;min-width:150px}
@@ -149,6 +151,58 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
 /* screenshot placeholder */
 .ss-ph{border:1px dashed var(--border);border-radius:8px;color:var(--slate500);
   font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;text-align:center;padding:6px;margin-top:10px}
+
+/* ================= DSO PAGE ================= */
+.dso-body{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;gap:16px;justify-content:space-between;padding-bottom:4px}
+.formula{background:linear-gradient(160deg,rgba(30,41,59,0.5),rgba(17,24,48,0.35));
+  border:1px solid var(--border);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:24px}
+.formula .eq{font-family:var(--serif);font-size:19px;color:#f1f5f9;line-height:1.3}
+.formula .eq .v{background:var(--grad-h);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic}
+.formula .ex{font-size:10px;color:var(--slate400);line-height:1.55;border-left:1px solid var(--border);padding-left:22px}
+.formula .ex b{color:var(--slate300)}
+.two{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 20px}
+.panel .lbl{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--slate500);margin-bottom:12px}
+.panel p{font-size:10.5px;line-height:1.58;color:var(--slate300)}
+.gap-fig{font-family:var(--serif);font-size:30px;font-weight:600;background:var(--grad-h);
+  -webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;margin-bottom:6px}
+.driver{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:10px}
+.driver:last-child{border-bottom:none}
+.driver .m{color:var(--slate300);font-weight:700}
+.driver .d{color:var(--slate500);flex:1;padding-left:10px}
+.driver .r{color:var(--green);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bigstat{display:flex;gap:14px;align-items:center;background:rgba(96,165,250,0.05);
+  border:1px solid var(--border);border-radius:14px;padding:14px 18px}
+.bigstat .n{font-family:var(--serif);font-size:34px;font-weight:600;background:var(--grad-h);
+  -webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;white-space:nowrap}
+.bigstat .t{font-size:10px;color:var(--slate400);line-height:1.5}
+.bigstat .t b{color:var(--slate300)}
+
+/* ================= MISSION / CLOSE PAGE ================= */
+.mission-body{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;gap:18px;justify-content:space-between;padding-bottom:4px}
+.mission-stmt{font-family:var(--serif);font-size:23px;font-weight:600;line-height:1.32;color:#f1f5f9}
+.mission-stmt .g{background:var(--grad-h);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gap-table{width:100%;border-collapse:collapse;font-size:10.5px}
+.gap-table th{text-align:left;font-size:8.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--slate500);padding:0 10px 10px;border-bottom:1px solid var(--border)}
+.gap-table td{padding:11px 10px;border-bottom:1px solid var(--border-soft);color:var(--slate300)}
+.gap-table td.metric{font-weight:700;color:#e2e8f0}
+.gap-table td.before{color:var(--slate500)}
+.gap-table td.imp{color:var(--green);font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.gap-table tr:last-child td{border-bottom:none}
+.principle{flex:1;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.principle .h{font-family:var(--serif);font-size:14px;color:#f1f5f9;margin-bottom:6px}
+.principle p{font-size:9.5px;line-height:1.5;color:var(--slate400)}
+.pull{font-family:var(--serif);font-style:italic;font-size:17px;line-height:1.4;color:var(--blue-light);
+  text-align:center;padding:6px 20px}
+.cta{display:flex;align-items:center;justify-content:space-between;gap:20px;
+  background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(129,140,248,0.04));
+  border:1px solid var(--border);border-radius:16px;padding:18px 22px}
+.cta .big{font-family:var(--serif);font-size:16px;color:#f1f5f9;line-height:1.3}
+.cta .calc{font-size:10px;color:var(--slate400);margin-top:6px}
+.cta .calc code{font-family:var(--sans);color:var(--blue-light);font-weight:700}
+.cta .contact{text-align:right;font-size:10px;color:var(--slate400);line-height:1.7;white-space:nowrap}
+.cta .contact .w{font-weight:800}
 </style>
 </head>
 <body>
@@ -166,8 +220,8 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
 
   <div class="cover-mid">
     <div class="eyebrow">Product Use Cases</div>
-    <h1>Automating the<br><span class="g">Order-to-Cash</span> cycle.</h1>
-    <p class="subtitle">Four connected modules that turn accounts receivable from a manual, month-end scramble into a real-time, self-running system — built for small professional services firms on QuickBooks and Slack.</p>
+    <h1>Collect the money<br>you've <span class="g">already earned.</span></h1>
+    <p class="cover-thesis">Four connected modules that move revenue from one column to another — from <em>outstanding</em> to <em>collected</em> — faster, more consistently, and without the owner chasing anyone. Built for owner-operated service firms on QuickBooks and Xero.</p>
     <div class="cover-proof">
       <div class="proof-card"><div class="n">84%</div><div class="l">Faster invoice<br>processing</div></div>
       <div class="proof-card"><div class="n">19-day</div><div class="l">DSO<br>improvement</div></div>
@@ -226,6 +280,93 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
   </div>
 
   <footer class="run-foot"><div class="confidential">Confidential</div><div>02</div></footer>
+</section>
+
+<!-- ============================================================ DSO FRAMING -->
+<section class="page">
+  <div class="glow"></div>
+  <header class="run-head">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" fill="url(#mg)"/></svg>
+      <div class="wordmark">LunarLogic<span class="ai">.ai</span></div>
+    </div>
+    <div class="tag">Use Cases</div>
+  </header>
+
+  <div class="dso-body">
+    <div>
+      <div class="eyebrow" style="margin-bottom:12px">The Metric That Matters</div>
+      <h2 class="section-title">Every one of those problems shows up as a single number</h2>
+      <p class="lead section-intro" style="margin-bottom:0">It's called <b style="color:var(--slate300)">Days Sales Outstanding (DSO)</b> — the average number of days between earning revenue and collecting the cash. Revenue is a promise; cash is the reality. DSO is the gap between them, and it's the leading indicator of financial health, not a lagging one.</p>
+    </div>
+
+    <div class="formula">
+      <div class="eq">DSO&nbsp;=&nbsp;<span class="v">( Accounts Receivable ÷ Credit Sales )</span>&nbsp;×&nbsp;Days</div>
+      <div class="ex">Example: <b>$150,000</b> in unpaid invoices ÷ <b>$150,000</b> invoiced last month × 30 days = a <b>30-day</b> DSO — a full month, on average, waiting to be paid.</div>
+    </div>
+
+    <div class="two">
+      <div class="panel">
+        <div class="lbl">Where you stand — Net-30 benchmark</div>
+        <svg viewBox="0 0 700 118" width="100%" style="display:block">
+          <defs>
+            <linearGradient id="gtrack" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#4ade80"/><stop offset="0.30" stop-color="#60A5FA"/>
+              <stop offset="0.55" stop-color="#f59e0b"/><stop offset="0.80" stop-color="#f97316"/>
+              <stop offset="1" stop-color="#ef4444"/></linearGradient>
+          </defs>
+          <!-- bar -->
+          <rect x="30" y="44" width="640" height="16" rx="8" fill="url(#gtrack)"/>
+          <!-- ticks at 0,30,45,60,90 (mapped x=30 + day*6.3, capped at 100d=660) -->
+          <g font-family="Nunito,sans-serif" fill="#64748b" font-size="8" text-anchor="middle">
+            <line x1="30"  y1="40" x2="30"  y2="64" stroke="#334155"/><text x="30"  y="78">0</text>
+            <line x1="219" y1="40" x2="219" y2="64" stroke="#334155"/><text x="219" y="78">30</text>
+            <line x1="313" y1="40" x2="313" y2="64" stroke="#334155"/><text x="313" y="78">45</text>
+            <line x1="408" y1="40" x2="408" y2="64" stroke="#334155"/><text x="408" y="78">60</text>
+            <line x1="597" y1="40" x2="597" y2="64" stroke="#334155"/><text x="597" y="78">90+</text>
+          </g>
+          <g font-family="Nunito,sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">
+            <text x="124" y="24" fill="#4ade80">EXCELLENT</text>
+            <text x="266" y="24" fill="#7fa8f7">HEALTHY</text>
+            <text x="360" y="24" fill="#f59e0b">FRICTION</text>
+            <text x="500" y="24" fill="#f97316">BREAKDOWN</text>
+            <text x="635" y="24" fill="#ef4444">CRISIS</text>
+          </g>
+          <!-- Kaptain Clean before/after markers: 52 -> 33 -->
+          <g font-family="Nunito,sans-serif">
+            <line x1="357" y1="44" x2="357" y2="98" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="3 3"/>
+            <circle cx="357" cy="52" r="5" fill="#0F172A" stroke="#94a3b8" stroke-width="2"/>
+            <line x1="238" y1="44" x2="238" y2="98" stroke="#4ade80" stroke-width="1.6"/>
+            <circle cx="238" cy="52" r="6" fill="#0F172A" stroke="#4ade80" stroke-width="2.5"/>
+            <path d="M349 92 h-95" stroke="#4ade80" stroke-width="1.6" marker-end="url(#arr1)"/>
+            <text x="405" y="95" fill="#cbd5e1" font-size="9" font-weight="700">52 → 33 days</text>
+            <text x="405" y="107" fill="#64748b" font-size="8">Kaptain Clean, in &lt;90 days</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="panel">
+        <div class="lbl">The DSO gap = recoverable cash</div>
+        <div class="gap-fig">~$60K</div>
+        <p style="margin-bottom:0">The distance between your actual DSO and best-in-class is pure, recoverable working capital. For a <b style="color:var(--slate300)">$2M</b> business, every <b style="color:var(--slate300)">10-day</b> reduction frees roughly <b style="color:var(--slate300)">$55K–$65K</b> — permanently. It doesn't arrive as one check; it simply stops leaving.</p>
+      </div>
+    </div>
+
+    <div class="panel" style="padding-top:16px;padding-bottom:8px">
+      <div class="lbl">How the four modules compress DSO</div>
+      <div class="driver"><span class="m">Invoice Automation</span><span class="d">eliminates invoice lag</span><span class="r">3–8 days</span></div>
+      <div class="driver"><span class="m">Payment Reminders</span><span class="d">ends inconsistent follow-up</span><span class="r">5–10 days</span></div>
+      <div class="driver"><span class="m">Sales Order Processing</span><span class="d">stops quote-to-invoice drift &amp; disputes</span><span class="r">4–7 days</span></div>
+      <div class="driver"><span class="m">AR Dashboard</span><span class="d">removes the visibility blind spot</span><span class="r">2–4 days</span></div>
+    </div>
+
+    <div class="bigstat">
+      <div class="n">15–25 days</div>
+      <div class="t"><b>Typical DSO reduction from the combined stack.</b> And it matters: 82% of small-business failures trace to cash-flow problems — not lack of revenue. <span style="color:var(--slate500)">(U.S. Bank / SCORE)</span></div>
+    </div>
+  </div>
+
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>03</div></footer>
 </section>
 
 <!-- ============================================================ UC1 — INVOICE AUTOMATION -->
@@ -325,7 +466,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>03</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>04</div></footer>
 </section>
 
 <!-- ============================================================ UC2 — PAYMENT REMINDERS -->
@@ -423,7 +564,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>04</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>05</div></footer>
 </section>
 
 <!-- ============================================================ UC3 — SALES ORDER PROCESSING -->
@@ -510,7 +651,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>05</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>06</div></footer>
 </section>
 
 <!-- ============================================================ UC4 — AR DASHBOARD -->
@@ -619,7 +760,68 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>06</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>07</div></footer>
+</section>
+
+<!-- ============================================================ MISSION / CLOSE -->
+<section class="page">
+  <div class="glow"></div>
+  <header class="run-head">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" fill="url(#mg)"/></svg>
+      <div class="wordmark">LunarLogic<span class="ai">.ai</span></div>
+    </div>
+    <div class="tag">Use Cases</div>
+  </header>
+
+  <div class="mission-body">
+    <div>
+      <div class="eyebrow" style="margin-bottom:12px">Our Mission</div>
+      <p class="mission-stmt">LunarLogic modernizes the accounting infrastructure of a business — module by module, starting with AR — until the entire financial operating layer runs <span class="g">automatically</span>: without manual intervention, and without a consultant.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">40%</div><div class="l">Avg. DSO<br>reduction</div></div>
+      <div class="stat"><div class="n green">70%</div><div class="l">Bad-debt<br>improvement</div></div>
+      <div class="stat"><div class="n">500+</div><div class="l">Hours saved<br>/ year / firm</div></div>
+    </div>
+
+    <div class="panel" style="padding-bottom:8px">
+      <div class="lbl">The measurable gap — before vs. with LunarLogic</div>
+      <table class="gap-table">
+        <thead><tr><th>Metric</th><th>Before</th><th>With LunarLogic</th><th style="text-align:right">Improvement</th></tr></thead>
+        <tbody>
+          <tr><td class="metric">Days Sales Outstanding</td><td class="before">45–60 days</td><td>18–28 days</td><td class="imp">40%</td></tr>
+          <tr><td class="metric">Bad-debt rate</td><td class="before">1.5–2.5% of revenue</td><td>0.5–0.8% of revenue</td><td class="imp">70%</td></tr>
+          <tr><td class="metric">AR admin hours</td><td class="before">500+ hrs / year</td><td>Under 100 hrs / year</td><td class="imp">80%</td></tr>
+          <tr><td class="metric">Invoice processing time</td><td class="before">19 min / invoice</td><td>3 min / invoice</td><td class="imp">84%</td></tr>
+          <tr><td class="metric">Month-end close</td><td class="before">14 days</td><td>3 days</td><td class="imp">79%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;gap:14px">
+      <div class="principle"><div class="h">Results First</div><p>Measured in hours saved and cash accelerated — not features shipped. Quantifiable ROI within 30 days, or we keep working.</p></div>
+      <div class="principle"><div class="h">Deploy Fast</div><p>2–4 week deployment. Zero data migration, minimal disruption, results clients can see immediately.</p></div>
+      <div class="principle"><div class="h">Built for Humans</div><p>Automation eliminates the tedious work; the owner keeps the judgment, the relationships, and the decisions.</p></div>
+    </div>
+
+    <p class="pull">"LunarLogic doesn't give business owners their time back. It gives them their future back."</p>
+
+    <div class="cta">
+      <div>
+        <div class="big">Start with your own number.</div>
+        <div class="calc">Your DSO today: <code>AR balance ÷ last 30 days of revenue × 30</code>. If it's above 45, there's cash to recover.</div>
+      </div>
+      <div class="contact">
+        <div class="w wordmark" style="font-size:14px">LunarLogic<span class="ai">.ai</span></div>
+        <div>lunarlogic.ai</div>
+        <div>support@lunarlogic.ai</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>08</div></footer>
 </section>
 
 </body>
