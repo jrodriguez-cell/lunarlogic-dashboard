@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '../../lib/toast';
+import { customerScore, scoreBand } from '../../lib/scoring';
 import { AutomationHeader, Card, StatTile, fmtM, fmtRunTime, tileGridStyle } from './automationKit';
 
 const CADENCE = [
@@ -11,11 +12,10 @@ const CADENCE = [
   { at: '+28d', label: 'Final notice' },
 ];
 
-function RiskDot({ level }) {
-  if (!level) return null;
-  const color = level === 'high' ? '#ef4444' : level === 'medium' ? '#f59e0b' : '#22c55e';
-  const label = level === 'high' ? 'High' : level === 'medium' ? 'Med' : 'Low';
-  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />{label} risk</span>;
+function ScoreChip({ score }) {
+  if (score == null) return null;
+  const b = scoreBand(score);
+  return <span title={`Payment health: ${b.label}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: b.color }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: b.color }} />{score} · {b.label}</span>;
 }
 
 function localReminderDraft(inv, companyName) {
@@ -70,7 +70,7 @@ export default function ClientReminders({ data, clientId, isMobile, onDrill }) {
   }, {})).map(c => ({
     ...c,
     collected: collectedBy[c.customer] || 0,
-    risk: pbMap[c.customer]?.riskLevel,
+    score: customerScore(pbMap[c.customer]),
     avgDays: pbMap[c.customer]?.avgDays,
   })).sort((a, b) => b.outstanding - a.outstanding);
   const maxOut = Math.max(...byCustomer.map(c => c.outstanding), 1);
@@ -156,7 +156,7 @@ export default function ClientReminders({ data, clientId, isMobile, onDrill }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 10.5, color: 'var(--muted)' }}>
                     <span>{c.reminders} reminder{c.reminders !== 1 ? 's' : ''} sent</span>
                     {c.collected > 0 && <span style={{ color: 'var(--green)', fontWeight: 600 }}>{fmtM(c.collected)} collected</span>}
-                    <RiskDot level={c.risk} />
+                    <ScoreChip score={c.score} />
                   </div>
                   {c.oldestInv && (
                     <button onClick={() => handleDraftReminder(c.oldestInv)} disabled={drafting === c.oldestInv.id}

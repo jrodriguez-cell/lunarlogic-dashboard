@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { invoiceScore, scoreBand } from '../../lib/scoring';
 
 function fmtM(v) {
   if (!v) return '$0';
@@ -26,6 +27,7 @@ const AGING_FILTERS = [
 const COLUMNS = [
   { key: 'id',          label: 'Invoice',      sort: (a, b) => a.id.localeCompare(b.id) },
   { key: 'customer',    label: 'Customer',     sort: (a, b) => a.customer.localeCompare(b.customer) },
+  { key: 'score',       label: 'Health',       align: 'right', sort: (a, b) => a._score - b._score },
   { key: 'amount',      label: 'Amount',       align: 'right', sort: (a, b) => a.amount - b.amount },
   { key: 'issued',      label: 'Issued',       sort: (a, b) => a.issued.localeCompare(b.issued) },
   { key: 'due',         label: 'Due',          sort: (a, b) => a.due.localeCompare(b.due) },
@@ -40,7 +42,7 @@ const EXPORT_COLS = [
   { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: r => r.daysOverdue > 0 ? r.daysOverdue : '' },
 ];
 
-export default function ClientInvoices({ invoices, isMobile, onDrill, onAction }) {
+export default function ClientInvoices({ invoices, paymentBehavior, isMobile, onDrill, onAction }) {
   const [query, setQuery]       = useState('');
   const [status, setStatus]     = useState('All');
   const [aging, setAging]       = useState('all');
@@ -50,6 +52,7 @@ export default function ClientInvoices({ invoices, isMobile, onDrill, onAction }
   const [sortKey, setSortKey]   = useState('daysOverdue');
   const [sortDir, setSortDir]   = useState('desc');
 
+  const pbMap = useMemo(() => Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p])), [paymentBehavior]);
   const customers = useMemo(() => [...new Set(invoices.map(i => i.customer))].sort(), [invoices]);
   const anyFilter = query || status !== 'All' || aging !== 'all' || customer !== 'All' || dateFrom || dateTo;
 
@@ -69,13 +72,13 @@ export default function ClientInvoices({ invoices, isMobile, onDrill, onAction }
       if (dateTo && inv.issued > dateTo) return false;
       if (q && !inv.id.toLowerCase().includes(q) && !inv.customer.toLowerCase().includes(q)) return false;
       return true;
-    });
+    }).map(inv => ({ ...inv, _score: invoiceScore(inv, pbMap[inv.customer]) }));
     filtered.sort((a, b) => {
       const r = col ? col.sort(a, b) : 0;
       return sortDir === 'asc' ? r : -r;
     });
     return filtered;
-  }, [invoices, query, status, aging, customer, dateFrom, dateTo, sortKey, sortDir]);
+  }, [invoices, pbMap, query, status, aging, customer, dateFrom, dateTo, sortKey, sortDir]);
 
   const totalAmt = results.reduce((s, i) => s + i.amount, 0);
 
@@ -193,6 +196,9 @@ export default function ClientInvoices({ invoices, isMobile, onDrill, onAction }
                     {inv.id}
                   </td>
                   <td style={{ padding: '9px 12px', fontSize: 12, color: 'var(--text)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</td>
+                  <td style={{ padding: '9px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    {(() => { const b = scoreBand(inv._score); return <span title={`Payment health: ${b.label}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: b.color }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: b.color }} />{inv._score}</span>; })()}
+                  </td>
                   <td style={{ padding: '9px 12px', fontSize: 12, fontWeight: 700, color: 'var(--text)', textAlign: 'right', whiteSpace: 'nowrap' }}>{fmtM(inv.amount)}</td>
                   {!isMobile && <td style={{ padding: '9px 12px', fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{inv.issued}</td>}
                   {!isMobile && <td style={{ padding: '9px 12px', fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{inv.due}</td>}

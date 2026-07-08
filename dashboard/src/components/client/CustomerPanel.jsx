@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useToast } from '../../lib/toast';
-import { exportCSV } from '../../lib/csv';
+import { setPromise, promiseDate, isBroken } from '../../lib/promises';
+import { customerScore, scoreBand } from '../../lib/scoring';
 
 const TEAM = ['Jonathan Rodriguez', 'Sarah M. (Admin)', 'Unassigned'];
 
@@ -45,6 +46,10 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
 
   const pb = paymentBehavior?.find(p => p.customer === inv.customer);
   const risk = RISK_CONFIG[pb?.riskLevel ?? 'medium'];
+  const score = customerScore(pb);
+  const band = scoreBand(score);
+  const [promise, setPromiseState] = useState(() => promiseDate(clientId, inv.id));
+  const promiseBroken = isBroken(promise);
 
   // All invoices for this customer
   const custInvoices = allInvoices.filter(i => i.customer === inv.customer);
@@ -124,15 +129,16 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
   async function submitSnooze(e) {
     e.preventDefault();
     setSending(true);
+    // Persist the promise locally so it shows here and can surface as a broken
+    // promise in "Needs you today". Best-effort log to the activity sheet too.
+    setPromise(clientId, inv.id, snoozeDate);
+    setPromiseState(snoozeDate);
     try {
-      await logActivity({ activity_type: 'snooze', detail_1: snoozeDate });
-      toast(`Snoozed until ${snoozeDate}`);
-      setAction(null);
-    } catch (err) {
-      toast(`Failed to snooze: ${err.message}`);
-    } finally {
-      setSending(false);
-    }
+      await logActivity({ activity_type: 'promise_to_pay', detail_1: snoozeDate });
+    } catch { /* logging is best-effort; the promise is already saved locally */ }
+    toast(`Promise recorded — ${inv.customer} to pay by ${snoozeDate}`);
+    setAction(null);
+    setSending(false);
   }
 
   const urgColor = inv.daysOverdue > 60 ? '#ef4444' : inv.daysOverdue > 30 ? '#f97316' : inv.daysOverdue > 0 ? '#f59e0b' : '#22c55e';
@@ -146,9 +152,14 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontFamily: 'monospace' }}>{inv.id}</span>
                 <span style={{ background: risk.bg, color: risk.color, fontSize: 9, fontWeight: 700, borderRadius: 10, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{risk.label}</span>
+                {score != null && (
+                  <span title="Payment health score — likelihood of paying on time" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: `${band.color}1a`, color: band.color, fontSize: 9, fontWeight: 700, borderRadius: 10, padding: '2px 8px' }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: band.color }} />{score}/100 · {band.label}
+                  </span>
+                )}
               </div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>{inv.customer}</div>
             </div>
@@ -202,6 +213,14 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                   : inv.daysOverdue > 0  ? 'Auto-reminder sent by LunarLogic'
                   : 'On track — LunarLogic monitoring'}
               </div>
+              {promise && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: promiseBroken ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
+                    {promiseBroken ? '⚠ Broken promise' : 'Promised to pay'} — {new Date(promise).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <button onClick={() => { setPromise(clientId, inv.id, null); setPromiseState(null); toast('Promise cleared'); }} style={{ fontSize: 10, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}>Clear</button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -214,7 +233,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                   { id: 'reminder', label: 'Send Reminder',  sub: 'Email draft ready',    primary: true },
                   { id: 'log',      label: 'Log Contact',    sub: 'Call, email, meeting'               },
                   { id: 'task',     label: 'Assign Task',    sub: 'Delegate follow-up'                 },
-                  { id: 'snooze',   label: 'Snooze',         sub: 'Promise to pay date'                },
+                  { id: 'snooze',   label: 'Promise to Pay', sub: 'Record an expected pay date'        },
                 ].map(a => (
                   <button key={a.id} onClick={() => setAction(a.id)} style={{
                     padding: '10px 12px', background: a.primary ? 'rgba(0,212,232,0.08)' : 'var(--bg)',
@@ -314,9 +333,9 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
             <form onSubmit={submitSnooze} style={{ padding: '14px 24px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                 <button type="button" onClick={() => setAction(null)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 12 }}>← Back</button>
-                <SectionLabel style={{ margin: 0 }}>Snooze invoice</SectionLabel>
+                <SectionLabel style={{ margin: 0 }}>Record promise to pay</SectionLabel>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.5 }}>Customer has committed to pay by a specific date. Removes from urgent queue until then.</div>
+              <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.5 }}>Customer committed to pay by a date. LunarLogic eases off urgent nudges until then — and flags it in "Needs you today" if the date passes.</div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {[7,14,21,30].map(d => {
                   const dt = new Date(); dt.setDate(dt.getDate() + d);
@@ -336,7 +355,7 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                 <input type="date" value={snoozeDate} onChange={e => setSnooze(e.target.value)} required
                   style={{ width: '100%', padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 12, boxSizing: 'border-box', colorScheme: 'dark' }} />
               </div>
-              <button type="submit" disabled={sending} style={{ padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: sending ? 'default' : 'pointer', opacity: sending ? 0.6 : 1 }}>{sending ? 'Saving…' : 'Snooze invoice'}</button>
+              <button type="submit" disabled={sending} style={{ padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: sending ? 'default' : 'pointer', opacity: sending ? 0.6 : 1 }}>{sending ? 'Saving…' : 'Record promise'}</button>
             </form>
           )}
 
