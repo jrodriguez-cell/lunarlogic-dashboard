@@ -6,8 +6,10 @@ import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
 import CustomerPanel from '../components/client/CustomerPanel';
 import ClientOverview from '../components/client/ClientOverview';
+import ClientInvoiceAI from '../components/client/ClientInvoiceAI';
+import ClientReminders from '../components/client/ClientReminders';
+import ClientCashApplication from '../components/client/ClientCashApplication';
 import ClientActionPlan from '../components/client/ClientActionPlan';
-import ClientCashForecast from '../components/client/ClientCashForecast';
 import ClientInvoices from '../components/client/ClientInvoices';
 import ClientReportCard from '../components/client/ClientReportCard';
 import SourceTag from '../components/SourceTag';
@@ -44,11 +46,13 @@ function timeAgo(date, nowMs) {
 }
 
 const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'action',   label: 'Action Plan' },
-  { id: 'cash',     label: 'Cash In' },
-  { id: 'invoices', label: 'Invoices' },
-  { id: 'report',   label: 'Report Card' },
+  { id: 'overview',  label: 'Overview' },
+  { id: 'invoiceai', label: 'Invoice AI' },
+  { id: 'reminders', label: 'Reminders' },
+  { id: 'cashapp',   label: 'Cash Application' },
+  { id: 'action',    label: 'Action Plan' },
+  { id: 'invoices',  label: 'Invoices' },
+  { id: 'report',    label: 'Report Card' },
 ];
 
 export default function ClientDashboardPage({ session, onLogout }) {
@@ -61,7 +65,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [liveData, setLiveData] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [refreshing, setRefreshing]   = useState(false);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   // A monotonically-increasing request id guards against a slow fetch from a
   // previous clientId (or a superseded refresh) landing after a newer one.
@@ -296,11 +300,13 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
       {/* Content */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
-        {activeTab === 'overview' && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'action'   && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'cash'     && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} payments={data.payments} isLive={data.isLive} wf3Connected={data.automationStatus?.wf3?.connected === true} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'invoices' && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'report'   && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
+        {activeTab === 'overview'  && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'invoiceai' && <ClientInvoiceAI data={data} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'reminders' && <ClientReminders data={data} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'cashapp'   && <ClientCashApplication data={data} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'action'    && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'invoices'  && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'report'    && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
       </div>
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
