@@ -112,11 +112,13 @@ export default function AIAssistant({ data, currentDSO, clientId, isLive, onClos
       display: 'flex', flexDirection: 'column', zIndex: 1000, overflow: 'hidden',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: 'var(--teal)', fontSize: 14 }}>✨</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 7, background: 'rgba(0,212,232,0.12)', color: 'var(--teal)', flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M2 3.5h12v8H6.5L3 15v-3.5H2z" /></svg>
+          </span>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>AR Assistant</div>
-            <div style={{ fontSize: 9, color: 'var(--muted)' }}>{isLive ? 'AI over your live QuickBooks data' : 'AI over your AR data'}</div>
+            <div style={{ fontSize: 9.5, color: 'var(--muted)' }}>Ask about what to collect next</div>
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>×</button>
@@ -134,16 +136,16 @@ export default function AIAssistant({ data, currentDSO, clientId, isLive, onClos
           </div>
         ))}
         {thinking && <div style={{ fontSize: 11, color: 'var(--muted)', fontStyle: 'italic' }}>Thinking…</div>}
-        {messages.length === 1 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            {SUGGESTIONS.map(s => (
-              <button key={s} onClick={() => ask(s)} style={{ fontSize: 11, color: 'var(--text-dim)', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '5px 10px', cursor: 'pointer' }}>{s}</button>
-            ))}
-          </div>
-        )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border)' }}>
+      {/* Quick questions — always one tap away */}
+      <div style={{ display: 'flex', gap: 6, padding: '8px 12px 0', overflowX: 'auto', flexShrink: 0 }}>
+        {SUGGESTIONS.map(s => (
+          <button key={s} onClick={() => ask(s)} disabled={thinking} style={{ whiteSpace: 'nowrap', fontSize: 11, color: 'var(--text-dim)', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}>{s}</button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: 'none' }}>
         <input
           value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(); }}
           placeholder="Ask about your AR…"

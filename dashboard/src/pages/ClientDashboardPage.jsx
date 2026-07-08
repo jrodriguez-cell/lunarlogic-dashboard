@@ -324,7 +324,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
             boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
           }}
         >
-          <span style={{ fontSize: 15 }}>✨</span> Ask AI
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M2 3.5h12v8H6.5L3 15v-3.5H2z" /></svg> Ask AI
         </button>
       )}
       {assistantOpen && (

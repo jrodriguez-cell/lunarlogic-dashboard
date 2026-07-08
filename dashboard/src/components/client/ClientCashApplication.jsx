@@ -196,7 +196,7 @@ export default function ClientCashApplication({ data, clientId, isMobile, onDril
                   )}
                   {sug && (
                     <div style={{ fontSize: 11, color: 'var(--teal)', background: 'rgba(0,212,232,0.08)', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 6, padding: '6px 9px', marginBottom: 8, lineHeight: 1.4 }}>
-                      <span style={{ fontWeight: 700 }}>✨ AI:</span> {sug.invoiceId ? `apply to ${sug.invoiceId}` : 'needs manual review'} — {sug.reason}
+                      <span style={{ fontWeight: 700 }}>AI suggestion:</span> {sug.invoiceId ? `apply to ${sug.invoiceId}` : 'needs manual review'} — {sug.reason}
                     </div>
                   )}
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -206,7 +206,7 @@ export default function ClientCashApplication({ data, clientId, isMobile, onDril
                     <button onClick={() => resolve(p, 'reviewed')} style={secondaryBtn}>Mark reviewed</button>
                     {!sug && (
                       <button onClick={() => handleSuggest(p)} disabled={suggesting[p.txId]} style={aiBtn}>
-                        {suggesting[p.txId] ? 'Analyzing…' : '✨ Suggest match'}
+                        {suggesting[p.txId] ? 'Analyzing…' : 'Suggest match'}
                       </button>
                     )}
                     <button onClick={() => drillPayment(p)} style={ghostBtn}>Details ↗</button>
