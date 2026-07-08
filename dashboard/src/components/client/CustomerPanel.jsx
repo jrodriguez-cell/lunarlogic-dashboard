@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '../../lib/toast';
 import { setPromise, promiseDate, isBroken } from '../../lib/promises';
 import { customerScore, scoreBand } from '../../lib/scoring';
@@ -31,13 +31,13 @@ function emailDraft(inv, companyName) {
     : 'Please let us know if you have any questions or if there is anything we can help with.';
   return {
     subject: `Invoice ${inv.id} — Payment Follow-Up`,
-    body: `Hi ${inv.customer},\n\nI wanted to follow up on Invoice ${inv.id} for $${inv.amount.toLocaleString()}, due ${inv.due}${d > 0 ? ` (${d} days overdue)` : ''}.\n\n${tone}\n\nPay online in one click: ${payLink(inv)}\n\nIf payment has already been sent, please disregard this message — we may be experiencing a processing delay.\n\nThank you,\n${companyName}`,
+    body: `Hi ${inv.customer},\n\nI wanted to follow up on Invoice ${inv.id} for $${inv.amount.toLocaleString()}, due ${inv.due}${d > 0 ? ` (${d} days overdue)` : ''}.\n\n${tone}\n\nPay online in one click: ${demoPayLink(inv)}\n\nIf payment has already been sent, please disregard this message — we may be experiencing a processing delay.\n\nThank you,\n${companyName}`,
   };
 }
 
-// Customer-facing payment link. In production this is the QuickBooks invoice
-// pay link; here it's a stable per-invoice URL placeholder.
-function payLink(inv) {
+// Placeholder pay link for demo logins. Live clients fetch the real QuickBooks
+// invoice link from /api/invoice-paylink.
+function demoPayLink(inv) {
   return `https://pay.lunarlogic.ai/i/${inv.id}`;
 }
 
@@ -56,6 +56,27 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
   const band = scoreBand(score);
   const [promise, setPromiseState] = useState(() => promiseDate(clientId, inv.id));
   const promiseBroken = isBroken(promise);
+  const [qbPayLink, setQbPayLink] = useState(null);
+  const [payLoading, setPayLoading] = useState(false);
+
+  // For the live sandbox client, fetch the real QuickBooks pay link when the
+  // Payment Link panel is opened. Demo clients fall back to the placeholder.
+  useEffect(() => {
+    if (action !== 'pay' || !isLive || !inv.qbId || qbPayLink) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPayLoading(true);
+    fetch('/api/invoice-paylink', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId, invoiceId: inv.qbId }),
+    })
+      .then(r => r.json()).then(j => { if (!cancelled && j.ok && j.link) setQbPayLink(j.link); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setPayLoading(false); });
+    return () => { cancelled = true; };
+  }, [action, isLive, inv.qbId, clientId, qbPayLink]);
+
+  const effectiveLink = qbPayLink || demoPayLink(inv);
 
   // All invoices for this customer
   const custInvoices = allInvoices.filter(i => i.customer === inv.customer);
@@ -271,20 +292,27 @@ export default function CustomerPanel({ inv, allInvoices, paymentBehavior, payme
                 <div style={{ fontSize: 12, color: inv.daysOverdue > 0 ? '#c0392b' : '#333', marginBottom: 12 }}>
                   {inv.daysOverdue > 0 ? `$${inv.amount.toLocaleString()} past due` : `$${inv.amount.toLocaleString()} due ${inv.due}`}
                 </div>
-                <button onClick={() => toast('Payment page opened (demo) — production uses the live QuickBooks pay link')}
-                  style={{ width: '100%', padding: '11px', background: '#22c55e', border: 'none', borderRadius: 7, color: '#fff', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}>
-                  Pay ${inv.amount.toLocaleString()}
+                <button
+                  onClick={() => {
+                    if (qbPayLink) window.open(qbPayLink, '_blank', 'noopener');
+                    else if (isLive) toast(payLoading ? 'Fetching the QuickBooks pay link…' : 'No online-payment link on this invoice in QuickBooks yet');
+                    else toast('Payment page opened (demo) — production uses the live QuickBooks pay link');
+                  }}
+                  style={{ width: '100%', padding: '11px', background: '#22c55e', border: 'none', borderRadius: 7, color: '#fff', fontWeight: 800, fontSize: 14, cursor: 'pointer', opacity: payLoading ? 0.7 : 1 }}>
+                  {payLoading ? 'Loading…' : `Pay $${inv.amount.toLocaleString()}`}
                 </button>
-                <div style={{ fontSize: 10, color: '#999', marginTop: 8 }}>Card or ACH · secure checkout</div>
+                <div style={{ fontSize: 10, color: '#999', marginTop: 8 }}>Card or ACH · secure checkout{isLive && qbPayLink ? ' · live QuickBooks link' : ''}</div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button onClick={() => { navigator.clipboard?.writeText(payLink(inv)); toast('Payment link copied — paste it anywhere'); }}
+                <button onClick={() => { navigator.clipboard?.writeText(effectiveLink); toast(qbPayLink ? 'QuickBooks pay link copied' : 'Payment link copied — paste it anywhere'); }}
                   style={{ flex: 1, padding: '9px', background: 'rgba(0,212,232,0.1)', border: '1px solid var(--teal)', borderRadius: 7, color: 'var(--teal)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
                   Copy payment link
                 </button>
               </div>
               <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8, fontStyle: 'italic' }}>
-                The reminder emails LunarLogic sends include this same one-click pay link — the fastest path from reminded to paid.
+                {isLive
+                  ? 'This is the live QuickBooks payment page — reminder emails include the same one-click link.'
+                  : 'The reminder emails LunarLogic sends include this same one-click pay link — the fastest path from reminded to paid.'}
               </div>
             </div>
           )}
