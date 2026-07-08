@@ -1,3 +1,4 @@
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { AutomationHeader, Card, StatTile, fmtM, fmtRunTime, tileGridStyle } from './automationKit';
 
 const CADENCE = [
@@ -8,6 +9,7 @@ const CADENCE = [
   { at: '+21d', label: 'Firm reminder', note: '' },
   { at: '+28d', label: 'Final notice', note: 'before escalation' },
 ];
+const CADENCE_N = CADENCE.length;
 
 function RiskDot({ level }) {
   const color = level === 'high' ? '#ef4444' : level === 'medium' ? '#f59e0b' : '#22c55e';
@@ -15,6 +17,28 @@ function RiskDot({ level }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color, flexShrink: 0 }}>
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />{label}
+    </div>
+  );
+}
+
+function weekStartISO(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  const dow = (dt.getDay() + 6) % 7; // Monday = 0
+  dt.setDate(dt.getDate() - dow);
+  return dt.toISOString().split('T')[0];
+}
+function weekLabel(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function FreqTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="chart-tooltip">
+      <div className="tooltip-title">Week of {label}</div>
+      <div className="tooltip-row"><span>Reminders sent</span><span style={{ color: 'var(--teal)' }}>{payload[0].value}</span></div>
     </div>
   );
 }
@@ -32,6 +56,32 @@ export default function ClientReminders({ data, isMobile, onDrill, onAction }) {
 
   const lastRun = data.isLive ? data.automationStatus?.wf2?.lastRun : data.wf2LastRun;
   const nextRun = data.isLive ? null : data.wf2NextRun;
+
+  // Outcomes among reminded / open invoices
+  const opened     = open.filter(i => i.status === 'Viewed').length;   // engaged after outreach
+  const chasing    = open.filter(i => i.status === 'Overdue').length;  // still overdue
+  const paidPeriod = data.invoices.filter(i => i.status === 'Paid').length;
+
+  // Reminder frequency by week (from delivered reminder dates on open invoices)
+  const freqData = (() => {
+    const counts = {};
+    open.forEach(i => (i.reminders ?? []).forEach(r => { const w = weekStartISO(r); counts[w] = (counts[w] ?? 0) + 1; }));
+    const weeks = Object.keys(counts).sort();
+    if (weeks.length === 0) return [];
+    const out = [];
+    const [sy, sm, sd] = weeks[0].split('-').map(Number);
+    const cur = new Date(sy, sm - 1, sd);
+    const end = new Date(...weeks[weeks.length - 1].split('-').map((v, i) => i === 1 ? v - 1 : Number(v)));
+    while (cur <= end) {
+      const iso = cur.toISOString().split('T')[0];
+      out.push({ week: weekLabel(iso), count: counts[iso] ?? 0 });
+      cur.setDate(cur.getDate() + 7);
+    }
+    return out;
+  })();
+
+  // Per-invoice reminder sequences, most-overdue first
+  const sequences = covered.slice().sort((a, b) => b.daysOverdue - a.daysOverdue);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -84,6 +134,64 @@ export default function ClientReminders({ data, isMobile, onDrill, onAction }) {
         </Card>
       )}
 
+      {/* Reminder activity — outcomes + frequency */}
+      {reminderDataAvailable && (
+        <Card title="Reminder activity & outcomes" hint="Volume of reminders going out, and how invoices respond.">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 14 }}>
+            <OutcomeTile label="Opened after outreach" value={opened} color="#a78bfa" sub="viewed, engaged" />
+            <OutcomeTile label="Still chasing" value={chasing} color="#f59e0b" sub="overdue, sequence active" />
+            <OutcomeTile label="Paid this period" value={paidPeriod} color="#22c55e" sub="resolved" />
+          </div>
+          {freqData.length > 0 && (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Reminders sent per week</div>
+              <ResponsiveContainer width="100%" height={140}>
+                <BarChart data={freqData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="week" tick={{ fill: '#4e6a88', fontSize: 9 }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(freqData.length / 7))} />
+                  <YAxis tick={{ fill: '#4e6a88', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip content={<FreqTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                  <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={26} isAnimationActive={false}>
+                    {freqData.map((d, i) => <Cell key={i} fill={d.count > 0 ? '#00d4e8' : '#26364a'} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </>
+          )}
+        </Card>
+      )}
+
+      {/* Per-invoice reminder sequences */}
+      {sequences.length > 0 && (
+        <Card title="Active reminder sequences" hint="Where each open invoice sits in its cadence. Filled = sent · amber ring = next scheduled.">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {sequences.map(inv => {
+              const sent = inv.reminders?.length ?? 0;
+              return (
+                <div key={inv.id} onClick={() => onAction(inv)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 6px', margin: '0 -6px', borderRadius: 6, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                      {!isMobile && <span style={{ fontFamily: 'monospace', marginRight: 6 }}>{inv.id}</span>}
+                      {inv.daysOverdue > 0 ? <span style={{ color: '#f59e0b', fontWeight: 600 }}>{inv.daysOverdue}d overdue</span> : <span>due {inv.due}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
+                    {Array.from({ length: CADENCE_N }).map((_, i) => {
+                      const isSent = i < sent;
+                      const isNext = i === sent && inv.nextReminder;
+                      return <div key={i} title={CADENCE[i].label} style={{ width: 9, height: 9, borderRadius: '50%', background: isSent ? 'var(--teal)' : 'transparent', border: isSent ? 'none' : isNext ? '1.5px solid #f59e0b' : '1.5px solid var(--border)' }} />;
+                    })}
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', flexShrink: 0, width: 64, textAlign: 'right' }}>{fmtM(inv.amount)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
         <Card title="Reminder cadence" hint="The escalating sequence each invoice follows, relative to its due date.">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -121,6 +229,16 @@ export default function ClientReminders({ data, isMobile, onDrill, onAction }) {
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function OutcomeTile({ label, value, color, sub }) {
+  return (
+    <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+      <div style={{ fontSize: 24, fontWeight: 900, color, letterSpacing: -1, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-dim)', marginTop: 4 }}>{label}</div>
+      <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 1 }}>{sub}</div>
     </div>
   );
 }

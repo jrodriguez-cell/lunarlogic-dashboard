@@ -2,6 +2,51 @@ import { AutomationHeader, Card, StatTile, BeforeAfter, fmtM, fmtRunTime, tileGr
 
 const PRE_LIVE_MINUTES = 19; // manual data-entry baseline per invoice (pre-LunarLogic)
 
+const CREATION_STEPS = [
+  { title: 'Slack request',      desc: 'PDF upload or a text command' },
+  { title: 'AI parses',          desc: 'Claude extracts line items & customer' },
+  { title: 'Customer match',     desc: 'Validated against QuickBooks' },
+  { title: 'Estimate & milestones', desc: 'Built and matched to the job' },
+  { title: 'Approval',           desc: 'Quick confirm in Slack' },
+  { title: 'Invoice sent',       desc: 'Created in QuickBooks & emailed' },
+];
+
+function CreationSequence({ isMobile }) {
+  const n = CREATION_STEPS.length;
+  if (isMobile) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {CREATION_STEPS.map((s, i) => (
+          <div key={s.title} style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={circleStyle}>{i + 1}</div>
+              {i < n - 1 && <div style={{ width: 2, flex: 1, minHeight: 22, background: 'var(--border)' }} />}
+            </div>
+            <div style={{ paddingBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{s.title}</div>
+              <div style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 2 }}>{s.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+      {CREATION_STEPS.map((s, i) => (
+        <div key={s.title} style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0 4px' }}>
+          {i < n - 1 && <div style={{ position: 'absolute', top: 13, left: '50%', width: '100%', height: 2, background: 'var(--border)' }} />}
+          <div style={{ ...circleStyle, zIndex: 1 }}>{i + 1}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', marginTop: 8 }}>{s.title}</div>
+          <div style={{ fontSize: 9.5, color: 'var(--muted)', marginTop: 2, lineHeight: 1.3 }}>{s.desc}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const circleStyle = { width: 28, height: 28, borderRadius: '50%', background: 'var(--bg)', border: '1.5px solid var(--teal)', color: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0, position: 'relative' };
+
 export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
   const stats     = data.automationStats;
   const tracked   = !!stats;
@@ -57,6 +102,10 @@ export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
           source="Invoices are issued the same day a job is approved. Before LunarLogic, manual invoicing added 3–8 days of lag before the invoice even reached the customer."
         />
       </div>
+
+      <Card title="How an invoice is created" hint="Every invoice runs this sequence automatically — from a Slack message to a sent QuickBooks invoice, same day.">
+        <CreationSequence isMobile={isMobile} />
+      </Card>
 
       {tracked && (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
