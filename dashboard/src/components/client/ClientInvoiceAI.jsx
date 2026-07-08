@@ -3,51 +3,7 @@ import InvoiceComposer from '../InvoiceComposer';
 import { AutomationHeader, Card, StatTile, BeforeAfter, fmtM, fmtRunTime, tileGridStyle } from './automationKit';
 
 const PRE_LIVE_MINUTES = 19; // manual data-entry baseline per invoice (pre-LunarLogic)
-
-const CREATION_STEPS = [
-  { title: 'Slack request',      desc: 'PDF upload or a text command' },
-  { title: 'AI parses',          desc: 'Claude extracts line items & customer' },
-  { title: 'Customer match',     desc: 'Validated against QuickBooks' },
-  { title: 'Estimate & milestones', desc: 'Built and matched to the job' },
-  { title: 'Approval',           desc: 'Quick confirm in Slack' },
-  { title: 'Invoice sent',       desc: 'Created in QuickBooks & emailed' },
-];
-
-function CreationSequence({ isMobile }) {
-  const n = CREATION_STEPS.length;
-  if (isMobile) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {CREATION_STEPS.map((s, i) => (
-          <div key={s.title} style={{ display: 'flex', gap: 12 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={circleStyle}>{i + 1}</div>
-              {i < n - 1 && <div style={{ width: 2, flex: 1, minHeight: 22, background: 'var(--border)' }} />}
-            </div>
-            <div style={{ paddingBottom: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{s.title}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 2 }}>{s.desc}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-      {CREATION_STEPS.map((s, i) => (
-        <div key={s.title} style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0 4px' }}>
-          {i < n - 1 && <div style={{ position: 'absolute', top: 13, left: '50%', width: '100%', height: 2, background: 'var(--border)' }} />}
-          <div style={{ ...circleStyle, zIndex: 1 }}>{i + 1}</div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', marginTop: 8 }}>{s.title}</div>
-          <div style={{ fontSize: 9.5, color: 'var(--muted)', marginTop: 2, lineHeight: 1.3 }}>{s.desc}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-const circleStyle = { width: 28, height: 28, borderRadius: '50%', background: 'var(--bg)', border: '1.5px solid var(--teal)', color: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0, position: 'relative' };
+const AVG_LAG_DAYS = 5;      // midpoint of the 3–8 day manual send lag LunarLogic removes
 
 export default function ClientInvoiceAI({ data, clientId, isMobile, onDrill }) {
   const [composing, setComposing] = useState(false);
@@ -55,6 +11,10 @@ export default function ClientInvoiceAI({ data, clientId, isMobile, onDrill }) {
   const tracked   = !!stats;
   const connected = data.isLive ? data.automationStatus?.wf1?.connected === true : true;
   const statusColor = connected ? 'var(--green)' : 'var(--muted)';
+
+  // Invoicing speed = cash speed: same-day sending keeps the 3–8 day manual lag
+  // out of DSO, which pulls the corresponding revenue in sooner each cycle.
+  const cashSooner = data.annualRevenue ? Math.round(AVG_LAG_DAYS * (data.annualRevenue / 365)) : null;
 
   const autoInvoices = data.invoices
     .filter(i => i.origin === 'wf1_auto')
@@ -107,11 +67,24 @@ export default function ClientInvoiceAI({ data, clientId, isMobile, onDrill }) {
       </div>
 
       <Card
-        title="How an invoice is created"
-        hint="Every invoice runs this sequence automatically — from a Slack message to a sent QuickBooks invoice, same day. Need to raise one yourself? Create it here and it enters the same flow."
+        title="Invoicing speed = cash speed"
+        hint="Every day an invoice sits unsent is a day added to your DSO. LunarLogic issues each one the same day the work is approved — so the collection clock starts immediately, with no manual data entry and nothing waiting on someone to get to it."
         right={<button onClick={() => setComposing(true)} style={createBtn}>+ Create invoice</button>}
       >
-        <CreationSequence isMobile={isMobile} />
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
+          <StatTile
+            label="Invoice lag removed from DSO" color="var(--teal)"
+            value="3–8 days"
+            sub="manual send delay before LunarLogic"
+            source="Before LunarLogic, invoices were created and sent manually 3–8 days after work was approved — days that added directly to DSO. Automated same-day sending removes that lag entirely."
+          />
+          <StatTile
+            label="Collected sooner each cycle" color="var(--green)"
+            value={cashSooner != null ? fmtM(cashSooner) : '—'}
+            sub={cashSooner != null ? 'reaches your bank faster vs. delayed invoicing' : 'add revenue to see the estimate'}
+            source={`Estimated cash pulled forward by eliminating invoice lag: ~${AVG_LAG_DAYS} days (midpoint of the 3–8 day manual delay) × (annual revenue ÷ 365). Faster invoicing collects the same earned revenue sooner.`}
+          />
+        </div>
       </Card>
 
       {tracked && (
