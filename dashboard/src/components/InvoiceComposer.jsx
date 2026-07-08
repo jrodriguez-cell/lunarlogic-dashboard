@@ -31,6 +31,8 @@ function makeLineItem() {
 export default function InvoiceComposer({ invoices, paymentBehavior, onClose, isLive = false, clientId }) {
   const toast = useToast();
   const [sending, setSending] = useState(false);
+  const [aiText, setAiText] = useState('');
+  const [drafting, setDrafting] = useState(false);
   const customers = paymentBehavior ? paymentBehavior.map(c => c.customer) : [];
 
   const [customer, setCustomer] = useState('');
@@ -80,6 +82,78 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose, is
 
   const total = lineItems.reduce((s, li) => s + lineAmount(li), 0);
   const resolvedCustomer = isNewCustomer ? newCustomerName : customer;
+
+  // Local heuristic parse used for demo logins and as a fallback when the n8n
+  // AI workflow isn't configured. Not as good as the AI — just enough to
+  // populate a sensible draft from a one-line description.
+  function localDraft(text) {
+    const lower = text.toLowerCase();
+    const matchedCustomer = customers.find(c => lower.includes(c.toLowerCase())) || null;
+    const qtyMatch = text.match(/(\d+)\s*(month|hour|hr|unit|week|day|seat|licen[cs]e)s?/i);
+    const amounts = [...text.matchAll(/\$\s*([\d,]+(?:\.\d{1,2})?)/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
+    const rateMatch = text.match(/(?:at|@)\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
+    const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
+    let rate = '';
+    if (rateMatch) rate = parseFloat(rateMatch[1].replace(/,/g, ''));
+    else if (amounts.length) rate = qtyMatch ? amounts[amounts.length - 1] : amounts[0];
+    const netMatch = text.match(/net\s*(\d+)/i);
+    let description = text
+      .replace(/\$\s*[\d,]+(?:\.\d{1,2})?/g, '')
+      .replace(/\bnet\s*\d+\b/ig, '')
+      .replace(/\b(at|@)\b/ig, '')
+      .replace(/\s+/g, ' ').trim();
+    if (matchedCustomer) description = description.replace(new RegExp(matchedCustomer, 'i'), '').replace(/\bfor\b\s*$/i, '').trim();
+    description = description.replace(/^[,\-\s]+|[,\-\s]+$/g, '') || 'Professional services';
+    return {
+      customer: matchedCustomer,
+      lines: [{ description: description.slice(0, 90), qty, rate }],
+      netDays: netMatch ? parseInt(netMatch[1], 10) : null,
+      __demo: true,
+    };
+  }
+
+  function applyDraft(d) {
+    if (!d) return;
+    if (d.customer) {
+      if (customers.includes(d.customer)) { setIsNewCustomer(false); setCustomer(d.customer); }
+      else { setIsNewCustomer(true); setNewCustomerName(d.customer); }
+    }
+    if (Array.isArray(d.lines) && d.lines.length) {
+      setLineItems(d.lines.map(l => ({
+        id: lineIdCounter++,
+        description: l.description || '',
+        qty: l.qty ?? 1,
+        rate: l.rate != null && l.rate !== '' ? String(l.rate) : '',
+      })));
+    }
+    if (d.netDays) setDueDate(addDays(issueDate, d.netDays));
+  }
+
+  async function handleAiDraft() {
+    const text = aiText.trim();
+    if (!text) { toast('Describe the invoice first', 'error'); return; }
+    setDrafting(true);
+    try {
+      let draft = null;
+      if (isLive) {
+        const resp = await fetch('/api/ai-draft-invoice', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId, text }),
+        });
+        const json = await resp.json().catch(() => ({}));
+        if (resp.ok && json.ok && json.draft) draft = json.draft;
+      }
+      const demo = !draft;
+      if (!draft) draft = localDraft(text);
+      applyDraft(draft);
+      toast(demo ? 'Drafted with AI (demo) — review below' : 'Drafted with AI — review below', 'info');
+    } catch {
+      applyDraft(localDraft(text));
+      toast('Drafted locally — review below', 'info');
+    } finally {
+      setDrafting(false);
+    }
+  }
 
   function invoicePayload(mode) {
     return {
@@ -166,6 +240,29 @@ export default function InvoiceComposer({ invoices, paymentBehavior, onClose, is
         </div>
 
         <div className="drawer-body">
+          {/* AI draft */}
+          <div style={{ background: 'rgba(0,212,232,0.05)', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 8, padding: 12, marginBottom: 18 }}>
+            <label className="drawer-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ color: 'var(--teal)' }}>✨</span> Draft with AI
+            </label>
+            <textarea
+              className="composer-input"
+              rows={2}
+              style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5, marginBottom: 8 }}
+              placeholder="Describe it in plain English — e.g. “3 months of advisory for Acme at $5,000/mo, net 30”"
+              value={aiText}
+              onChange={e => setAiText(e.target.value)}
+            />
+            <button
+              onClick={handleAiDraft}
+              disabled={drafting}
+              style={{ padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: drafting ? 'default' : 'pointer', border: '1px solid var(--teal)', background: 'rgba(0,212,232,0.12)', color: 'var(--teal)', opacity: drafting ? 0.6 : 1 }}
+            >
+              {drafting ? 'Drafting…' : '✨ Draft invoice'}
+            </button>
+            <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 10 }}>Fills the fields below — you review before sending.</span>
+          </div>
+
           {/* Customer */}
           <div className="composer-field">
             <label className="drawer-section-title">Customer</label>
