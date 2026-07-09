@@ -330,7 +330,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {activeTab === 'subscriptions' && <ClientSubscriptions data={data} />}
           {activeTab === 'invoiceai'  && <ClientInvoiceAI data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'cashapp'    && <ClientCashApplication data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-          {activeTab === 'activities' && <ClientActivities data={data} clientId={session.clientId} />}
+          {activeTab === 'activities' && <ClientActivities data={data} clientId={session.clientId} onAction={setActionInv} />}
           {activeTab === 'action'     && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'report'     && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
           {activeTab === 'cashflow'   && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} payments={data.payments} isLive={data.isLive} wf3Connected={data.automationStatus?.wf3?.connected === true} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
