@@ -250,7 +250,7 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
         <SectionLabel>How LunarLogic is working for you — explore each automation</SectionLabel>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 10, marginTop: 4 }}>
           <AutoLink title="Invoice AI" desc="Slack → QuickBooks invoicing, sent same day" color="#22c55e" onClick={() => onNavigate('invoiceai')} />
-          <AutoLink title="Payment Reminders" desc="Automated escalating email sequences" color="#22c55e" onClick={() => onNavigate('customers')} />
+          <AutoLink title="Payment Reminders" desc="Automated escalating email sequences" color="#22c55e" onClick={() => onNavigate('reminders')} />
           <AutoLink title="Cash Application" desc="Bank payments auto-matched to invoices" color="var(--teal)" onClick={() => onNavigate('cashapp')} />
         </div>
       </div>

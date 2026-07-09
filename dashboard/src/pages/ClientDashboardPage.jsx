@@ -17,6 +17,7 @@ import ClientCustomers from '../components/client/ClientCustomers';
 import ClientSubscriptions from '../components/client/ClientSubscriptions';
 import ClientEstimates from '../components/client/ClientEstimates';
 import ClientActivities from '../components/client/ClientActivities';
+import ClientReminders from '../components/client/ClientReminders';
 import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
@@ -59,6 +60,7 @@ const NAV = [
   { id: 'invoices',    label: 'Invoices',     icon: 'fileText' },
   { id: 'subscriptions', label: 'Subscriptions', icon: 'repeat' },
   { id: 'invoiceai',   label: 'Invoice AI',   icon: 'bolt' },
+  { id: 'reminders',   label: 'Reminders',    icon: 'bell' },
   { id: 'cashapp',     label: 'Payments',     icon: 'card' },
   { id: 'activities',  label: 'Activities',   icon: 'activity' },
   { id: 'action',      label: 'Action Plan',  icon: 'check' },
@@ -75,6 +77,7 @@ function NavIcon({ name }) {
     fileText: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h6',
     bolt: 'M13 2L4 14h6v8l9-12h-6z',
     card: 'M2 5h20v14H2zM2 10h20',
+    bell: 'M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0',
     activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
     check: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
     bars: 'M12 20V10M18 20V4M6 20v-4',
@@ -329,6 +332,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {activeTab === 'invoices'   && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'subscriptions' && <ClientSubscriptions data={data} />}
           {activeTab === 'invoiceai'  && <ClientInvoiceAI data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'reminders'  && <ClientReminders data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'cashapp'    && <ClientCashApplication data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'activities' && <ClientActivities data={data} clientId={session.clientId} onAction={setActionInv} />}
           {activeTab === 'action'     && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
