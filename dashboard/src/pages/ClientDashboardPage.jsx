@@ -13,6 +13,7 @@ import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientInvoices from '../components/client/ClientInvoices';
 import ClientReportCard from '../components/client/ClientReportCard';
 import ClientCashForecast from '../components/client/ClientCashForecast';
+import ClientSettings from '../components/client/ClientSettings';
 import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
@@ -60,7 +61,7 @@ const NAV = [
   { id: 'report',     label: 'Reports',    icon: 'bars' },
   { id: 'cashflow',   label: 'Cash Flow',  icon: 'trend' },
 ];
-const NAV_SETTINGS = { id: 'settings', label: 'Settings', icon: 'cog', soon: true };
+const NAV_SETTINGS = { id: 'settings', label: 'Settings', icon: 'cog' };
 
 function NavIcon({ name }) {
   const p = {
@@ -327,7 +328,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {activeTab === 'action'     && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'report'     && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
           {activeTab === 'cashflow'   && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} payments={data.payments} isLive={data.isLive} wf3Connected={data.automationStatus?.wf3?.connected === true} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-          {activeTab === 'settings'   && <ComingSoon title="Settings" note="Configure reminder cadences per customer (email / call / text), with AI-suggested cadences you can override, per-step assignment, and escalation tasks. This is the next major build." />}
+          {activeTab === 'settings'   && <ClientSettings data={data} clientId={session.clientId} isMobile={isMobile} />}
         </div>
       </div>
 
