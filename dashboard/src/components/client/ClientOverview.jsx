@@ -1,5 +1,6 @@
 import SourceTag from '../SourceTag';
 import DSOProjection from './DSOProjection';
+import InvoicedVsCollected from './InvoicedVsCollected';
 import { getPromises, isBroken } from '../../lib/promises';
 
 function fmtM(v) {
@@ -233,12 +234,23 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
         </div>
       </div>
 
+      {/* Invoiced vs collected */}
+      {paymentDataAvailable && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
+          <SectionLabel>
+            Invoiced vs. collected
+            <SourceTag label="Monthly totals of invoices issued (invoiced) versus payments applied in QuickBooks (collected). The line is collected ÷ invoiced — sustained near or above 100% means you are collecting about as fast as you bill." />
+          </SectionLabel>
+          <InvoicedVsCollected invoices={data.invoices} payments={payments} isMobile={isMobile} />
+        </div>
+      )}
+
       {/* Explore automations */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>How LunarLogic is working for you — explore each automation</SectionLabel>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 10, marginTop: 4 }}>
           <AutoLink title="Invoice AI" desc="Slack → QuickBooks invoicing, sent same day" color="#22c55e" onClick={() => onNavigate('invoiceai')} />
-          <AutoLink title="Payment Reminders" desc="Automated escalating email sequences" color="#22c55e" onClick={() => onNavigate('reminders')} />
+          <AutoLink title="Payment Reminders" desc="Automated escalating email sequences" color="#22c55e" onClick={() => onNavigate('customers')} />
           <AutoLink title="Cash Application" desc="Bank payments auto-matched to invoices" color="var(--teal)" onClick={() => onNavigate('cashapp')} />
         </div>
       </div>
