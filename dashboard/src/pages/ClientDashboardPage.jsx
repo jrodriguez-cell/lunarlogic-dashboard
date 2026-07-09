@@ -84,7 +84,6 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
   const [actionPlanSort, setActionPlanSort] = useState(null);
   const isMobile = useMobile();
   const base = useMemo(() => getClientData(session.clientId), [session.clientId]);
@@ -168,29 +167,27 @@ export default function ClientDashboardPage({ session, onLogout }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
 
-      {/* Left sidebar */}
-      {isMobile && navOpen && <div onClick={() => setNavOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }} />}
+      {/* Left sidebar — always visible (compact icon rail on mobile) */}
       <aside style={{
-        width: 208, flexShrink: 0, background: 'var(--bg-card)', borderRight: '1px solid var(--border)',
-        display: 'flex', flexDirection: 'column', padding: '14px 12px',
-        position: isMobile ? 'fixed' : 'sticky', top: 0, height: '100vh', zIndex: 50,
-        transform: isMobile ? `translateX(${navOpen ? '0' : '-110%'})` : 'none', transition: 'transform 0.2s ease',
+        width: isMobile ? 56 : 208, flexShrink: 0, background: 'var(--bg-card)', borderRight: '1px solid var(--border)',
+        display: 'flex', flexDirection: 'column', padding: isMobile ? '12px 6px' : '14px 12px',
+        position: 'sticky', top: 0, height: '100vh', alignSelf: 'flex-start',
       }}>
-        <div className="sidebar-wordmark" style={{ fontSize: 16, padding: '4px 8px 14px', display: 'flex', alignItems: 'center', gap: 7 }}>
+        <div className="sidebar-wordmark" style={{ fontSize: 16, padding: isMobile ? '4px 0 14px' : '4px 8px 14px', display: 'flex', alignItems: 'center', gap: 7, justifyContent: isMobile ? 'center' : 'flex-start' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#moonGradientSb)">
             <defs><linearGradient id="moonGradientSb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#60A5FA" /><stop offset="100%" stopColor="#818CF8" /></linearGradient></defs>
             <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
           </svg>
-          <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>
+          {!isMobile && <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>}
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflowY: 'auto' }}>
           {NAV.map(n => (
             <NavItem key={n.id} item={n} active={activeTab === n.id} badge={n.id === 'action' ? urgentCount : 0}
-              onClick={() => { setActiveTab(n.id); setNavOpen(false); }} />
+              compact={isMobile} onClick={() => setActiveTab(n.id)} />
           ))}
         </nav>
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 8 }}>
-          <NavItem item={NAV_SETTINGS} active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setNavOpen(false); }} />
+          <NavItem item={NAV_SETTINGS} active={activeTab === 'settings'} compact={isMobile} onClick={() => setActiveTab('settings')} />
         </div>
       </aside>
 
@@ -200,11 +197,6 @@ export default function ClientDashboardPage({ session, onLogout }) {
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: `0 ${isMobile ? 16 : 24}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 52 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          {isMobile && (
-            <button onClick={() => setNavOpen(true)} aria-label="Menu" style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', display: 'flex', padding: 4 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
-            </button>
-          )}
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -378,11 +370,12 @@ export default function ClientDashboardPage({ session, onLogout }) {
   );
 }
 
-function NavItem({ item, active, badge = 0, onClick }) {
+function NavItem({ item, active, badge = 0, compact, onClick }) {
   return (
-    <button onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
-      padding: '8px 10px', borderRadius: 8, cursor: 'pointer', border: 'none',
+    <button onClick={onClick} title={compact ? item.label : undefined} style={{
+      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+      textAlign: 'left', justifyContent: compact ? 'center' : 'flex-start', position: 'relative',
+      padding: compact ? '9px 0' : '8px 10px', borderRadius: 8, cursor: 'pointer', border: 'none',
       background: active ? 'rgba(0,212,232,0.12)' : 'none',
       color: active ? 'var(--teal)' : 'var(--text-dim)',
       fontSize: 13, fontWeight: active ? 700 : 500, transition: 'background 0.1s, color 0.1s',
@@ -390,9 +383,10 @@ function NavItem({ item, active, badge = 0, onClick }) {
       onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-hover)'; }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'none'; }}>
       <NavIcon name={item.icon} />
-      <span style={{ flex: 1 }}>{item.label}</span>
-      {badge > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800, borderRadius: 10, padding: '1px 6px', lineHeight: 1.6 }}>{badge}</span>}
-      {item.soon && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 6, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Soon</span>}
+      {!compact && <span style={{ flex: 1 }}>{item.label}</span>}
+      {!compact && badge > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800, borderRadius: 10, padding: '1px 6px', lineHeight: 1.6 }}>{badge}</span>}
+      {!compact && item.soon && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 6, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Soon</span>}
+      {compact && badge > 0 && <span style={{ position: 'absolute', top: 4, right: 6, width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />}
     </button>
   );
 }
