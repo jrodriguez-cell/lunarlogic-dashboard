@@ -16,6 +16,8 @@ import ClientSettings from '../components/client/ClientSettings';
 import ClientCustomers from '../components/client/ClientCustomers';
 import ClientSubscriptions from '../components/client/ClientSubscriptions';
 import ClientEstimates from '../components/client/ClientEstimates';
+import ClientActivities from '../components/client/ClientActivities';
+import ClientReminders from '../components/client/ClientReminders';
 import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
@@ -58,8 +60,9 @@ const NAV = [
   { id: 'invoices',    label: 'Invoices',     icon: 'fileText' },
   { id: 'subscriptions', label: 'Subscriptions', icon: 'repeat' },
   { id: 'invoiceai',   label: 'Invoice AI',   icon: 'bolt' },
+  { id: 'reminders',   label: 'Reminders',    icon: 'bell' },
   { id: 'cashapp',     label: 'Payments',     icon: 'card' },
-  { id: 'activities',  label: 'Activities',   icon: 'activity', soon: true },
+  { id: 'activities',  label: 'Activities',   icon: 'activity' },
   { id: 'action',      label: 'Action Plan',  icon: 'check' },
   { id: 'report',      label: 'Reports',      icon: 'bars' },
   { id: 'cashflow',    label: 'Cash Flow',    icon: 'trend' },
@@ -74,6 +77,7 @@ function NavIcon({ name }) {
     fileText: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h6',
     bolt: 'M13 2L4 14h6v8l9-12h-6z',
     card: 'M2 5h20v14H2zM2 10h20',
+    bell: 'M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0',
     activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
     check: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
     bars: 'M12 20V10M18 20V4M6 20v-4',
@@ -328,8 +332,9 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {activeTab === 'invoices'   && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'subscriptions' && <ClientSubscriptions data={data} />}
           {activeTab === 'invoiceai'  && <ClientInvoiceAI data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'reminders'  && <ClientReminders data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'cashapp'    && <ClientCashApplication data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-          {activeTab === 'activities' && <ComingSoon title="Activities" note="A running log of everything LunarLogic and your team have done — reminders sent, calls logged, promises recorded, payments applied. Building this next." />}
+          {activeTab === 'activities' && <ClientActivities data={data} clientId={session.clientId} onAction={setActionInv} />}
           {activeTab === 'action'     && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'report'     && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
           {activeTab === 'cashflow'   && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} payments={data.payments} isLive={data.isLive} wf3Connected={data.automationStatus?.wf3?.connected === true} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
@@ -394,16 +399,6 @@ function NavItem({ item, active, badge = 0, compact, onClick }) {
       {!compact && item.soon && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 6, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Soon</span>}
       {compact && badge > 0 && <span style={{ position: 'absolute', top: 4, right: 6, width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />}
     </button>
-  );
-}
-
-function ComingSoon({ title, note }) {
-  return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '44px 24px', textAlign: 'center' }}>
-      <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>{title}</div>
-      <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6, maxWidth: 520, margin: '0 auto' }}>{note}</div>
-      <div style={{ marginTop: 16, display: 'inline-block', fontSize: 10, fontWeight: 700, color: 'var(--teal)', background: 'rgba(0,212,232,0.1)', border: '1px solid rgba(0,212,232,0.3)', borderRadius: 20, padding: '4px 12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>In progress</div>
-    </div>
   );
 }
 
