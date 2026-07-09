@@ -68,6 +68,12 @@ const NAV = [
 ];
 const NAV_SETTINGS = { id: 'settings', label: 'Settings', icon: 'cog' };
 
+// Mobile bottom tab bar: the 4 core AR workflows + a "More" sheet for the rest.
+const BOTTOM_IDS = ['action', 'overview', 'invoices', 'cashapp'];
+const BOTTOM_LABEL = { action: 'Actions', overview: 'Dashboard', invoices: 'Invoices', cashapp: 'Payments' };
+const NAV_BY_ID = Object.fromEntries([...NAV, NAV_SETTINGS].map(n => [n.id, n]));
+const MORE_IDS = [...NAV.map(n => n.id).filter(id => !BOTTOM_IDS.includes(id)), 'settings'];
+
 function NavIcon({ name }) {
   const p = {
     grid: 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',
@@ -92,6 +98,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [actionPlanSort, setActionPlanSort] = useState(null);
   const isMobile = useMobile();
   const base = useMemo(() => getClientData(session.clientId), [session.clientId]);
@@ -175,10 +182,11 @@ export default function ClientDashboardPage({ session, onLogout }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
 
-      {/* Left sidebar — always visible (compact icon rail on mobile) */}
+      {/* Left sidebar — desktop only (mobile uses the bottom tab bar) */}
+      {!isMobile && (
       <aside style={{
-        width: isMobile ? 56 : 208, flexShrink: 0, background: 'var(--bg-card)', borderRight: '1px solid var(--border)',
-        display: 'flex', flexDirection: 'column', padding: isMobile ? '12px 6px' : '14px 12px',
+        width: 208, flexShrink: 0, background: 'var(--bg-card)', borderRight: '1px solid var(--border)',
+        display: 'flex', flexDirection: 'column', padding: '14px 12px',
         position: 'sticky', top: 0, height: '100vh', alignSelf: 'flex-start',
       }}>
         <div className="sidebar-wordmark" onClick={() => setActiveTab(HOME_TAB)} title="Go to home (Action Plan)" style={{ fontSize: 16, padding: isMobile ? '4px 0 14px' : '4px 8px 14px', display: 'flex', alignItems: 'center', gap: 7, justifyContent: isMobile ? 'center' : 'flex-start', cursor: 'pointer' }}>
@@ -195,16 +203,23 @@ export default function ClientDashboardPage({ session, onLogout }) {
           ))}
         </nav>
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 8 }}>
-          <NavItem item={NAV_SETTINGS} active={activeTab === 'settings'} compact={isMobile} onClick={() => setActiveTab('settings')} />
+          <NavItem item={NAV_SETTINGS} active={activeTab === 'settings'} compact={false} onClick={() => setActiveTab('settings')} />
         </div>
       </aside>
+      )}
 
       {/* Main column */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: `0 ${isMobile ? 16 : 24}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 52 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+          {isMobile && (
+            <svg onClick={() => setActiveTab(HOME_TAB)} width="20" height="20" viewBox="0 0 24 24" fill="url(#moonGradientTop)" style={{ flexShrink: 0, cursor: 'pointer' }}>
+              <defs><linearGradient id="moonGradientTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#60A5FA" /><stop offset="100%" stopColor="#818CF8" /></linearGradient></defs>
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+            </svg>
+          )}
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -326,7 +341,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ maxWidth: 940, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
+        <div style={{ maxWidth: 940, margin: '0 auto', padding: isMobile ? '16px 16px 88px' : '24px' }}>
           {activeTab === 'overview'   && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'customers'  && <ClientCustomers data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'estimates'  && <ClientEstimates data={data} />}
@@ -350,7 +365,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
           onClick={() => setAssistantOpen(true)}
           title="Ask the AR assistant"
           style={{
-            position: 'fixed', bottom: 20, right: 20, zIndex: 1000,
+            position: 'fixed', bottom: isMobile ? 74 : 20, right: isMobile ? 14 : 20, zIndex: 1000,
             display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px',
             borderRadius: 24, border: '1px solid var(--teal)', background: 'var(--bg-card)',
             color: 'var(--teal)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
@@ -362,6 +377,58 @@ export default function ClientDashboardPage({ session, onLogout }) {
       )}
       {assistantOpen && (
         <AIAssistant data={data} currentDSO={currentDSO} clientId={session.clientId} isLive={data.isLive} onClose={() => setAssistantOpen(false)} />
+      )}
+
+      {/* Mobile bottom tab bar + More sheet */}
+      {isMobile && (
+        <>
+          {moreOpen && (
+            <>
+              <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1150 }} />
+              <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 1151, background: '#151E31', borderTop: '1px solid var(--border)', borderRadius: '16px 16px 0 0', padding: '10px 12px calc(16px + env(safe-area-inset-bottom))', maxHeight: '72vh', overflowY: 'auto', boxShadow: '0 -8px 30px rgba(0,0,0,0.4)' }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '4px auto 14px' }} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                  {MORE_IDS.map(id => {
+                    const item = NAV_BY_ID[id];
+                    const active = activeTab === id;
+                    return (
+                      <button key={id} onClick={() => { setActiveTab(id); setMoreOpen(false); }} style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '13px 4px', borderRadius: 10, cursor: 'pointer',
+                        border: `1px solid ${active ? 'var(--teal)' : 'var(--border)'}`, background: active ? 'rgba(0,212,232,0.1)' : 'var(--bg)', color: active ? 'var(--teal)' : 'var(--text-dim)',
+                      }}>
+                        <NavIcon name={item.icon} />
+                        <span style={{ fontSize: 10, fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+          <nav style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 1100, height: 60, background: '#151E31', borderTop: '1px solid var(--border)', display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)', boxShadow: '0 -4px 20px rgba(0,0,0,0.35)' }}>
+            {BOTTOM_IDS.map(id => {
+              const item = NAV_BY_ID[id];
+              const active = activeTab === id && !moreOpen;
+              return (
+                <button key={id} onClick={() => { setActiveTab(id); setMoreOpen(false); }} style={{
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+                  background: 'none', border: 'none', cursor: 'pointer', color: active ? 'var(--teal)' : 'var(--muted)', position: 'relative',
+                }}>
+                  <NavIcon name={item.icon} />
+                  <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 500 }}>{BOTTOM_LABEL[id]}</span>
+                  {id === 'action' && urgentCount > 0 && <span style={{ position: 'absolute', top: 7, right: 'calc(50% - 17px)', width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />}
+                </button>
+              );
+            })}
+            <button onClick={() => setMoreOpen(v => !v)} style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+              background: 'none', border: 'none', cursor: 'pointer', color: (moreOpen || MORE_IDS.includes(activeTab)) ? 'var(--teal)' : 'var(--muted)',
+            }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" /></svg>
+              <span style={{ fontSize: 9.5, fontWeight: (moreOpen || MORE_IDS.includes(activeTab)) ? 700 : 500 }}>More</span>
+            </button>
+          </nav>
+        </>
       )}
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
