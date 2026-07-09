@@ -283,7 +283,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
   <div class="sec-head" style="position:relative;z-index:2;display:flex;flex-direction:column;flex:1">
     <div class="eyebrow" style="margin-bottom:12px">Overview</div>
     <h2 class="section-title">The problems we're solving</h2>
-    <p class="lead section-intro">For most service businesses, accounts receivable is death by a thousand manual steps. Four root problems quietly drain time and cash out of the business every single month.</p>
+    <p class="lead section-intro">The revenue is already earned; the cash just sits trapped on an aging report instead of in the bank. Four breakdowns keep it there: invoicing that lags the work, follow-up that never happens consistently, quotes that stall before they close, and an AR picture no one sees until month-end. Every one widens the gap between finishing the work and collecting the cash, and that gap is your cash flow.</p>
 
     <div class="prob-grid">
       <div class="prob"><span class="num">01</span>
@@ -314,6 +314,100 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
   </div>
 
   <footer class="run-foot"><div class="confidential">Confidential</div><div>02</div></footer>
+</section>
+
+<!-- ============================================================ BROKEN WORKFLOW -->
+<section class="page">
+  <div class="glow"></div>
+  <header class="run-head">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" fill="url(#mg)"/></svg>
+      <div class="wordmark">lunarlogic<span class="ai">.ai</span></div>
+    </div>
+    <div class="tag">Use Cases</div>
+  </header>
+
+  <div class="dso-body">
+    <div class="sec-head">
+      <div class="eyebrow" style="margin-bottom:12px">The Broken Workflow</div>
+      <h2 class="section-title">One manual process, leaking cash at every step</h2>
+      <p class="lead section-intro" style="margin-bottom:0">Those four problems are not separate. They are a single manual order-to-cash workflow, and at every handoff between finishing the work and collecting the money, time and cash leak out.</p>
+    </div>
+
+    <div class="stage">
+      <span class="cap">Today's manual order-to-cash</span>
+      <svg viewBox="0 0 720 250" width="100%" style="display:block">
+        <defs>
+          <marker id="amb" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto"><path d="M0 0l7 4.5L0 9z" fill="#f59e0b"/></marker>
+        </defs>
+
+        <!-- connectors (broken / dashed amber) -->
+        <g stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4">
+          <line x1="128" y1="96" x2="152" y2="96" marker-end="url(#amb)"/>
+          <line x1="273" y1="96" x2="297" y2="96" marker-end="url(#amb)"/>
+          <line x1="418" y1="96" x2="442" y2="96" marker-end="url(#amb)"/>
+          <line x1="563" y1="96" x2="587" y2="96" marker-end="url(#amb)"/>
+        </g>
+
+        <!-- process nodes -->
+        <g font-family="Nunito,sans-serif" text-anchor="middle">
+          <g>
+            <rect x="10" y="66" width="118" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+            <text x="69" y="92" fill="#f1f5f9" font-size="11" font-weight="700">Quote</text>
+            <text x="69" y="108" fill="#94a3b8" font-size="8.5">re-keyed by hand</text>
+          </g>
+          <g>
+            <rect x="155" y="66" width="118" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+            <text x="214" y="92" fill="#f1f5f9" font-size="11" font-weight="700">Invoice</text>
+            <text x="214" y="108" fill="#94a3b8" font-size="8.5">built manually</text>
+          </g>
+          <g>
+            <rect x="300" y="66" width="118" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+            <text x="359" y="92" fill="#f1f5f9" font-size="11" font-weight="700">Sent</text>
+            <text x="359" y="108" fill="#94a3b8" font-size="8.5">days later</text>
+          </g>
+          <g>
+            <rect x="445" y="66" width="118" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+            <text x="504" y="92" fill="#f1f5f9" font-size="11" font-weight="700">Follow-up</text>
+            <text x="504" y="108" fill="#94a3b8" font-size="8.5">forgotten</text>
+          </g>
+          <!-- outcome node (red) -->
+          <g>
+            <rect x="590" y="62" width="120" height="68" rx="12" fill="rgba(239,68,68,0.10)" stroke="#ef4444"/>
+            <text x="650" y="90" fill="#fca5a5" font-size="11" font-weight="800">Cash trapped</text>
+            <text x="650" y="106" fill="#ef4444" font-size="8.5">DSO climbs</text>
+          </g>
+        </g>
+
+        <!-- friction labels under each handoff -->
+        <g font-family="Nunito,sans-serif" text-anchor="middle" fill="#f59e0b" font-size="8" font-weight="700">
+          <text x="140" y="150">transcription errors</text>
+          <text x="285" y="150">3–5 days of lag</text>
+          <text x="430" y="150">no consistent chase</text>
+          <text x="575" y="150">no real-time view</text>
+        </g>
+        <g stroke="#f59e0b" stroke-width="1" opacity="0.5">
+          <line x1="140" y1="130" x2="140" y2="140"/>
+          <line x1="285" y1="130" x2="285" y2="140"/>
+          <line x1="430" y1="130" x2="430" y2="140"/>
+          <line x1="575" y1="130" x2="575" y2="140"/>
+        </g>
+
+        <!-- bottom summary -->
+        <g font-family="Nunito,sans-serif">
+          <line x1="10" y1="188" x2="710" y2="188" stroke="#334155" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="360" y="214" fill="#94a3b8" font-size="10.5" text-anchor="middle">Every handoff adds days between doing the work and being paid for it,</text>
+          <text x="360" y="230" fill="#94a3b8" font-size="10.5" text-anchor="middle">and none of it is visible until the month-end close.</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="bigstat" style="align-items:flex-start">
+      <div class="t" style="font-size:10.5px"><b style="color:var(--slate300)">The result.</b> Revenue that was earned weeks ago still hasn't reached the bank, DSO keeps climbing, bad debt grows in the aging report, and no one can see it happening in real time. The next four modules replace this workflow one step at a time.</div>
+    </div>
+  </div>
+
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>03</div></footer>
 </section>
 
 <!-- ============================================================ DSO FRAMING -->
@@ -402,7 +496,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>03</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>04</div></footer>
 </section>
 
 <!-- ============================================================ UC1, INVOICE AUTOMATION -->
@@ -503,7 +597,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>04</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>05</div></footer>
 </section>
 
 <!-- ============================================================ UC2, PAYMENT REMINDERS -->
@@ -602,7 +696,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>05</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>06</div></footer>
 </section>
 
 <!-- ============================================================ UC3, SALES ORDER PROCESSING -->
@@ -690,7 +784,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>06</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>07</div></footer>
 </section>
 
 <!-- ============================================================ UC4, AR DASHBOARD -->
@@ -800,7 +894,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>07</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>08</div></footer>
 </section>
 
 <!-- ============================================================ ACCOUNTING IMPACT -->
@@ -847,7 +941,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>08</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>09</div></footer>
 </section>
 
 <!-- ============================================================ BEYOND THE RECOVERY -->
@@ -898,7 +992,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     <p style="font-size:8px;color:var(--slate500);font-style:italic;text-align:center;margin-top:-4px">Illustrative figures for a representative $2.5M service firm moving from a 48-day to a 22-day DSO. Not a guaranteed result.</p>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>09</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>10</div></footer>
 </section>
 
 <!-- ============================================================ MISSION / CLOSE -->
@@ -959,7 +1053,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
     </div>
   </div>
 
-  <footer class="run-foot"><div class="confidential">Confidential</div><div>10</div></footer>
+  <footer class="run-foot"><div class="confidential">Confidential</div><div>11</div></footer>
 </section>
 
 </body>
