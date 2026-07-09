@@ -48,7 +48,7 @@ export default function ClientCashApplication({ data, clientId, isMobile, onDril
   }
 
   const connected = data.isLive ? data.automationStatus?.wf3?.connected === true : true;
-  const statusColor = connected ? 'var(--teal)' : 'var(--muted)';
+  const statusColor = connected ? 'var(--green)' : 'var(--muted)';
 
   const payments = data.payments ?? [];
   const available = data.isLive ? connected : payments.length > 0;
@@ -108,7 +108,7 @@ export default function ClientCashApplication({ data, clientId, isMobile, onDril
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <AutomationHeader title="Cash Application" status={connected ? 'Active' : 'Not connected'} statusColor={statusColor}
+      <AutomationHeader title="Cash Application" status={connected ? 'Online' : 'Not connected'} statusColor={statusColor}
         blurb="Incoming bank payments are matched to open invoices automatically using amount and customer-name matching, then applied in QuickBooks — no manual reconciliation. Anything below 90% confidence is held for your quick confirmation."
         meta={[{ label: 'Source', value: 'Plaid bank feed' }, { label: 'Auto-apply threshold', value: '≥ 90% confidence' }]}
       />

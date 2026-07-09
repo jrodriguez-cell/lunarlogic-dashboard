@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { customerScore, scoreBand } from '../../lib/scoring';
 import { suggestTemplate, effectiveCadence } from '../../lib/cadences';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const CHART_TODAY = new Date('2026-06-11');
 
 function fmtM(v) {
   if (!v) return '$0';
@@ -25,7 +29,7 @@ const BUCKETS = [
 ];
 
 export default function CustomerDetail({ data, clientId, customer, onBack, onAction, onDrill }) {
-  const { invoices, open, overdue, totalOpen, totalOverdue, buckets, pb, score, cadence, payments, remindersSent } = useMemo(() => {
+  const { invoices, open, overdue, totalOpen, totalOverdue, buckets, pb, score, cadence, payments, remindersSent, paymentSeries } = useMemo(() => {
     const invoices = data.invoices.filter(i => i.customer === customer);
     const open = invoices.filter(i => i.status !== 'Paid');
     const overdue = open.filter(i => i.daysOverdue > 0);
@@ -37,7 +41,18 @@ export default function CustomerDetail({ data, clientId, customer, onBack, onAct
     const cadence = effectiveCadence(clientId, customer, suggestTemplate(pb, score)).name;
     const payments = (data.payments ?? []).filter(p => p.matchedCustomer === customer);
     const remindersSent = open.reduce((s, i) => s + (i.reminders?.length ?? 0), 0);
-    return { invoices, open, overdue, totalOpen, totalOverdue, buckets, pb, score, cadence, payments, remindersSent };
+    // Payments received per month over the last 6 months.
+    const monthBuckets = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(CHART_TODAY.getFullYear(), CHART_TODAY.getMonth() - i, 1);
+      monthBuckets[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] = { label: MONTHS[d.getMonth()], amount: 0 };
+    }
+    payments.forEach(p => {
+      const key = (p.appliedAt || p.received || '').slice(0, 7);
+      if (monthBuckets[key]) monthBuckets[key].amount += p.amount;
+    });
+    const paymentSeries = Object.values(monthBuckets);
+    return { invoices, open, overdue, totalOpen, totalOverdue, buckets, pb, score, cadence, payments, remindersSent, paymentSeries };
   }, [data, clientId, customer]);
 
   const band = scoreBand(score);
@@ -127,6 +142,24 @@ export default function CustomerDetail({ data, clientId, customer, onBack, onAct
         </div>
         <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 8 }}>Click any invoice to open it — payment link, reminder, promise to pay, log contact.</div>
       </div>
+
+      {/* Payments over time */}
+      {payments.length > 0 && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>Payments received over time</div>
+          <div style={{ width: '100%', height: 170 }}>
+            <ResponsiveContainer>
+              <BarChart data={paymentSeries} margin={{ top: 6, right: 6, left: -6, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e2733" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#7d8896' }} axisLine={{ stroke: '#1e2733' }} tickLine={false} />
+                <YAxis tickFormatter={v => v >= 1000 ? `$${Math.round(v / 1000)}k` : `$${v}`} tick={{ fontSize: 10, fill: '#7d8896' }} axisLine={false} tickLine={false} width={44} />
+                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={{ background: '#141b24', border: '1px solid #263041', borderRadius: 8, fontSize: 12 }} labelStyle={{ color: '#e6edf3', fontWeight: 700 }} formatter={v => [fmtFull(v), 'Received']} />
+                <Bar dataKey="amount" name="Received" fill="#22c55e" radius={[3, 3, 0, 0]} maxBarSize={38} isAnimationActive={false} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* Payment history */}
       {payments.length > 0 && (

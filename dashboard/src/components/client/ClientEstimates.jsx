@@ -87,14 +87,15 @@ export default function ClientEstimates({ data }) {
                 <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>{fmtFull(e.amount)}</div>
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                {e.status === 'draft' && <Btn onClick={() => act(e, 'sent', `Estimate ${e.id} sent to ${e.customer}`)} primary>Send for approval</Btn>}
+                {e.status === 'draft' && <Btn onClick={() => act(e, 'sent', `Estimate ${e.id} sent to ${e.customer} for approval`)} primary>Send for approval</Btn>}
                 {e.status === 'sent' && <>
-                  <Btn onClick={() => act(e, 'approved', `${e.id} marked approved`)} primary>Mark approved</Btn>
+                  <Btn onClick={() => act(e, 'approved', `${e.id} marked approved — ready to convert`)} primary>Mark approved</Btn>
+                  <Btn onClick={() => toast(`Approval reminder sent to ${e.customer} for ${e.id}`)}>Send reminder</Btn>
                   <Btn onClick={() => act(e, 'declined', `${e.id} marked declined`)}>Mark declined</Btn>
                 </>}
                 {e.status === 'approved' && <>
-                  <Btn onClick={() => toast(`Deposit invoice for ${fmtFull(e.deposit)} created from ${e.id} (demo)`)} primary>Collect deposit</Btn>
-                  <Btn onClick={() => toast(`${e.id} converted to an invoice (demo)`)}>Convert to invoice</Btn>
+                  <Btn onClick={() => toast(`${e.id} converted to an invoice for ${fmtFull(e.amount)} (demo)`)} primary>Convert to invoice ↗</Btn>
+                  <Btn onClick={() => toast(`Deposit invoice for ${fmtFull(e.deposit)} (30%) created from ${e.id} (demo)`)}>Collect {fmtFull(e.deposit)} deposit</Btn>
                 </>}
                 {e.status === 'declined' && <span style={{ fontSize: 11, color: 'var(--muted)', fontStyle: 'italic' }}>Customer declined this estimate.</span>}
               </div>

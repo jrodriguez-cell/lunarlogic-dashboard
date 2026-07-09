@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { invoiceScore, scoreBand } from '../../lib/scoring';
 import { PageHeader } from './automationKit';
+import InvoiceComposer from '../InvoiceComposer';
 
 function fmtM(v) {
   if (!v) return '$0';
@@ -43,7 +44,8 @@ const EXPORT_COLS = [
   { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: r => r.daysOverdue > 0 ? r.daysOverdue : '' },
 ];
 
-export default function ClientInvoices({ invoices, paymentBehavior, isMobile, onDrill, onAction }) {
+export default function ClientInvoices({ data, clientId, invoices, paymentBehavior, isMobile, onDrill, onAction }) {
+  const [composing, setComposing] = useState(false);
   const [query, setQuery]       = useState('');
   const [status, setStatus]     = useState('All');
   const [aging, setAging]       = useState('all');
@@ -112,7 +114,29 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <PageHeader title="Invoices" subtitle="Search, filter, and act on every invoice. Click a row to open it and take action; export the current results anytime." />
+      <PageHeader
+        title="Invoices"
+        subtitle="Search, filter, and act on every invoice. Click a row to open it and take action; export the current results anytime."
+        right={<button onClick={() => setComposing(true)} style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', background: 'rgba(0,212,232,0.12)', border: '1px solid var(--teal)', borderRadius: 7, padding: '8px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New invoice</button>}
+      />
+
+      {/* Invoice AI automation status */}
+      {(() => {
+        const connected = data?.isLive ? data?.automationStatus?.wf1?.connected === true : true;
+        const stats = data?.automationStats;
+        const autoCount = invoices.filter(i => i.origin === 'wf1_auto').length;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: connected ? 'var(--green)' : 'var(--muted)', boxShadow: connected ? '0 0 8px var(--green)' : 'none', flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>Invoice AI</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: connected ? 'var(--green)' : 'var(--muted)', background: connected ? 'rgba(34,197,94,0.12)' : 'var(--bg-hover)', border: `1px solid ${connected ? 'rgba(34,197,94,0.35)' : 'var(--border)'}`, borderRadius: 20, padding: '2px 9px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{connected ? 'Online' : 'Not connected'}</span>
+            <span style={{ fontSize: 11, color: 'var(--text-dim)', minWidth: 0 }}>
+              Slack → QuickBooks, sent same day{stats ? ` · ${stats.invoicesProcessedTotal} auto-created · ${stats.avgProcessingMinutes} min avg` : autoCount ? ` · ${autoCount} auto-created` : ''}
+            </span>
+            <button onClick={() => setComposing(true)} style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: 'var(--teal)', background: 'none', border: '1px solid rgba(0,212,232,0.35)', borderRadius: 6, padding: '5px 11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>Create with AI ↗</button>
+          </div>
+        );
+      })()}
 
       {/* Search + controls */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -224,6 +248,16 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
       <div style={{ fontSize: 10, color: 'var(--muted)' }}>
         Click a column header to sort · click any row to open the invoice and take action · Export downloads the current results as CSV or Excel.
       </div>
+
+      {composing && (
+        <InvoiceComposer
+          invoices={invoices}
+          paymentBehavior={paymentBehavior}
+          isLive={data?.isLive}
+          clientId={clientId}
+          onClose={() => setComposing(false)}
+        />
+      )}
     </div>
   );
 }

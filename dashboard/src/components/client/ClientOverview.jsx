@@ -1,7 +1,20 @@
+import { useState } from 'react';
 import SourceTag from '../SourceTag';
 import DSOProjection from './DSOProjection';
 import InvoicedVsCollected from './InvoicedVsCollected';
 import { getPromises, isBroken } from '../../lib/promises';
+import { getEnabledWidgets, setEnabledWidgets } from '../../lib/dashboardLayout';
+
+// Canonical widget order + labels for the customizable Dashboard.
+const WIDGET_DEFS = [
+  { id: 'needsToday',  label: 'Needs you today' },
+  { id: 'arHealth',    label: 'AR health at a glance' },
+  { id: 'dsoPath',     label: 'Path to a lower DSO' },
+  { id: 'cashComingIn', label: 'Cash coming in' },
+  { id: 'invoicedVsCollected', label: 'Invoiced vs. collected' },
+  { id: 'automations', label: 'Explore automations' },
+];
+const ALL_WIDGET_IDS = WIDGET_DEFS.map(w => w.id);
 
 function fmtM(v) {
   if (!v) return '$0';
@@ -148,13 +161,47 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
   const target = Math.max(bpdso, Math.round(currentDSO * 0.6));
   const projImprove = Math.max(0, Math.round(currentDSO) - target);
 
+  // Customizable widgets — which sections the user has chosen to show.
+  const [enabled, setEnabled] = useState(() => getEnabledWidgets(clientId, ALL_WIDGET_IDS));
+  const [customizing, setCustomizing] = useState(false);
+  const on = id => enabled.includes(id);
+  function toggle(id) {
+    const next = enabled.includes(id) ? enabled.filter(x => x !== id) : ALL_WIDGET_IDS.filter(x => enabled.includes(x) || x === id);
+    setEnabled(next);
+    setEnabledWidgets(clientId, next);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+      {/* Customize bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Dashboard</div>
+        <button onClick={() => setCustomizing(v => !v)} style={{ fontSize: 11, fontWeight: 700, color: customizing ? 'var(--teal)' : 'var(--muted)', background: customizing ? 'rgba(0,212,232,0.1)' : 'none', border: `1px solid ${customizing ? 'var(--teal)' : 'var(--border)'}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg>
+          {customizing ? 'Done' : 'Customize'}
+        </button>
+      </div>
+
+      {customizing && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--teal)', borderRadius: 12, padding: 16 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 10 }}>Choose which widgets appear on your dashboard. Your selection is saved to this browser.</div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8 }}>
+            {WIDGET_DEFS.map(w => (
+              <label key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5, color: 'var(--text)', cursor: 'pointer', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px' }}>
+                <input type="checkbox" checked={on(w.id)} onChange={() => toggle(w.id)} style={{ accentColor: '#00d4e8', width: 15, height: 15, cursor: 'pointer' }} />
+                {w.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Needs you today */}
-      <NeedsToday items={visibleActions} totalItems={actionItems.length} totalAtStake={totalAtStake} isMobile={isMobile} onNavigate={onNavigate} />
+      {on('needsToday') && <NeedsToday items={visibleActions} totalItems={actionItems.length} totalAtStake={totalAtStake} isMobile={isMobile} onNavigate={onNavigate} />}
 
       {/* AR Health */}
+      {on('arHealth') && (
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>AR health at a glance</SectionLabel>
         <div style={{ display: 'flex', gap: isMobile ? 14 : 24, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center' }}>
@@ -191,8 +238,10 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
           <MiniStat label="Collection rate" value={data.collectionEfficiency != null ? `${data.collectionEfficiency}%` : '—'} sub="paid within terms" />
         </div>
       </div>
+      )}
 
       {/* Path to a lower DSO — the money visual */}
+      {on('dsoPath') && (
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>Your path to a lower DSO</SectionLabel>
         <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14, maxWidth: 680 }}>
@@ -213,8 +262,10 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
           </div>
         </div>
       </div>
+      )}
 
       {/* Cash coming in */}
+      {on('cashComingIn') && (
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>
           Cash coming in
@@ -233,9 +284,10 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
           ))}
         </div>
       </div>
+      )}
 
       {/* Invoiced vs collected */}
-      {paymentDataAvailable && (
+      {on('invoicedVsCollected') && paymentDataAvailable && (
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
           <SectionLabel>
             Invoiced vs. collected
@@ -246,14 +298,22 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
       )}
 
       {/* Explore automations */}
+      {on('automations') && (
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>How LunarLogic is working for you — explore each automation</SectionLabel>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 10, marginTop: 4 }}>
-          <AutoLink title="Invoice AI" desc="Slack → QuickBooks invoicing, sent same day" color="#22c55e" onClick={() => onNavigate('invoiceai')} />
+          <AutoLink title="Invoice AI" desc="Slack → QuickBooks invoicing, sent same day" color="#22c55e" onClick={() => onNavigate('invoices')} />
           <AutoLink title="Payment Reminders" desc="Automated escalating email sequences" color="#22c55e" onClick={() => onNavigate('reminders')} />
           <AutoLink title="Cash Application" desc="Bank payments auto-matched to invoices" color="var(--teal)" onClick={() => onNavigate('cashapp')} />
         </div>
       </div>
+      )}
+
+      {enabled.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)', fontSize: 13, background: 'var(--bg-card)', border: '1px dashed var(--border)', borderRadius: 12 }}>
+          No widgets selected. Click <strong style={{ color: 'var(--teal)' }}>Customize</strong> to add widgets to your dashboard.
+        </div>
+      )}
     </div>
   );
 }

@@ -276,6 +276,43 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
 
       <PageHeader title="Action plan" subtitle="Everything that needs a decision or a nudge, most urgent first — disputes flagged by AI, overdue invoices to chase, and what LunarLogic is already handling for you." />
 
+      {/* Bad debt risk — 90+ days overdue */}
+      {(() => {
+        const badDebt = invoices.filter(i => i.status !== 'Paid' && i.daysOverdue > 90);
+        const badDebtAmt = badDebt.reduce((s, i) => s + i.amount, 0);
+        if (badDebt.length === 0) return null;
+        return (
+          <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.09em' }}>Bad debt risk — action required</div>
+              <button onClick={() => drillAction('Bad Debt Risk — 90+ Days Overdue', [...badDebt].sort((a, b) => b.daysOverdue - a.daysOverdue), `${fmtM(badDebtAmt)} · ${badDebt.length} invoice${badDebt.length !== 1 ? 's' : ''} at critical risk`)}
+                style={{ fontSize: 10, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 10px', cursor: 'pointer' }}>Export ↗</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 22, fontWeight: 900, color: '#ef4444' }}>{fmtM(badDebtAmt)}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>across {badDebt.length} invoice{badDebt.length !== 1 ? 's' : ''} 90+ days overdue — recovery drops below 50% past 90 days</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[...badDebt].sort((a, b) => b.daysOverdue - a.daysOverdue).slice(0, 5).map(inv => (
+                <div key={inv.id} onClick={() => onAction(inv)}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239,68,68,0.06)', borderRadius: 6, padding: '7px 10px', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.12)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.06)')}>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginRight: 8 }}>{inv.customer}</span>
+                    <span style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'monospace' }}>{inv.id} · {inv.daysOverdue}d overdue</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#ef4444' }}>{fmtM(inv.amount)}</span>
+                    <span style={{ fontSize: 10, color: '#ef4444', opacity: 0.7 }}>escalate ↗</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* AI Dispute Monitor */}
       {disputes.length > 0 && (
         <DisputeMonitor disputes={disputes} isMobile={isMobile} onAction={onAction} />
