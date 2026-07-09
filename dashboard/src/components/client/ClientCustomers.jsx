@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react';
 import { customerScore, scoreBand } from '../../lib/scoring';
 import { suggestTemplate, effectiveCadence } from '../../lib/cadences';
+import { useToast } from '../../lib/toast';
+import { PageHeader } from './automationKit';
+import CustomerDetail from './CustomerDetail';
 
 function fmtM(v) {
   if (!v) return '—';
@@ -17,7 +20,9 @@ const BUCKETS = [
   { key: '90+',     label: '90+d',    color: '#dc2626', test: d => d > 90 },
 ];
 
-export default function ClientCustomers({ data, clientId, onAction }) {
+export default function ClientCustomers({ data, clientId, onAction, onDrill }) {
+  const toast = useToast();
+  const [selected, setSelected] = useState(null);
   const [query, setQuery] = useState('');
   const [sortKey, setSortKey] = useState('total');
   const [sortDir, setSortDir] = useState('desc');
@@ -72,8 +77,18 @@ export default function ClientCustomers({ data, clientId, onAction }) {
     { key: 'total', label: 'Total', align: 'right' },
   ];
 
+  if (selected) {
+    return <CustomerDetail data={data} clientId={clientId} customer={selected} onBack={() => setSelected(null)} onAction={onAction} onDrill={onDrill} />;
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <PageHeader
+        title="Customers"
+        subtitle="Every customer with an open balance, aged and scored. Click a customer to open their full account."
+        right={<button onClick={() => toast('New customer (demo) — creates the customer in QuickBooks in production')} style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', background: 'rgba(0,212,232,0.12)', border: '1px solid var(--teal)', borderRadius: 7, padding: '8px 14px', cursor: 'pointer' }}>+ New customer</button>}
+      />
+
       {/* Top debtors */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -82,7 +97,7 @@ export default function ClientCustomers({ data, clientId, onAction }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {topDebtors.map(d => (
-            <div key={d.customer} onClick={() => d.worst && onAction(d.worst)} style={{ cursor: 'pointer' }}>
+            <div key={d.customer} onClick={() => setSelected(d.customer)} style={{ cursor: 'pointer' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 3 }}>
                 <span style={{ color: 'var(--text-dim)' }}>{d.customer}</span>
                 <span style={{ fontWeight: 700, color: 'var(--text)' }}>{fmtM(d.total)}{d.overdue > 0 && <span style={{ color: '#ef4444', fontWeight: 500 }}> · {fmtM(d.overdue)} overdue</span>}</span>
@@ -125,7 +140,7 @@ export default function ClientCustomers({ data, clientId, onAction }) {
             {filtered.map(r => {
               const band = scoreBand(r.score);
               return (
-                <tr key={r.customer} onClick={() => r.worst && onAction(r.worst)} style={{ cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+                <tr key={r.customer} onClick={() => setSelected(r.customer)} style={{ cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ padding: '9px 12px', fontSize: 12.5, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>{r.customer}</td>

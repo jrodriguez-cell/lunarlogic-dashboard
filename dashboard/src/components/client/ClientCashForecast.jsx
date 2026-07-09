@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { enrichInvoices, forecastWithin, addDays } from '../../lib/forecast';
 import SourceTag from '../SourceTag';
+import { PageHeader } from './automationKit';
 
 function fmtM(v) {
   if (!v || v === 0) return '$0';
@@ -29,26 +30,6 @@ const FCST_COLS = [
   { key: 'daysOverdue',     label: 'Days Overdue',      render: v => v > 0 ? `${v}d` : '—', csvVal: row => row.daysOverdue > 0 ? row.daysOverdue : '' },
 ];
 
-const PENDING_COLS = [
-  { key: 'txId',            label: 'Transaction' },
-  { key: 'matchedCustomer', label: 'Customer' },
-  { key: 'amount',          label: 'Amount Received',    render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
-  { key: 'received',        label: 'Date Received' },
-  { key: 'confidence',      label: 'AI Confidence',      render: v => `${v}%` },
-  { key: 'rule',            label: 'Why It Needs Review' },
-  { key: 'candidates',      label: 'Candidate Invoices', render: v => Array.isArray(v) ? v.join(' · ') : '—', csvVal: row => Array.isArray(row.candidates) ? row.candidates.join(', ') : '' },
-];
-
-const AUTO_COLS = [
-  { key: 'txId',            label: 'Transaction' },
-  { key: 'matchedCustomer', label: 'Customer' },
-  { key: 'amount',          label: 'Amount',             render: v => `$${v.toLocaleString()}`, csvVal: row => row.amount },
-  { key: 'received',        label: 'Date Received' },
-  { key: 'matchedInvoice',  label: 'Applied To',         render: v => v ?? '—' },
-  { key: 'confidence',      label: 'Match Confidence',   render: v => `${v}%` },
-  { key: 'rule',            label: 'Match Rule' },
-];
-
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
@@ -62,7 +43,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, payments, isLive, wf3Connected, isMobile, onDrill, onAction }) {
+export default function ClientCashForecast({ invoices, paymentBehavior, annualRevenue, isMobile, onDrill, onAction }) {
   const containerRef = useRef(null);
   const [chartW, setChartW] = useState(0);
   const TODAY = new Date();
@@ -90,13 +71,6 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
     .filter(i => i.expectedDate >= TODAY && i.expectedDate <= next7Days)
     .sort((a, b) => a.expectedDate - b.expectedDate);
 
-  const allPayments   = payments ?? [];
-  const pendingPmts   = allPayments.filter(p => p.status === 'Pending Review');
-  const autoPmts      = allPayments.filter(p => p.status !== 'Pending Review').slice(-6);
-  // For live clients, an empty payments list only means "everything's been
-  // matched" when WF3 telemetry is actually connected — otherwise it means
-  // "no data reported yet."
-  const paymentDataAvailable = isLive ? wf3Connected : true;
 
   const weeks = Array.from({ length: 13 }, (_, i) => {
     const start = addDays(TODAY, i * 7);
@@ -146,6 +120,7 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <PageHeader title="Cash flow" subtitle="What's expected to arrive and when — a forward look at collections against your operating needs. Payment matching and history live under Payments and Activities." />
 
       {/* Summary tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10 }}>
@@ -333,96 +308,8 @@ export default function ClientCashForecast({ invoices, paymentBehavior, annualRe
         </div>
       </div>
 
-      {/* Payment confirmations + recent payments */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
-
-        {/* Pending confirmations */}
-        <div style={{ background: 'var(--bg-card)', border: `1px solid ${pendingPmts.length > 0 ? 'rgba(245,158,11,0.35)' : 'var(--border)'}`, borderRadius: 12, padding: '16px' }}>
-          <SectionLabel>Payment confirmations needed</SectionLabel>
-          {!paymentDataAvailable ? (
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10, fontStyle: 'italic' }}>WF3 payment matching isn't connected for this client yet — no payment data to review.</div>
-          ) : pendingPmts.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--green)', marginTop: 10, fontStyle: 'italic' }}>All payments matched automatically — nothing needs your review.</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-              {pendingPmts.map(p => (
-                <div key={p.txId} style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '10px 12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{p.matchedCustomer}</div>
-                      <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4 }}>{p.txId} · received {p.received}</div>
-                      <div style={{ fontSize: 10, color: '#f59e0b', marginBottom: 3 }}>
-                        AI confidence {p.confidence}% — below 90% threshold
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.5 }}>{p.rule}</div>
-                      {Array.isArray(p.candidates) && p.candidates.length > 0 && (
-                        <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>
-                          Candidate invoices: {p.candidates.join(' · ')}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text)' }}>{fmtM(p.amount)}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => onDrill({
-                      title: `Payment ${p.txId} — Confirmation Needed`,
-                      subtitle: `${fmtM(p.amount)} from ${p.matchedCustomer} · received ${p.received}`,
-                      source: p.rule,
-                      filename: `payment_review_${p.txId}`,
-                      columns: PENDING_COLS,
-                      rows: [p],
-                    })}
-                    style={{ width: '100%', padding: '5px 0', fontSize: 11, fontWeight: 600, borderRadius: 6, border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.08)', color: '#f59e0b', cursor: 'pointer' }}
-                  >
-                    Review and confirm match ↗
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent payments */}
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <SectionLabel>Recent payments received</SectionLabel>
-            {allPayments.length > 6 && (
-              <button
-                onClick={() => onDrill({ title: 'All Payments Received', subtitle: `${allPayments.length} payments`, source: 'Payment data from bank feed via Plaid integration.', filename: 'all_payments', columns: AUTO_COLS, rows: allPayments })}
-                style={{ fontSize: 10, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                View all ↗
-              </button>
-            )}
-          </div>
-          {autoPmts.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10, fontStyle: 'italic' }}>No recent payments on record.</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {autoPmts.map((p, idx) => (
-                <div key={p.txId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: idx < autoPmts.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.matchedCustomer}</div>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 10, color: 'var(--muted)' }}>{p.received}</span>
-                      {p.matchedInvoice && <span style={{ fontSize: 10, color: 'var(--muted)' }}>→ {p.matchedInvoice}</span>}
-                      <span style={{ fontSize: 9, fontWeight: 700, color: p.status === 'Auto-Applied' ? '#22c55e' : '#f59e0b', background: p.status === 'Auto-Applied' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', borderRadius: 6, padding: '1px 5px' }}>
-                        {p.status === 'Auto-Applied' ? `Auto ${p.confidence}%` : p.status}
-                      </span>
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)', flexShrink: 0, marginLeft: 10 }}>{fmtM(p.amount)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
       <div style={{ fontSize: 10, color: 'var(--muted)', paddingTop: 8, borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-        <span>Click any tile or chart bar to export underlying invoices. Expected receipt dates use each customer's historical payment patterns. Cash gap assumes 65% of annual revenue as operating costs.</span>
+        <span>Click any tile or chart bar to export underlying invoices. Expected receipt dates use each customer's historical payment patterns. Cash gap assumes 65% of annual revenue as operating costs. Payment matching and received-payment history live under the Payments and Activities tabs.</span>
         <SourceTag label="Cash forecast: Expected receipt date = invoice due date + customer's historical avg days-to-pay (from QuickBooks payment history). Cash gap uses 65% of annual revenue as operating cost estimate. WF2 status from Microsoft Outlook delivery records." />
       </div>
     </div>

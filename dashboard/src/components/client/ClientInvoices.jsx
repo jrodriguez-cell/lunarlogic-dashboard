@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { invoiceScore, scoreBand } from '../../lib/scoring';
+import { PageHeader } from './automationKit';
 
 function fmtM(v) {
   if (!v) return '$0';
@@ -111,6 +112,8 @@ export default function ClientInvoices({ invoices, paymentBehavior, isMobile, on
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <PageHeader title="Invoices" subtitle="Search, filter, and act on every invoice. Click a row to open it and take action; export the current results anytime." />
+
       {/* Search + controls */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 180, display: 'flex' }}>

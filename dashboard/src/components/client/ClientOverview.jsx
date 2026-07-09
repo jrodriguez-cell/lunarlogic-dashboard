@@ -152,7 +152,7 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Needs you today */}
-      <NeedsToday items={visibleActions} totalItems={actionItems.length} totalAtStake={totalAtStake} isMobile={isMobile} />
+      <NeedsToday items={visibleActions} totalItems={actionItems.length} totalAtStake={totalAtStake} isMobile={isMobile} onNavigate={onNavigate} />
 
       {/* AR Health */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
@@ -301,7 +301,7 @@ function AutoLink({ title, desc, color, onClick }) {
   );
 }
 
-function NeedsToday({ items, totalItems, totalAtStake, isMobile }) {
+function NeedsToday({ items, totalItems, totalAtStake, isMobile, onNavigate }) {
   const allClear = items.length === 0;
   return (
     <div style={{ background: allClear ? 'rgba(34,197,94,0.06)' : 'var(--bg-card)', border: `1px solid ${allClear ? 'rgba(34,197,94,0.25)' : 'var(--border)'}`, borderRadius: 12, padding: 16 }}>
@@ -310,9 +310,12 @@ function NeedsToday({ items, totalItems, totalAtStake, isMobile }) {
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>Needs you today</div>
           {!allClear && <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: '#ef4444', borderRadius: 10, padding: '1px 7px', lineHeight: 1.6 }}>{totalItems}</span>}
         </div>
-        {!allClear && totalAtStake > 0 && (
-          <div style={{ fontSize: 11, color: 'var(--text-dim)' }}><span style={{ fontWeight: 800, color: 'var(--text)' }}>{fmtM(totalAtStake)}</span> at stake</div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {!allClear && totalAtStake > 0 && (
+            <div style={{ fontSize: 11, color: 'var(--text-dim)' }}><span style={{ fontWeight: 800, color: 'var(--text)' }}>{fmtM(totalAtStake)}</span> at stake</div>
+          )}
+          {onNavigate && <button onClick={() => onNavigate('action')} style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}>Action plan ↗</button>}
+        </div>
       </div>
       {allClear ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

@@ -55,8 +55,8 @@ export default function ClientEstimates({ data }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-        <Tile label="Open estimates" value={fmtM(openAmt)} color="#60a5fa" sub="sent or draft, awaiting decision" />
-        <Tile label="Approved — to convert" value={fmtM(approvedAmt)} color="var(--green)" sub="ready to invoice / collect deposit" />
+        <Tile label="Open estimates" value={fmtM(openAmt)} color="#60a5fa" sub="awaiting approval — tap to view" onClick={() => setFilter('Sent')} active={filter === 'Sent'} />
+        <Tile label="Approved — to convert" value={fmtM(approvedAmt)} color="var(--green)" sub="ready to invoice — tap to view" onClick={() => setFilter('Approved')} active={filter === 'Approved'} />
         <Tile label="Win rate" value={`${winRate}%`} color="var(--teal)" sub="approved of decided" />
       </div>
 
@@ -107,10 +107,14 @@ export default function ClientEstimates({ data }) {
   );
 }
 
-function Tile({ label, value, sub, color }) {
+function Tile({ label, value, sub, color, onClick, active }) {
+  const clickable = !!onClick;
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px' }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
+    <div onClick={onClick}
+      style={{ background: 'var(--bg-card)', border: `1px solid ${active ? color : 'var(--border)'}`, borderRadius: 12, padding: '14px 16px', cursor: clickable ? 'pointer' : 'default', transition: 'border-color 0.12s, background 0.12s' }}
+      onMouseEnter={clickable ? e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.background = `${color}0d`; } : undefined}
+      onMouseLeave={clickable ? e => { e.currentTarget.style.borderColor = active ? color : 'var(--border)'; e.currentTarget.style.background = 'var(--bg-card)'; } : undefined}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}{clickable && <span style={{ marginLeft: 4, color }}>↗</span>}</div>
       <div style={{ fontSize: 26, fontWeight: 900, color, letterSpacing: -1, lineHeight: 1, marginTop: 6 }}>{value}</div>
       <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>{sub}</div>
     </div>
