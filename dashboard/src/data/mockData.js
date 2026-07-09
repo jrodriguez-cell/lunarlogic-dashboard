@@ -131,6 +131,13 @@ const CLIENTS = {
       { txId: 'TXN-8808', amount: 12400, received: '2026-05-12', bank: 'Chase Business',   description: 'RIVERSIDE BSNS PARK',         matchedCustomer: 'Riverside Business Park', matchedInvoice: 'INV-1041', confidence: 96, status: 'Auto-Applied',   appliedAt: '2026-05-12T09:44:58', rule: 'Exact amount + name match',                  candidates: [] },
       { txId: 'TXN-8807', amount:  8200, received: '2026-05-11', bank: 'Chase Business',   description: 'METRO TOWER CORP PAYMENT',    matchedCustomer: 'Metro Tower Corp',        matchedInvoice: 'INV-1042', confidence: 97, status: 'Auto-Applied',   appliedAt: '2026-05-11T08:37:19', rule: 'Exact amount + name match',                  candidates: [] },
     ],
+    estimates: [
+      { id: 'EST-2041', customer: 'Metro Tower Corp',        amount:  9600, issued: '2026-06-08', expires: '2026-06-22', status: 'Pending Approval', lineItems: 3, convertedInvoice: null },
+      { id: 'EST-2040', customer: 'Northgate Offices',       amount:  6400, issued: '2026-06-05', expires: '2026-06-19', status: 'Approved',         lineItems: 2, convertedInvoice: null },
+      { id: 'EST-2039', customer: 'Summit Business Plaza',   amount:  3200, issued: '2026-05-29', expires: '2026-06-12', status: 'Approved',         lineItems: 1, convertedInvoice: null },
+      { id: 'EST-2038', customer: 'Harbor View Facilities',  amount:  5100, issued: '2026-05-20', expires: '2026-06-03', status: 'Converted',        lineItems: 2, convertedInvoice: 'INV-1037' },
+      { id: 'EST-2037', customer: 'Riverside Business Park', amount: 11200, issued: '2026-05-14', expires: '2026-05-28', status: 'Expired',          lineItems: 4, convertedInvoice: null },
+    ],
   },
 
   gualapack: {
@@ -199,6 +206,13 @@ const CLIENTS = {
       { txId: 'GP-T-429', amount: 28600, received: '2026-05-11', bank: 'Wells Fargo Business', description: 'PACIFIC BEVERAGES PAYMENT',      matchedCustomer: 'Pacific Beverages',  matchedInvoice: 'GP-2203', confidence: 97, status: 'Auto-Applied',   appliedAt: '2026-05-11T10:12:38', rule: 'Exact amount + name match',                    candidates: [] },
       { txId: 'GP-T-428', amount: 19200, received: '2026-05-10', bank: 'Wells Fargo Business', description: 'WESTERN FOODS LLC',              matchedCustomer: 'Western Foods LLC',  matchedInvoice: 'GP-2206', confidence: 98, status: 'Auto-Applied',   appliedAt: '2026-05-10T08:39:55', rule: 'Exact amount + name match',                    candidates: [] },
       { txId: 'GP-T-427', amount: 22000, received: '2026-05-09', bank: 'Wells Fargo Business', description: 'FRESHMART FOODS WIRE PMT',       matchedCustomer: 'FreshMart Foods',    matchedInvoice: 'GP-2207', confidence: 91, status: 'Auto-Applied',   appliedAt: '2026-05-09T14:03:17', rule: 'Amount match + partial name (0.91)',            candidates: [] },
+    ],
+    estimates: [
+      { id: 'GPE-3110', customer: 'Alpine Snacks Co',    amount: 18400, issued: '2026-06-09', expires: '2026-06-23', status: 'Pending Approval', lineItems: 5, convertedInvoice: null },
+      { id: 'GPE-3109', customer: 'Pacific Beverages',   amount: 34200, issued: '2026-06-07', expires: '2026-06-21', status: 'Pending Approval', lineItems: 6, convertedInvoice: null },
+      { id: 'GPE-3108', customer: 'Sunrise Dairy',       amount:  9800, issued: '2026-06-02', expires: '2026-06-16', status: 'Approved',         lineItems: 2, convertedInvoice: null },
+      { id: 'GPE-3107', customer: 'FreshMart Foods',     amount: 24600, issued: '2026-05-24', expires: '2026-06-07', status: 'Converted',        lineItems: 4, convertedInvoice: 'GP-2202' },
+      { id: 'GPE-3106', customer: 'Western Foods LLC',   amount: 16200, issued: '2026-05-12', expires: '2026-05-26', status: 'Expired',          lineItems: 3, convertedInvoice: null },
     ],
   },
 
@@ -289,6 +303,13 @@ const CLIENTS = {
       { txId: 'FM-T-0908', amount:  98000, received: '2026-05-12', bank: 'JPMorgan Treasury', description: 'VANTAGE HLTHCARE SYS WIRE',          matchedCustomer: 'Vantage Healthcare Systems',   matchedInvoice: 'FM-4401', confidence: 95, status: 'Auto-Applied',   appliedAt: '2026-05-12T09:44:58', rule: 'Exact amount + name match',                              candidates: [] },
       { txId: 'FM-T-0907', amount: 128000, received: '2026-05-11', bank: 'JPMorgan Treasury', description: 'ALDERTON CAPITAL PARTNERS PAYMENT',  matchedCustomer: 'Alderton Capital Partners',    matchedInvoice: 'FM-4418', confidence: 97, status: 'Auto-Applied',   appliedAt: '2026-05-11T08:37:19', rule: 'Exact amount + name match',                              candidates: [] },
     ],
+    estimates: [
+      { id: 'FME-5210', customer: 'Summit Ridge Logistics',     amount: 68000,  issued: '2026-06-09', expires: '2026-06-23', status: 'Pending Approval', lineItems: 8,  convertedInvoice: null },
+      { id: 'FME-5209', customer: 'Meridian Industrial Group',  amount: 94000,  issued: '2026-06-06', expires: '2026-06-20', status: 'Pending Approval', lineItems: 11, convertedInvoice: null },
+      { id: 'FME-5208', customer: 'Northlake Private Equity',   amount: 52000,  issued: '2026-06-01', expires: '2026-06-15', status: 'Approved',         lineItems: 5,  convertedInvoice: null },
+      { id: 'FME-5207', customer: 'Castlebrook Real Estate',    amount: 71000,  issued: '2026-05-22', expires: '2026-06-05', status: 'Converted',        lineItems: 7,  convertedInvoice: 'FM-4402' },
+      { id: 'FME-5206', customer: 'Vantage Healthcare Systems', amount: 112000, issued: '2026-05-11', expires: '2026-05-25', status: 'Expired',          lineItems: 9,  convertedInvoice: null },
+    ],
   },
 
   meridian: {
@@ -364,6 +385,12 @@ const CLIENTS = {
       { txId: 'MA-P-0433', amount:  26400, received: '2026-05-15', bank: 'First National Business', description: 'CRESTLINE PARTNERS WIRE',          matchedCustomer: 'Crestline Partners LLC',    matchedInvoice: 'MA-3028', confidence: 94, status: 'Auto-Applied',   appliedAt: '2026-05-15T11:33:28', rule: 'Amount match + partial name (0.94)',       candidates: [] },
       { txId: 'MA-P-0432', amount:  32000, received: '2026-05-14', bank: 'First National Business', description: 'BELLWETHER CAPITAL GROUP PAYMENT', matchedCustomer: 'Bellwether Capital Group',  matchedInvoice: 'MA-3022', confidence: 97, status: 'Auto-Applied',   appliedAt: '2026-05-14T08:55:11', rule: 'Exact amount + name match',               candidates: [] },
       { txId: 'MA-P-0431', amount:  19400, received: '2026-05-13', bank: 'First National Business', description: 'THORNFIELD ADVISORY LLC',          matchedCustomer: 'Thornfield Advisory',       matchedInvoice: 'MA-3023', confidence: 91, status: 'Auto-Applied',   appliedAt: '2026-05-13T14:21:44', rule: 'Amount match + fuzzy name (0.91)',         candidates: [] },
+    ],
+    estimates: [
+      { id: 'MAE-4110', customer: 'Waypoint Group',        amount: 27600, issued: '2026-06-08', expires: '2026-06-22', status: 'Pending Approval', lineItems: 4, convertedInvoice: null },
+      { id: 'MAE-4109', customer: 'Irongate Solutions Inc', amount: 41200, issued: '2026-06-04', expires: '2026-06-18', status: 'Approved',         lineItems: 6, convertedInvoice: null },
+      { id: 'MAE-4108', customer: 'Harrow Consulting Group', amount: 19800, issued: '2026-05-27', expires: '2026-06-10', status: 'Converted',        lineItems: 3, convertedInvoice: 'MA-3024' },
+      { id: 'MAE-4107', customer: 'Parkside Ventures',      amount: 33400, issued: '2026-05-13', expires: '2026-05-27', status: 'Expired',          lineItems: 5, convertedInvoice: null },
     ],
   },
   qbsandbox: {

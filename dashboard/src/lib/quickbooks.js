@@ -54,6 +54,7 @@ export async function fetchDashboardData(clientId) {
       preLiveDSO:           null,
       automationStats:      null,
       payments,
+      estimates:            [], // Sales Order Processing (WF1A) telemetry isn't wired into this dashboard yet.
       isLive:               true,
     };
   } catch (err) {
@@ -76,6 +77,7 @@ function mockShape(client) {
     collectionEfficiency: client.collectionEfficiency,
     automationStats:      client.automationStats,
     payments:             client.payments,
+    estimates:            client.estimates ?? [],
     isLive:               false,
   };
 }

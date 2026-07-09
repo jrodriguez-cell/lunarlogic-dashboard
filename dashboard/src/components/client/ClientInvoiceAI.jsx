@@ -1,4 +1,4 @@
-import { AutomationHeader, Card, StatTile, BeforeAfter, fmtM, fmtRunTime, tileGridStyle } from './automationKit';
+import { AutomationHeader, Card, StatTile, BeforeAfter, fmtRunTime, tileGridStyle } from './automationKit';
 
 const PRE_LIVE_MINUTES = 19; // manual data-entry baseline per invoice (pre-LunarLogic)
 
@@ -47,33 +47,21 @@ function CreationSequence({ isMobile }) {
 
 const circleStyle = { width: 28, height: 28, borderRadius: '50%', background: 'var(--bg)', border: '1.5px solid var(--teal)', color: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0, position: 'relative' };
 
-export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
+export default function ClientInvoiceAI({ data, isMobile, onNavigate }) {
   const stats     = data.automationStats;
   const tracked   = !!stats;
   const connected = data.isLive ? data.automationStatus?.wf1?.connected === true : true;
   const statusColor = connected ? 'var(--green)' : 'var(--muted)';
 
-  const autoInvoices = data.invoices
-    .filter(i => i.origin === 'wf1_auto')
-    .slice()
-    .sort((a, b) => new Date(b.issued) - new Date(a.issued));
-  const recent = autoInvoices.slice(0, 8);
+  const autoInvoices = data.invoices.filter(i => i.origin === 'wf1_auto');
 
   const lastRun = data.isLive ? data.automationStatus?.wf1?.lastRun : data.wf1LastRun;
-
-  const INV_COLS = [
-    { key: 'id', label: 'Invoice' },
-    { key: 'customer', label: 'Customer' },
-    { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: r => r.amount },
-    { key: 'issued', label: 'Issued' },
-    { key: 'status', label: 'Status' },
-  ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <AutomationHeader
         title="Invoice AI"
-        status={connected ? 'Operational' : 'Not connected'}
+        status={connected ? 'Active' : 'Not connected'}
         statusColor={statusColor}
         blurb="Sales orders and job approvals in Slack become QuickBooks invoices automatically — parsed by AI, matched to the right customer, and sent the same day. No manual data entry, no send lag."
         meta={[
@@ -118,34 +106,16 @@ export default function ClientInvoiceAI({ data, isMobile, onDrill }) {
         </div>
       )}
 
-      <Card
-        title="Recently auto-created invoices"
-        right={recent.length > 0 && (
-          <button onClick={() => onDrill({
-            title: 'Invoices Created by Invoice AI', subtitle: `${autoInvoices.length} invoices auto-created`,
-            source: 'Invoices created automatically via the Slack → QuickBooks AI workflow (origin = wf1_auto).',
-            filename: 'invoice_ai_created', columns: INV_COLS, rows: autoInvoices,
-          })} style={exportBtn}>View all ↗</button>
-        )}
-      >
-        {recent.length === 0 ? (
-          <div style={{ fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>No AI-created invoices to show yet.</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {recent.map(inv => (
-              <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 8, fontWeight: 800, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 8, padding: '1px 5px', flexShrink: 0 }}>AI</span>
-                <span style={{ fontSize: 12, color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.customer}</span>
-                {!isMobile && <span style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'monospace', flexShrink: 0 }}>{inv.id}</span>}
-                <span style={{ fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>{inv.issued}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', flexShrink: 0, width: 70, textAlign: 'right' }}>{fmtM(inv.amount)}</span>
-              </div>
-            ))}
+      <Card title="See it in your ledger">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.5 }}>
+            {autoInvoices.length} invoice{autoInvoices.length !== 1 ? 's' : ''} in your ledger {autoInvoices.length !== 1 ? 'were' : 'was'} created by Invoice AI — look for the <span style={{ fontSize: 8, fontWeight: 800, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 8, padding: '1px 5px' }}>AI</span> tag.
           </div>
-        )}
+          <button onClick={() => onNavigate?.('invoices')} style={{ padding: '6px 14px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--teal)', background: 'rgba(0,212,232,0.08)', color: 'var(--teal)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            Open Invoices ↗
+          </button>
+        </div>
       </Card>
     </div>
   );
 }
-
-const exportBtn = { padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)' };

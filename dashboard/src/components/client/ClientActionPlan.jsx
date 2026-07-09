@@ -282,8 +282,25 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
     });
   }
 
+  const badDebt    = invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 90);
+  const badDebtAmt = badDebt.reduce((s, i) => s + i.amount, 0);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Bad debt risk */}
+      {badDebtAmt > 0 && (
+        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '14px 16px' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 6 }}>Bad Debt Risk — Action Required</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#ef4444' }}>{fmtM(badDebtAmt)}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>in invoices 90+ days overdue</span>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.5 }}>
+            {badDebt.length} invoice{badDebt.length !== 1 ? 's' : ''} at critical risk. Recovery rates drop sharply after 90 days — below 50% on average. See the action queue below for escalation steps.
+          </div>
+        </div>
+      )}
 
       {/* Working capital summary */}
       {(() => {

@@ -17,7 +17,7 @@ export default function ClientCashApplication({ data, isMobile, onDrill }) {
   const [resolved, setResolved] = useState({}); // txId -> { action, label }
 
   const connected = data.isLive ? data.automationStatus?.wf3?.connected === true : true;
-  const statusColor = connected ? 'var(--teal)' : 'var(--muted)';
+  const statusColor = connected ? 'var(--green)' : 'var(--muted)';
 
   const payments = data.payments ?? [];
   const available = data.isLive ? connected : payments.length > 0;

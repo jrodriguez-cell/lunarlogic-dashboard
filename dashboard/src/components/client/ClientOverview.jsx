@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import SourceTag from '../SourceTag';
 import DSOProjection from './DSOProjection';
 
@@ -6,6 +7,36 @@ function fmtM(v) {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
   if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
   return `$${v}`;
+}
+
+// ── Configurable widget layout ──────────────────────────────────────────
+// Each widget can be shown/hidden and reordered; the choice is saved per
+// client so different logins on the same browser don't clobber each other.
+const WIDGET_DEFS = [
+  { id: 'needsToday', label: 'Needs You Today' },
+  { id: 'arHealth',   label: 'AR Health at a Glance' },
+  { id: 'dsoPath',    label: 'Path to a Lower DSO' },
+  { id: 'cashIn',     label: 'Cash Coming In' },
+  { id: 'explore',    label: 'Explore Automations' },
+];
+
+function layoutKey(clientId) { return `ll_overview_layout_${clientId ?? 'default'}`; }
+
+function loadLayout(clientId) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(layoutKey(clientId)));
+    if (Array.isArray(saved) && saved.length > 0) {
+      // Merge in any widgets added since the layout was last saved.
+      const knownIds = new Set(saved.map(w => w.id));
+      const missing = WIDGET_DEFS.filter(w => !knownIds.has(w.id)).map(w => ({ id: w.id, visible: true }));
+      return [...saved.filter(w => WIDGET_DEFS.some(d => d.id === w.id)), ...missing];
+    }
+  } catch { /* fall through to default */ }
+  return WIDGET_DEFS.map(w => ({ id: w.id, visible: true }));
+}
+
+function saveLayout(clientId, layout) {
+  try { localStorage.setItem(layoutKey(clientId), JSON.stringify(layout)); } catch { /* storage unavailable */ }
 }
 
 const INV_COLS = [
@@ -35,7 +66,26 @@ function daysToDue(dueStr) {
   return Math.round((new Date(dueStr) - TODAY) / 86400000);
 }
 
-export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dsoGapDollars, onNavigate, isMobile, onDrill }) {
+export default function ClientOverview({ data, clientId, currentDSO, dsoChange, bpdso, dsoGapDollars, onNavigate, isMobile, onDrill }) {
+  const [layout, setLayout] = useState(() => loadLayout(clientId));
+  const [customizing, setCustomizing] = useState(false);
+
+  useEffect(() => { saveLayout(clientId, layout); }, [clientId, layout]);
+
+  function toggleWidget(id) {
+    setLayout(l => l.map(w => w.id === id ? { ...w, visible: !w.visible } : w));
+  }
+  function moveWidget(id, dir) {
+    setLayout(l => {
+      const i = l.findIndex(w => w.id === id);
+      const j = i + dir;
+      if (j < 0 || j >= l.length) return l;
+      const next = l.slice();
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+
   const open    = data.invoices.filter(i => i.status !== 'Paid');
   const overdue = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
   const totalOpen    = open.reduce((s, i) => s + i.amount, 0);
@@ -136,13 +186,13 @@ export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dso
   const target = Math.max(bpdso, Math.round(currentDSO * 0.6));
   const projImprove = Math.max(0, Math.round(currentDSO) - target);
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+  const widgets = {};
 
-      {/* Needs you today */}
-      <NeedsToday items={visibleActions} totalItems={actionItems.length} totalAtStake={totalAtStake} isMobile={isMobile} />
+  widgets.needsToday = (
+    <NeedsToday items={visibleActions} totalItems={actionItems.length} totalAtStake={totalAtStake} isMobile={isMobile} />
+  );
 
-      {/* AR Health */}
+  widgets.arHealth = (
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>AR health at a glance</SectionLabel>
         <div style={{ display: 'flex', gap: isMobile ? 14 : 24, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center' }}>
@@ -179,8 +229,9 @@ export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dso
           <MiniStat label="Collection rate" value={data.collectionEfficiency != null ? `${data.collectionEfficiency}%` : '—'} sub="paid within terms" />
         </div>
       </div>
+  );
 
-      {/* Path to a lower DSO — the money visual */}
+  widgets.dsoPath = (
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>Your path to a lower DSO</SectionLabel>
         <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14, maxWidth: 680 }}>
@@ -201,8 +252,9 @@ export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dso
           </div>
         </div>
       </div>
+  );
 
-      {/* Cash coming in */}
+  widgets.cashIn = (
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>
           Cash coming in
@@ -221,8 +273,9 @@ export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dso
           ))}
         </div>
       </div>
+  );
 
-      {/* Explore automations */}
+  widgets.explore = (
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
         <SectionLabel>How LunarLogic is working for you — explore each automation</SectionLabel>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 10, marginTop: 4 }}>
@@ -231,8 +284,63 @@ export default function ClientOverview({ data, currentDSO, dsoChange, bpdso, dso
           <AutoLink title="Cash Application" desc="Bank payments auto-matched to invoices" color="var(--teal)" onClick={() => onNavigate('cashapp')} />
         </div>
       </div>
+  );
+
+  const visibleWidgets = layout.filter(w => w.visible);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button onClick={() => setCustomizing(v => !v)} style={{
+          fontSize: 11, fontWeight: 600, color: customizing ? 'var(--teal)' : 'var(--muted)',
+          background: customizing ? 'rgba(0,212,232,0.08)' : 'none',
+          border: `1px solid ${customizing ? 'var(--teal)' : 'var(--border)'}`,
+          borderRadius: 6, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <circle cx="7" cy="7" r="2.2" /><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.6 2.6l1.4 1.4M10 10l1.4 1.4M11.4 2.6L10 4M4 10l-1.4 1.4" />
+          </svg>
+          {customizing ? 'Done customizing' : 'Customize dashboard'}
+        </button>
+      </div>
+
+      {customizing && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--teal)', borderRadius: 12, padding: 14 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>
+            Show, hide, and reorder your widgets
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {layout.map((w, i) => {
+              const def = WIDGET_DEFS.find(d => d.id === w.id);
+              return (
+                <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', background: 'var(--bg)', borderRadius: 8 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, fontSize: 12, color: w.visible ? 'var(--text)' : 'var(--muted)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={w.visible} onChange={() => toggleWidget(w.id)} />
+                    {def?.label ?? w.id}
+                  </label>
+                  <button onClick={() => moveWidget(w.id, -1)} disabled={i === 0} style={reorderBtn(i === 0)}>▲</button>
+                  <button onClick={() => moveWidget(w.id, 1)} disabled={i === layout.length - 1} style={reorderBtn(i === layout.length - 1)}>▼</button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {visibleWidgets.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)', fontSize: 13 }}>
+          All widgets are hidden — use "Customize dashboard" above to bring one back.
+        </div>
+      )}
+
+      {visibleWidgets.map(w => <div key={w.id}>{widgets[w.id]}</div>)}
     </div>
   );
+}
+
+function reorderBtn(disabled) {
+  return { fontSize: 10, width: 22, height: 22, borderRadius: 5, cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--border)', background: 'none', color: disabled ? 'var(--border)' : 'var(--muted)', flexShrink: 0 };
 }
 
 const ctaBtn = { padding: '6px 14px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--teal)', background: 'rgba(0,212,232,0.1)', color: 'var(--teal)' };

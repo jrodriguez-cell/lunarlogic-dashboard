@@ -11,6 +11,8 @@ import ClientReminders from '../components/client/ClientReminders';
 import ClientCashApplication from '../components/client/ClientCashApplication';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientInvoices from '../components/client/ClientInvoices';
+import ClientCustomers from '../components/client/ClientCustomers';
+import ClientEstimates from '../components/client/ClientEstimates';
 import ClientReportCard from '../components/client/ClientReportCard';
 import SourceTag from '../components/SourceTag';
 
@@ -46,17 +48,22 @@ function timeAgo(date, nowMs) {
 }
 
 const TABS = [
-  { id: 'overview',  label: 'Overview' },
+  { id: 'action',    label: 'Action Plan' },
+  { id: 'overview',  label: 'Dashboard' },
   { id: 'invoiceai', label: 'Invoice AI' },
   { id: 'reminders', label: 'Reminders' },
   { id: 'cashapp',   label: 'Cash Application' },
-  { id: 'action',    label: 'Action Plan' },
   { id: 'invoices',  label: 'Invoices' },
+  { id: 'customers', label: 'Customers' },
+  { id: 'estimates', label: 'Estimates' },
   { id: 'report',    label: 'Report Card' },
 ];
 
+// The tab shown by default on login and when the logo/wordmark is clicked.
+const HOME_TAB = TABS[0].id;
+
 export default function ClientDashboardPage({ session, onLogout }) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(HOME_TAB);
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
   const [actionPlanSort, setActionPlanSort] = useState(null);
@@ -114,6 +121,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
       automationStats: liveData.automationStats,
       automationStatus: liveData.automationStatus,
       payments: liveData.payments,
+      estimates: liveData.estimates,
       isLive: liveData.isLive,
     };
   }, [base, liveData]);
@@ -145,7 +153,12 @@ export default function ClientDashboardPage({ session, onLogout }) {
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: `0 ${isMobile ? 16 : 24}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 52 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <div className="sidebar-wordmark" style={{ fontSize: 15, flexShrink: 0 }}>
+          <button
+            onClick={() => setActiveTab(HOME_TAB)}
+            title="Go to home"
+            className="sidebar-wordmark"
+            style={{ fontSize: 15, flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="url(#moonGradientTopbar)">
               <defs>
                 <linearGradient id="moonGradientTopbar" x1="0" y1="0" x2="1" y2="1">
@@ -156,13 +169,15 @@ export default function ClientDashboardPage({ session, onLogout }) {
               <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
             </svg>
             <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>
-          </div>
+          </button>
           <div style={{ width: 1, height: 16, background: 'var(--border)', flexShrink: 0 }} />
           <div style={{ fontSize: 13, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {!isMobile && lastUpdated && (
-            <span style={{ fontSize: 11, color: 'var(--muted)' }}>Updated {timeAgo(lastUpdated, now)}</span>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }} title={lastUpdated.toLocaleString()}>
+              Updated {timeAgo(lastUpdated, now)} ({lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+            </span>
           )}
           <button
             onClick={load}
@@ -300,12 +315,14 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
       {/* Content */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
-        {activeTab === 'overview'  && <ClientOverview data={data} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'invoiceai' && <ClientInvoiceAI data={data} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'overview'  && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'invoiceai' && <ClientInvoiceAI data={data} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} onNavigate={setActiveTab} />}
         {activeTab === 'reminders' && <ClientReminders data={data} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'cashapp'   && <ClientCashApplication data={data} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'action'    && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
         {activeTab === 'invoices'  && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'customers' && <ClientCustomers data={data} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+        {activeTab === 'estimates' && <ClientEstimates data={data} isMobile={isMobile} onDrill={setDrill} />}
         {activeTab === 'report'    && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
       </div>
 
