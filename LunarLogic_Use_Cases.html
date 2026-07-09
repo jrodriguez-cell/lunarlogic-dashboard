@@ -36,6 +36,19 @@ html,body{background:#0a0f1d;font-family:var(--sans);color:var(--slate300);-webk
   body{padding:28px 0}
   .page{margin:0 auto 26px;box-shadow:0 24px 70px rgba(0,0,0,0.6);border-radius:2px}
 }
+/* mobile: scale each fixed page to fit the phone width (print/PDF unaffected) */
+@media screen and (max-width:900px){
+  html,body{overflow-x:hidden;background:#0a0f1d}
+  body{padding:10px 0}
+  .page{
+    transform:scale(var(--m-scale,1));
+    transform-origin:top left;
+    margin-top:0;margin-right:0;
+    margin-left:calc(50vw - 408px * var(--m-scale,1));
+    margin-bottom:calc((var(--m-scale,1) - 1) * 11in + 16px);
+    box-shadow:0 12px 40px rgba(0,0,0,0.6);border-radius:2px;
+  }
+}
 
 /* subtle top accent bar + radial glow */
 .page::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad-h)}
@@ -1031,5 +1044,19 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
   <footer class="run-foot"><div class="confidential">Confidential</div><div>10</div></footer>
 </section>
 
+<script>
+/* Fit the fixed 8.5in pages to narrow (mobile) screens. No effect on print/PDF. */
+(function(){
+  var PAGE_PX = 8.5 * 96; // 816
+  function fit(){
+    var vw = document.documentElement.clientWidth;
+    var scale = vw <= 900 ? Math.min(1, (vw - 12) / PAGE_PX) : 1;
+    document.documentElement.style.setProperty('--m-scale', scale);
+  }
+  fit();
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', fit);
+})();
+</script>
 </body>
 </html>
