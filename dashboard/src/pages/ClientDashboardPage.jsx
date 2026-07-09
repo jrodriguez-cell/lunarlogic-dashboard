@@ -7,13 +7,13 @@ import DrillDrawer from '../components/DrillDrawer';
 import CustomerPanel from '../components/client/CustomerPanel';
 import ClientOverview from '../components/client/ClientOverview';
 import ClientInvoiceAI from '../components/client/ClientInvoiceAI';
-import ClientReminders from '../components/client/ClientReminders';
 import ClientCashApplication from '../components/client/ClientCashApplication';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientInvoices from '../components/client/ClientInvoices';
 import ClientReportCard from '../components/client/ClientReportCard';
 import ClientCashForecast from '../components/client/ClientCashForecast';
 import ClientSettings from '../components/client/ClientSettings';
+import ClientCustomers from '../components/client/ClientCustomers';
 import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
@@ -319,7 +319,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: 940, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
           {activeTab === 'overview'   && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-          {activeTab === 'customers'  && <ClientReminders data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'customers'  && <ClientCustomers data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'estimates'  && <ComingSoon title="Estimates" note="Generate estimates, send them for customer approval, and collect deposits once approved. Building this next." />}
           {activeTab === 'invoices'   && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'invoiceai'  && <ClientInvoiceAI data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
