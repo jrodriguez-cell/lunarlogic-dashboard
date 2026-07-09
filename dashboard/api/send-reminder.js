@@ -8,6 +8,8 @@
 import { getInvoice, sendInvoiceEmail } from './_lib/quickbooks.js';
 import { logReminderToSheets } from './_lib/googleSheets.js';
 
+const LIVE_CLIENTS = new Set(['qbsandbox']);
+
 export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -16,7 +18,11 @@ export default async function handler(req, res) {
 
   try {
     const { invoice_id, client_id } = req.body;
-    const clientId = client_id || 'default';
+
+    if (!client_id || !LIVE_CLIENTS.has(client_id)) {
+      return res.status(403).json({ error: 'Sending reminders is only enabled for live-connected clients.' });
+    }
+    const clientId = client_id;
 
     if (!invoice_id) {
       return res.status(400).json({ error: 'invoice_id is required' });
