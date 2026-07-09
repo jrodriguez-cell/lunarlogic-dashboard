@@ -12,6 +12,7 @@ import ClientCashApplication from '../components/client/ClientCashApplication';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientInvoices from '../components/client/ClientInvoices';
 import ClientReportCard from '../components/client/ClientReportCard';
+import ClientCashForecast from '../components/client/ClientCashForecast';
 import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
@@ -46,21 +47,44 @@ function timeAgo(date, nowMs) {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-const TABS = [
-  { id: 'overview',  label: 'Overview' },
-  { id: 'invoiceai', label: 'Invoice AI' },
-  { id: 'reminders', label: 'Reminders' },
-  { id: 'cashapp',   label: 'Cash Application' },
-  { id: 'action',    label: 'Action Plan' },
-  { id: 'invoices',  label: 'Invoices' },
-  { id: 'report',    label: 'Report Card' },
+// Left-sidebar navigation. Items with `soon` are placeholders being built next.
+const NAV = [
+  { id: 'overview',   label: 'Dashboard',  icon: 'grid' },
+  { id: 'customers',  label: 'Customers',  icon: 'users' },
+  { id: 'estimates',  label: 'Estimates',  icon: 'file', soon: true },
+  { id: 'invoices',   label: 'Invoices',   icon: 'fileText' },
+  { id: 'invoiceai',  label: 'Invoice AI', icon: 'bolt' },
+  { id: 'cashapp',    label: 'Payments',   icon: 'card' },
+  { id: 'activities', label: 'Activities', icon: 'activity', soon: true },
+  { id: 'action',     label: 'Action Plan', icon: 'check' },
+  { id: 'report',     label: 'Reports',    icon: 'bars' },
+  { id: 'cashflow',   label: 'Cash Flow',  icon: 'trend' },
 ];
+const NAV_SETTINGS = { id: 'settings', label: 'Settings', icon: 'cog', soon: true };
+
+function NavIcon({ name }) {
+  const p = {
+    grid: 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',
+    users: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M17 3.13a4 4 0 010 7.75',
+    file: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6',
+    fileText: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h6',
+    bolt: 'M13 2L4 14h6v8l9-12h-6z',
+    card: 'M2 5h20v14H2zM2 10h20',
+    activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
+    check: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
+    bars: 'M12 20V10M18 20V4M6 20v-4',
+    trend: 'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6',
+    cog: 'M12 15a3 3 0 100-6 3 3 0 000 6zM19 12a7 7 0 00-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 00-1.7-1L14.5 2h-4l-.3 2.6a7 7 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 000 2l-2 1.6 2 3.4 2.4-1a7 7 0 001.7 1l.3 2.6h4l.3-2.6a7 7 0 001.7-1l2.4 1 2-3.4-2-1.6a7 7 0 00.1-1z',
+  }[name] || '';
+  return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d={p} /></svg>;
+}
 
 export default function ClientDashboardPage({ session, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [actionPlanSort, setActionPlanSort] = useState(null);
   const isMobile = useMobile();
   const base = useMemo(() => getClientData(session.clientId), [session.clientId]);
@@ -142,25 +166,46 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const bm = getDSOBenchmark(Math.round(currentDSO));
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
+
+      {/* Left sidebar */}
+      {isMobile && navOpen && <div onClick={() => setNavOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }} />}
+      <aside style={{
+        width: 208, flexShrink: 0, background: 'var(--bg-card)', borderRight: '1px solid var(--border)',
+        display: 'flex', flexDirection: 'column', padding: '14px 12px',
+        position: isMobile ? 'fixed' : 'sticky', top: 0, height: '100vh', zIndex: 50,
+        transform: isMobile ? `translateX(${navOpen ? '0' : '-110%'})` : 'none', transition: 'transform 0.2s ease',
+      }}>
+        <div className="sidebar-wordmark" style={{ fontSize: 16, padding: '4px 8px 14px', display: 'flex', alignItems: 'center', gap: 7 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#moonGradientSb)">
+            <defs><linearGradient id="moonGradientSb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#60A5FA" /><stop offset="100%" stopColor="#818CF8" /></linearGradient></defs>
+            <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+          </svg>
+          <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>
+        </div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflowY: 'auto' }}>
+          {NAV.map(n => (
+            <NavItem key={n.id} item={n} active={activeTab === n.id} badge={n.id === 'action' ? urgentCount : 0}
+              onClick={() => { setActiveTab(n.id); setNavOpen(false); }} />
+          ))}
+        </nav>
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 8 }}>
+          <NavItem item={NAV_SETTINGS} active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setNavOpen(false); }} />
+        </div>
+      </aside>
+
+      {/* Main column */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: `0 ${isMobile ? 16 : 24}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 52 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <div className="sidebar-wordmark" style={{ fontSize: 15, flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="url(#moonGradientTopbar)">
-              <defs>
-                <linearGradient id="moonGradientTopbar" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#60A5FA" />
-                  <stop offset="100%" stopColor="#818CF8" />
-                </linearGradient>
-              </defs>
-              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
-            </svg>
-            <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>
-          </div>
-          <div style={{ width: 1, height: 16, background: 'var(--border)', flexShrink: 0 }} />
-          <div style={{ fontSize: 13, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
+          {isMobile && (
+            <button onClick={() => setNavOpen(true)} aria-label="Menu" style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', display: 'flex', padding: 4 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+            </button>
+          )}
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {!isMobile && lastUpdated && (
@@ -277,39 +322,24 @@ export default function ClientDashboardPage({ session, onLogout }) {
         </div>
       </div>
 
-      {/* Tab nav */}
-      <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <div style={{ display: 'flex', padding: isMobile ? '0 4px' : '0 24px', minWidth: 'max-content' }}>
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-              padding: isMobile ? '10px 14px' : '12px 20px',
-              fontSize: isMobile ? 12 : 13,
-              fontWeight: activeTab === t.id ? 700 : 400,
-              color: activeTab === t.id ? 'var(--teal)' : 'var(--muted)',
-              borderBottom: activeTab === t.id ? '2px solid var(--teal)' : '2px solid transparent',
-              background: 'none', border: 'none', borderRadius: 0, cursor: 'pointer',
-              transition: 'color 0.12s', whiteSpace: 'nowrap',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              {t.label}
-              {t.id === 'action' && urgentCount > 0 && (
-                <span style={{ background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800, borderRadius: 10, padding: '1px 6px', lineHeight: 1.6 }}>{urgentCount}</span>
-              )}
-            </button>
-          ))}
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ maxWidth: 940, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
+          {activeTab === 'overview'   && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'customers'  && <ClientReminders data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'estimates'  && <ComingSoon title="Estimates" note="Generate estimates, send them for customer approval, and collect deposits once approved. Building this next." />}
+          {activeTab === 'invoices'   && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'invoiceai'  && <ClientInvoiceAI data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'cashapp'    && <ClientCashApplication data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'activities' && <ComingSoon title="Activities" note="A running log of everything LunarLogic and your team have done — reminders sent, calls logged, promises recorded, payments applied. Building this next." />}
+          {activeTab === 'action'     && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'report'     && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
+          {activeTab === 'cashflow'   && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} payments={data.payments} isLive={data.isLive} wf3Connected={data.automationStatus?.wf3?.connected === true} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'settings'   && <ComingSoon title="Settings" note="Configure reminder cadences per customer (email / call / text), with AI-suggested cadences you can override, per-step assignment, and escalation tasks. This is the next major build." />}
         </div>
       </div>
 
-      {/* Content */}
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
-        {activeTab === 'overview'  && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'invoiceai' && <ClientInvoiceAI data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'reminders' && <ClientReminders data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'cashapp'   && <ClientCashApplication data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'action'    && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'invoices'  && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-        {activeTab === 'report'    && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
-      </div>
+      </div>{/* /main column */}
 
       {/* AI assistant — always available */}
       {!assistantOpen && (
@@ -344,6 +374,35 @@ export default function ClientDashboardPage({ session, onLogout }) {
           onClose={() => setActionInv(null)}
         />
       )}
+    </div>
+  );
+}
+
+function NavItem({ item, active, badge = 0, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+      padding: '8px 10px', borderRadius: 8, cursor: 'pointer', border: 'none',
+      background: active ? 'rgba(0,212,232,0.12)' : 'none',
+      color: active ? 'var(--teal)' : 'var(--text-dim)',
+      fontSize: 13, fontWeight: active ? 700 : 500, transition: 'background 0.1s, color 0.1s',
+    }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-hover)'; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'none'; }}>
+      <NavIcon name={item.icon} />
+      <span style={{ flex: 1 }}>{item.label}</span>
+      {badge > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800, borderRadius: 10, padding: '1px 6px', lineHeight: 1.6 }}>{badge}</span>}
+      {item.soon && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 6, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Soon</span>}
+    </button>
+  );
+}
+
+function ComingSoon({ title, note }) {
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '44px 24px', textAlign: 'center' }}>
+      <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>{title}</div>
+      <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6, maxWidth: 520, margin: '0 auto' }}>{note}</div>
+      <div style={{ marginTop: 16, display: 'inline-block', fontSize: 10, fontWeight: 700, color: 'var(--teal)', background: 'rgba(0,212,232,0.1)', border: '1px solid rgba(0,212,232,0.3)', borderRadius: 20, padding: '4px 12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>In progress</div>
     </div>
   );
 }
