@@ -6,7 +6,6 @@ import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
 import CustomerPanel from '../components/client/CustomerPanel';
 import ClientOverview from '../components/client/ClientOverview';
-import ClientInvoiceAI from '../components/client/ClientInvoiceAI';
 import ClientCashApplication from '../components/client/ClientCashApplication';
 import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientInvoices from '../components/client/ClientInvoices';
@@ -53,17 +52,17 @@ function timeAgo(date, nowMs) {
 }
 
 // Left-sidebar navigation. Items with `soon` are placeholders being built next.
+const HOME_TAB = 'action';
 const NAV = [
+  { id: 'action',      label: 'Action Plan',  icon: 'check' },
   { id: 'overview',    label: 'Dashboard',    icon: 'grid' },
   { id: 'customers',   label: 'Customers',    icon: 'users' },
   { id: 'estimates',   label: 'Estimates',    icon: 'file' },
   { id: 'invoices',    label: 'Invoices',     icon: 'fileText' },
   { id: 'subscriptions', label: 'Subscriptions', icon: 'repeat' },
-  { id: 'invoiceai',   label: 'Invoice AI',   icon: 'bolt' },
   { id: 'reminders',   label: 'Reminders',    icon: 'bell' },
   { id: 'cashapp',     label: 'Payments',     icon: 'card' },
   { id: 'activities',  label: 'Activities',   icon: 'activity' },
-  { id: 'action',      label: 'Action Plan',  icon: 'check' },
   { id: 'report',      label: 'Reports',      icon: 'bars' },
   { id: 'cashflow',    label: 'Cash Flow',    icon: 'trend' },
 ];
@@ -89,7 +88,7 @@ function NavIcon({ name }) {
 }
 
 export default function ClientDashboardPage({ session, onLogout }) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(HOME_TAB);
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -182,7 +181,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
         display: 'flex', flexDirection: 'column', padding: isMobile ? '12px 6px' : '14px 12px',
         position: 'sticky', top: 0, height: '100vh', alignSelf: 'flex-start',
       }}>
-        <div className="sidebar-wordmark" style={{ fontSize: 16, padding: isMobile ? '4px 0 14px' : '4px 8px 14px', display: 'flex', alignItems: 'center', gap: 7, justifyContent: isMobile ? 'center' : 'flex-start' }}>
+        <div className="sidebar-wordmark" onClick={() => setActiveTab(HOME_TAB)} title="Go to home (Action Plan)" style={{ fontSize: 16, padding: isMobile ? '4px 0 14px' : '4px 8px 14px', display: 'flex', alignItems: 'center', gap: 7, justifyContent: isMobile ? 'center' : 'flex-start', cursor: 'pointer' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#moonGradientSb)">
             <defs><linearGradient id="moonGradientSb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#60A5FA" /><stop offset="100%" stopColor="#818CF8" /></linearGradient></defs>
             <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
@@ -210,7 +209,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {!isMobile && lastUpdated && (
-            <span style={{ fontSize: 11, color: 'var(--muted)' }}>Updated {timeAgo(lastUpdated, now)}</span>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>Updated {timeAgo(lastUpdated, now)} · {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
           )}
           <button
             onClick={load}
@@ -331,9 +330,8 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {activeTab === 'overview'   && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'customers'  && <ClientCustomers data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'estimates'  && <ClientEstimates data={data} />}
-          {activeTab === 'invoices'   && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'invoices'   && <ClientInvoices data={data} clientId={session.clientId} invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'subscriptions' && <ClientSubscriptions data={data} />}
-          {activeTab === 'invoiceai'  && <ClientInvoiceAI data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'reminders'  && <ClientReminders data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'cashapp'    && <ClientCashApplication data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'activities' && <ClientActivities data={data} clientId={session.clientId} onAction={setActionInv} onDrill={setDrill} />}

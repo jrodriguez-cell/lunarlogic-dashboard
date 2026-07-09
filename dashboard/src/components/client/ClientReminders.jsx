@@ -114,7 +114,7 @@ export default function ClientReminders({ data, clientId, isMobile, onDrill }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <AutomationHeader
         title="Payment Reminders"
-        status={connected ? 'Operational' : 'Not connected'}
+        status={connected ? 'Online' : 'Not connected'}
         statusColor={statusColor}
         blurb="Every open invoice is enrolled in an escalating email sequence sent on your behalf, so nothing slips and you never make the awkward first call. It pauses automatically the moment a payment lands."
         meta={[
