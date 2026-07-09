@@ -41,6 +41,20 @@ export function AutomationHeader({ title, status, statusColor, blurb, meta = [] 
   );
 }
 
+// Lightweight tab header for the non-automation tabs (Invoices, Customers,
+// Action Plan, Cash Flow, …). Title + one-line description, optional right action.
+export function PageHeader({ title, subtitle, right }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+      <div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', letterSpacing: -0.2 }}>{title}</div>
+        {subtitle && <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2, maxWidth: 620, lineHeight: 1.5 }}>{subtitle}</div>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
 export function Card({ title, hint, right, children, accent }) {
   return (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, borderTop: accent ? `2px solid ${accent}` : undefined }}>

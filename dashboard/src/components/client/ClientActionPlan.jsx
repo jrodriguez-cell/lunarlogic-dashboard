@@ -1,12 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import SourceTag from '../SourceTag';
-
-function fmtK(v) {
-  if (!v) return '$0';
-  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000)     return `$${Math.round(v / 1_000)}k`;
-  return `$${v}`;
-}
+import { PageHeader } from './automationKit';
 
 function fmtM(v) {
   if (!v) return '$0';
@@ -202,10 +196,9 @@ const ACTION_COLS = [
   { key: 'impact',      label: 'DSO Impact',   render: v => v != null ? `~${v}d` : '—', csvVal: row => row.impact ?? '' },
 ];
 
-export default function ClientActionPlan({ invoices, paymentBehavior, payments, currentDSO, annualRevenue, bpdso, dsoGapDays, dsoGapDollars, initialSort, isMobile, onDrill, onAction }) {
+export default function ClientActionPlan({ invoices, paymentBehavior, payments, currentDSO, annualRevenue, bpdso, initialSort, isMobile, onDrill, onAction }) {
   const [filter, setFilter] = useState('priority');
   const [sortMode, setSortMode] = useState(initialSort ?? 'priority');
-  const [showBanner, setShowBanner] = useState(initialSort === 'dsoImpact');
 
   const totalAR = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
   const pbMap   = Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p]));
@@ -250,10 +243,6 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
   const needsAction = allOpen.filter(i => filter === 'all' ? true : ['critical','high','medium'].includes(i.urgency));
   const onTrack     = allOpen.filter(i => ['ok','low','watch'].includes(i.urgency));
 
-  const totalImpact  = allOpen.filter(i => i.daysOverdue > 0).reduce((s, i) => s + (i.impact ?? 0), 0);
-  const projectedDSO = Math.round(Math.max(currentDSO - totalImpact, currentDSO * 0.8));
-  const urgentCount  = allOpen.filter(i => ['critical','high','medium'].includes(i.urgency)).length;
-
   function drillAction(title, rows, sub) {
     onDrill({ title, subtitle: sub, source: 'Priority ranked by days overdue and dollar value. Recommended actions based on LunarLogic collection playbook.', filename: title.toLowerCase().replace(/\s+/g,'_'), columns: ACTION_COLS, rows });
   }
@@ -285,87 +274,12 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      {/* Working capital summary */}
-      {(() => {
-        const overdueInvs = invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
-        const overdueAR   = overdueInvs.reduce((s, i) => s + i.amount, 0);
-        const dsoSavings  = totalAR > 0 ? Math.round((overdueAR / totalAR) * currentDSO * 0.6) : 0;
-        if (overdueInvs.length === 0) return null;
-        return (
-          <div style={{ background: 'rgba(0,212,232,0.06)', border: '1px solid rgba(0,212,232,0.25)', borderRadius: 12, padding: '14px 16px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 8 }}>Working capital at stake</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-              <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>{fmtK(overdueAR)}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>locked in {overdueInvs.length} overdue invoice{overdueInvs.length !== 1 ? 's' : ''}</span>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.5 }}>
-              Collecting these this week would compress your DSO by approximately <strong style={{ color: 'var(--teal)' }}>{dsoSavings} additional days</strong> — moving it from {Math.round(currentDSO)} toward your best-possible {Math.round(currentDSO - dsoSavings)} days.
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 6, fontStyle: 'italic' }}>Revenue is a promise. Cash is the reality. LunarLogic moves it between the two.</div>
-          </div>
-        );
-      })()}
-
-      {/* Best Possible DSO banner */}
-      {bpdso != null && (
-        <div style={{ background: 'rgba(0,212,232,0.05)', border: '1px solid rgba(0,212,232,0.15)', borderRadius: 12, overflow: 'hidden' }}>
-          <div
-            onClick={() => setShowBanner(v => !v)}
-            style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
-                Path to Best Possible DSO
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                {Math.round(currentDSO)}d today → {bpdso}d target · {dsoGapDays}d gap{dsoGapDollars ? ` · ${fmtK(dsoGapDollars)} recoverable` : ''}
-              </div>
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--muted)' }}>{showBanner ? '▲ hide' : '▼ show'}</span>
-          </div>
-
-          {showBanner && (
-            <div style={{ padding: '0 16px 14px' }}>
-              {/* Gap visualization */}
-              <div style={{ position: 'relative', height: 26, borderRadius: 6, overflow: 'hidden', background: 'var(--bg)', marginBottom: 10 }}>
-                <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${currentDSO > 0 ? Math.round((bpdso / Math.round(currentDSO)) * 100) : 0}%`, background: 'rgba(0,212,232,0.25)', borderRight: '2px solid #00d4e8' }} />
-                <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '100%', background: 'rgba(239,68,68,0.1)' }} />
-                <div style={{ position: 'absolute', left: 6, top: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#00d4e8' }}>{bpdso}d BPDSO</span>
-                </div>
-                <div style={{ position: 'absolute', right: 6, top: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#ef4444' }}>+{dsoGapDays}d overdue gap</span>
-                </div>
-              </div>
-
-              {/* Formula */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
-                <FormulaRow label="Non-overdue AR ÷ Daily revenue" value={`= ${bpdso}d Best Possible DSO`} />
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--muted)', lineHeight: 1.6 }}>
-                BPDSO is your theoretical DSO floor — the number you'd have today if every overdue invoice were collected right now. Sort by "DSO Impact" below to see the fastest path to close the {dsoGapDays}-day gap.
-                <SourceTag label="BPDSO = Non-overdue AR ÷ (Annual Revenue ÷ 365). DSO contribution per invoice = Invoice amount ÷ Daily revenue." />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <PageHeader title="Action plan" subtitle="Everything that needs a decision or a nudge, most urgent first — disputes flagged by AI, overdue invoices to chase, and what LunarLogic is already handling for you." />
 
       {/* AI Dispute Monitor */}
       {disputes.length > 0 && (
-        <DisputeMonitor disputes={disputes} isMobile={isMobile} onAction={onAction} onDrill={onDrill} />
+        <DisputeMonitor disputes={disputes} isMobile={isMobile} onAction={onAction} />
       )}
-
-      {/* Summary tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 10 }}>
-        <SummaryTile label="Needs attention" value={urgentCount} sub="invoices to act on" color="var(--red)"
-          onClick={() => drillAction('Action Required — All Urgent Invoices', allOpen.filter(i => ['critical','high','medium'].includes(i.urgency)), `${urgentCount} invoice${urgentCount !== 1 ? 's' : ''} need action`)} />
-        <SummaryTile label="DSO improvement possible" value={`−${Math.round(totalImpact)}d`} sub="if resolved this week" color="var(--green)"
-          onClick={() => drillAction('Overdue Invoices — DSO Impact Analysis', allOpen.filter(i => i.daysOverdue > 0), `${allOpen.filter(i=>i.daysOverdue>0).length} overdue invoices · potential ${Math.round(totalImpact)}d DSO improvement`)} />
-        <SummaryTile label="Projected DSO after action" value={projectedDSO} sub={`currently ${Math.round(currentDSO)}d`} color="var(--teal)"
-          style={isMobile ? { gridColumn: '1 / -1' } : {}}
-          onClick={() => drillAction('Full Action Plan Export', allOpen, `${allOpen.length} open invoices with recommended actions`)} />
-      </div>
 
       {/* Filter + sort */}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -432,7 +346,7 @@ export default function ClientActionPlan({ invoices, paymentBehavior, payments, 
 }
 
 // AI Dispute Monitor panel
-function DisputeMonitor({ disputes, isMobile, onAction, onDrill }) {
+function DisputeMonitor({ disputes, isMobile, onAction }) {
   const [expanded, setExpanded] = useState(null);
   const [draftOpen, setDraftOpen] = useState(null);
 
@@ -566,7 +480,6 @@ function DisputeMonitor({ disputes, isMobile, onAction, onDrill }) {
 
 function ActionRow({ inv, isMobile, onClick, onAction }) {
   const color = URGENCY_COLOR[inv.urgency];
-  const isAutomated = inv.urgency === 'low';
   return (
     <div style={{ background: 'var(--bg-card)', border: `1px solid ${['critical','high'].includes(inv.urgency) ? color+'44' : 'var(--border)'}`, borderLeft: `3px solid ${color}`, borderRadius: 8, overflow: 'hidden' }}>
       <div onClick={onClick} style={{ padding: '12px 14px', cursor: 'pointer', transition: 'background 0.1s' }}
@@ -672,28 +585,3 @@ function QuickBtn({ label, onClick, primary, isMobile }) {
   );
 }
 
-function FormulaRow({ label, value }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{label}</span>
-      <span style={{ fontSize: 12, fontWeight: 700, color: '#00d4e8' }}>{value}</span>
-    </div>
-  );
-}
-
-function SummaryTile({ label, value, sub, color, onClick, style = {} }) {
-  return (
-    <div onClick={onClick}
-      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer', transition: 'background 0.12s, border-color 0.12s', ...style }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.borderColor = 'rgba(0,212,232,0.3)'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 5 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
-        <span style={{ fontSize: 10, color: 'var(--teal)', opacity: 0.6 }}>↗</span>
-      </div>
-      <div style={{ fontSize: 24, fontWeight: 900, color, letterSpacing: -1, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>{sub}</div>
-    </div>
-  );
-}

@@ -2,16 +2,6 @@ import { useState } from 'react';
 import { useToast } from '../../lib/toast';
 import { AutomationHeader, Card, StatTile, fmtM, tileGridStyle } from './automationKit';
 
-const PMT_COLS = [
-  { key: 'txId', label: 'Transaction' },
-  { key: 'matchedCustomer', label: 'Customer' },
-  { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: r => r.amount },
-  { key: 'received', label: 'Received' },
-  { key: 'matchedInvoice', label: 'Matched Invoice', render: v => v ?? '—' },
-  { key: 'confidence', label: 'Confidence', render: v => `${v}%` },
-  { key: 'status', label: 'Status' },
-];
-
 export default function ClientCashApplication({ data, clientId, isMobile, onDrill }) {
   const toast = useToast();
   const [resolved, setResolved] = useState({}); // txId -> { action, label }
@@ -218,30 +208,9 @@ export default function ClientCashApplication({ data, clientId, isMobile, onDril
         </Card>
       )}
 
-      <Card title="Recently auto-applied payments"
-        hint="Click any payment to see the match detail — bank description, confidence, and rule."
-        right={auto.length > 0 && (
-          <button onClick={() => onDrill({
-            title: 'Auto-Applied Payments', subtitle: `${auto.length} payments matched and applied automatically`,
-            source: 'Payments matched by amount + customer-name fuzzy matching at ≥90% confidence and applied in QuickBooks.',
-            filename: 'auto_applied_payments', columns: PMT_COLS, rows: auto,
-          })} style={ghostBtn}>View all ↗</button>
-        )}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {auto.slice(0, 8).map(p => (
-            <div key={p.txId} onClick={() => drillPayment(p)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 6px', margin: '0 -6px', borderRadius: 6, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-              <span style={{ fontSize: 11, color: '#22c55e', flexShrink: 0 }}>✓</span>
-              <span style={{ fontSize: 12, color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.matchedCustomer}</span>
-              {!isMobile && <span style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'monospace', flexShrink: 0 }}>{p.matchedInvoice ?? '—'}</span>}
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', flexShrink: 0 }}>{p.confidence}%</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', flexShrink: 0, width: 70, textAlign: 'right' }}>{fmtM(p.amount)}</span>
-              <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>↗</span>
-            </div>
-          ))}
-        </div>
-      </Card>
+      <div style={{ fontSize: 10, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+        Auto-applied payments and full received-payment history live under the Activities tab — this tab surfaces only what needs your confirmation.
+      </div>
     </div>
   );
 }
