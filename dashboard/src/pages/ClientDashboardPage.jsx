@@ -14,6 +14,8 @@ import ClientReportCard from '../components/client/ClientReportCard';
 import ClientCashForecast from '../components/client/ClientCashForecast';
 import ClientSettings from '../components/client/ClientSettings';
 import ClientCustomers from '../components/client/ClientCustomers';
+import ClientSubscriptions from '../components/client/ClientSubscriptions';
+import ClientEstimates from '../components/client/ClientEstimates';
 import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
@@ -50,16 +52,17 @@ function timeAgo(date, nowMs) {
 
 // Left-sidebar navigation. Items with `soon` are placeholders being built next.
 const NAV = [
-  { id: 'overview',   label: 'Dashboard',  icon: 'grid' },
-  { id: 'customers',  label: 'Customers',  icon: 'users' },
-  { id: 'estimates',  label: 'Estimates',  icon: 'file', soon: true },
-  { id: 'invoices',   label: 'Invoices',   icon: 'fileText' },
-  { id: 'invoiceai',  label: 'Invoice AI', icon: 'bolt' },
-  { id: 'cashapp',    label: 'Payments',   icon: 'card' },
-  { id: 'activities', label: 'Activities', icon: 'activity', soon: true },
-  { id: 'action',     label: 'Action Plan', icon: 'check' },
-  { id: 'report',     label: 'Reports',    icon: 'bars' },
-  { id: 'cashflow',   label: 'Cash Flow',  icon: 'trend' },
+  { id: 'overview',    label: 'Dashboard',    icon: 'grid' },
+  { id: 'customers',   label: 'Customers',    icon: 'users' },
+  { id: 'estimates',   label: 'Estimates',    icon: 'file' },
+  { id: 'invoices',    label: 'Invoices',     icon: 'fileText' },
+  { id: 'subscriptions', label: 'Subscriptions', icon: 'repeat' },
+  { id: 'invoiceai',   label: 'Invoice AI',   icon: 'bolt' },
+  { id: 'cashapp',     label: 'Payments',     icon: 'card' },
+  { id: 'activities',  label: 'Activities',   icon: 'activity', soon: true },
+  { id: 'action',      label: 'Action Plan',  icon: 'check' },
+  { id: 'report',      label: 'Reports',      icon: 'bars' },
+  { id: 'cashflow',    label: 'Cash Flow',    icon: 'trend' },
 ];
 const NAV_SETTINGS = { id: 'settings', label: 'Settings', icon: 'cog' };
 
@@ -75,6 +78,7 @@ function NavIcon({ name }) {
     check: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
     bars: 'M12 20V10M18 20V4M6 20v-4',
     trend: 'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6',
+    repeat: 'M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3',
     cog: 'M12 15a3 3 0 100-6 3 3 0 000 6zM19 12a7 7 0 00-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 00-1.7-1L14.5 2h-4l-.3 2.6a7 7 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 000 2l-2 1.6 2 3.4 2.4-1a7 7 0 001.7 1l.3 2.6h4l.3-2.6a7 7 0 001.7-1l2.4 1 2-3.4-2-1.6a7 7 0 00.1-1z',
   }[name] || '';
   return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d={p} /></svg>;
@@ -320,8 +324,9 @@ export default function ClientDashboardPage({ session, onLogout }) {
         <div style={{ maxWidth: 940, margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
           {activeTab === 'overview'   && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'customers'  && <ClientCustomers data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
-          {activeTab === 'estimates'  && <ComingSoon title="Estimates" note="Generate estimates, send them for customer approval, and collect deposits once approved. Building this next." />}
+          {activeTab === 'estimates'  && <ClientEstimates data={data} />}
           {activeTab === 'invoices'   && <ClientInvoices invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'subscriptions' && <ClientSubscriptions data={data} />}
           {activeTab === 'invoiceai'  && <ClientInvoiceAI data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'cashapp'    && <ClientCashApplication data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'activities' && <ComingSoon title="Activities" note="A running log of everything LunarLogic and your team have done — reminders sent, calls logged, promises recorded, payments applied. Building this next." />}
