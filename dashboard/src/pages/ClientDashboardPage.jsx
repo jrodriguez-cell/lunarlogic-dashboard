@@ -8,7 +8,6 @@ import DrillDrawer from '../components/DrillDrawer';
 import CustomerPanel from '../components/client/CustomerPanel';
 import ClientOverview from '../components/client/ClientOverview';
 import ClientCashApplication from '../components/client/ClientCashApplication';
-import ClientActionPlan from '../components/client/ClientActionPlan';
 import ClientInvoices from '../components/client/ClientInvoices';
 import ClientReportCard from '../components/client/ClientReportCard';
 import ClientCashForecast from '../components/client/ClientCashForecast';
@@ -62,7 +61,6 @@ function timeAgo(date, nowMs) {
 // Left-sidebar navigation, split by suite. LunarLogic runs both sides of the
 // ledger: Receivables (AR), Payables (AP), and the combined Full Suite view.
 const AR_NAV = [
-  { id: 'action',      label: 'Action Plan',  icon: 'check' },
   { id: 'overview',    label: 'Dashboard',    icon: 'grid' },
   { id: 'customers',   label: 'Customers',    icon: 'users' },
   { id: 'estimates',   label: 'Estimates',    icon: 'file' },
@@ -91,7 +89,7 @@ const NAV_SETTINGS = { id: 'settings', label: 'Settings', icon: 'cog' };
 // an accent colour that carries through the nav so you always know where you
 // are). AR = blue, AP = indigo, Full Suite = green (the combined/net view).
 const SUITES = {
-  ar:   { label: 'Receivables', short: 'AR',   code: 'AR', sublabel: 'Money in · get paid faster',   accent: '#60A5FA', nav: AR_NAV,   home: 'action',      bottom: ['action', 'overview', 'invoices', 'cashapp'] },
+  ar:   { label: 'Receivables', short: 'AR',   code: 'AR', sublabel: 'Money in · get paid faster',   accent: '#60A5FA', nav: AR_NAV,   home: 'overview',    bottom: ['overview', 'invoices', 'customers', 'cashapp'] },
   ap:   { label: 'Payables',    short: 'AP',   code: 'AP', sublabel: 'Money out · pay on purpose',    accent: '#818CF8', nav: AP_NAV,   home: 'ap_overview', bottom: ['ap_overview', 'ap_bills', 'ap_approvals', 'ap_payments'] },
   full: { label: 'Full Suite',  short: 'Full', code: 'FS', sublabel: 'Both sides · cash conversion',  accent: '#34D399', nav: FULL_NAV, home: 'full',        bottom: ['full'] },
 };
@@ -101,7 +99,7 @@ const HOME_TAB = SUITES.ar.home;
 const ALL_NAV = [...AR_NAV, ...AP_NAV, ...FULL_NAV, NAV_SETTINGS];
 const NAV_BY_ID = Object.fromEntries(ALL_NAV.map(n => [n.id, n]));
 const BOTTOM_LABEL = {
-  action: 'Actions', overview: 'Dashboard', invoices: 'Invoices', cashapp: 'Payments',
+  overview: 'Dashboard', invoices: 'Invoices', customers: 'Customers', cashapp: 'Payments',
   ap_overview: 'AP', ap_bills: 'Bills', ap_approvals: 'Approvals', ap_payments: 'Payments',
   full: 'Cash Cycle',
 };
@@ -132,7 +130,6 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [actionInv, setActionInv] = useState(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [actionPlanSort, setActionPlanSort] = useState(null);
   const isMobile = useMobile();
   const base = useMemo(() => getClientData(session.clientId), [session.clientId]);
   const ap = useMemo(() => getClientAPData(session.clientId), [session.clientId]);
@@ -259,7 +256,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflowY: 'auto' }}>
           {suiteNav.map(n => (
-            <NavItem key={n.id} item={n} active={activeTab === n.id} accent={suiteAccent} badge={n.id === 'action' ? urgentCount : n.id === 'ap_approvals' ? ap.counts.review : 0}
+            <NavItem key={n.id} item={n} active={activeTab === n.id} accent={suiteAccent} badge={n.id === 'overview' ? urgentCount : n.id === 'ap_approvals' ? ap.counts.review : 0}
               compact={isMobile} onClick={() => setActiveTab(n.id)} />
           ))}
         </nav>
@@ -433,8 +430,16 @@ export default function ClientDashboardPage({ session, onLogout }) {
               value={`${bpdso}d`}
               sub={dsoGapDays > 0 ? `${dsoGapDays}d gap = ${fmtK(dsoGapDollars)} recoverable` : 'At optimal efficiency'}
               color="var(--teal)"
-              clickable
-              onClick={() => { setActionPlanSort('dsoImpact'); setActiveTab('action'); }}
+              clickable={overdueInvs.length > 0}
+              hint="tap to view overdue"
+              onClick={overdueInvs.length > 0 ? () => setDrill({
+                title: 'Recoverable DSO — Overdue Invoices',
+                subtitle: `${dsoGapDays}d gap = ${fmtK(dsoGapDollars)} recoverable`,
+                source: 'Overdue invoices ranked by value — collecting these compresses DSO toward best-in-class.',
+                filename: `recoverable_dso_${data.name.replace(/\s/g, '_')}`,
+                columns: INV_COLS,
+                rows: overdueInvs,
+              }) : undefined}
             />
 
           </div>
@@ -453,7 +458,6 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {activeTab === 'reminders'  && <ClientReminders data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'cashapp'    && <ClientCashApplication data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'activities' && <ClientActivities data={data} clientId={session.clientId} onAction={setActionInv} onDrill={setDrill} />}
-          {activeTab === 'action'     && <ClientActionPlan invoices={data.invoices} paymentBehavior={data.paymentBehavior} payments={data.payments} currentDSO={currentDSO} preLiveDSO={data.preLiveDSO} annualRevenue={data.annualRevenue} bpdso={bpdso} dsoGapDays={dsoGapDays} dsoGapDollars={dsoGapDollars} initialSort={actionPlanSort} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'report'     && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
           {activeTab === 'cashflow'   && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'settings'   && <ClientSettings data={data} clientId={session.clientId} isMobile={isMobile} />}
@@ -529,7 +533,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
                 }}>
                   <NavIcon name={item.icon} />
                   <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 500 }}>{BOTTOM_LABEL[id]}</span>
-                  {id === 'action' && urgentCount > 0 && <span style={{ position: 'absolute', top: 7, right: 'calc(50% - 17px)', width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />}
+                  {id === 'overview' && urgentCount > 0 && <span style={{ position: 'absolute', top: 7, right: 'calc(50% - 17px)', width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />}
                 </button>
               );
             })}

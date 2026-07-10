@@ -2,12 +2,13 @@ import { useState } from 'react';
 import SourceTag from '../SourceTag';
 import DSOProjection from './DSOProjection';
 import InvoicedVsCollected from './InvoicedVsCollected';
+import ActionQueue from './ActionQueue';
 import { getPromises, isBroken } from '../../lib/promises';
 import { getEnabledWidgets, setEnabledWidgets } from '../../lib/dashboardLayout';
 
 // Canonical widget order + labels for the customizable Dashboard.
 const WIDGET_DEFS = [
-  { id: 'needsToday',  label: 'Needs you today' },
+  { id: 'needsToday',  label: 'Action plan' },
   { id: 'arHealth',    label: 'AR health at a glance' },
   { id: 'dsoPath',     label: 'Path to a lower DSO' },
   { id: 'cashComingIn', label: 'Cash coming in' },
@@ -155,8 +156,13 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
     onClick: () => drillInvoices('Overdue — Outside Automation', overdueUncovered, `${fmtM(sumAmt(overdueUncovered))} · ${overdueUncovered.length} invoices`),
   });
   actionItems.sort((a, b) => b.weight - a.weight);
-  const visibleActions = actionItems.slice(0, 4);
-  const totalAtStake = actionItems.reduce((s, i) => s + i.amount, 0);
+  // Map the grouped action items into the clearable ActionQueue shape. The
+  // primary button runs the item's review/drill tool; ActionQueue adds the
+  // Done control that clears it from the list.
+  const queueItems = actionItems.map(a => ({
+    key: a.key, tag: a.tag, color: a.color, title: a.title, detail: a.detail, amount: a.amount,
+    actions: [{ label: 'Review', primary: true, onClick: a.onClick }],
+  }));
 
   const target = Math.max(bpdso, Math.round(currentDSO * 0.6));
   const projImprove = Math.max(0, Math.round(currentDSO) - target);
@@ -197,8 +203,8 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
         </div>
       )}
 
-      {/* Needs you today */}
-      {on('needsToday') && <NeedsToday items={visibleActions} totalItems={actionItems.length} totalAtStake={totalAtStake} isMobile={isMobile} onNavigate={onNavigate} />}
+      {/* Action plan — clearable queue of what needs you today */}
+      {on('needsToday') && <ActionQueue items={queueItems} accent="var(--teal)" title="Action plan" isMobile={isMobile} />}
 
       {/* AR Health */}
       {on('arHealth') && (
@@ -257,9 +263,6 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
           <PathStat label="DSO today" value={`${Math.round(currentDSO)}d`} color="var(--teal)" />
           <PathStat label="Projected" value={`${target}d`} color="var(--green)" sub={projImprove > 0 ? `▼ ${projImprove}d` : 'at optimal'} />
           {dsoChange != null && dsoChange < 0 && <PathStat label="Since go-live" value={`▼ ${Math.abs(dsoChange)}d`} color="var(--green)" />}
-          <div style={{ marginLeft: 'auto', alignSelf: 'center' }}>
-            <button onClick={() => onNavigate('action')} style={ctaBtn}>See remediation plan ↗</button>
-          </div>
         </div>
       </div>
       )}
@@ -318,8 +321,6 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
   );
 }
 
-const ctaBtn = { padding: '6px 14px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--teal)', background: 'rgba(0,212,232,0.1)', color: 'var(--teal)' };
-
 function SectionLabel({ children }) {
   return <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>{children}</div>;
 }
@@ -358,53 +359,5 @@ function AutoLink({ title, desc, color, onClick }) {
       </div>
       <div style={{ fontSize: 10.5, color: 'var(--text-dim)', lineHeight: 1.4 }}>{desc}</div>
     </button>
-  );
-}
-
-function NeedsToday({ items, totalItems, totalAtStake, isMobile, onNavigate }) {
-  const allClear = items.length === 0;
-  return (
-    <div style={{ background: allClear ? 'rgba(34,197,94,0.06)' : 'var(--bg-card)', border: `1px solid ${allClear ? 'rgba(34,197,94,0.25)' : 'var(--border)'}`, borderRadius: 12, padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: allClear ? 0 : 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>Needs you today</div>
-          {!allClear && <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: '#ef4444', borderRadius: 10, padding: '1px 7px', lineHeight: 1.6 }}>{totalItems}</span>}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {!allClear && totalAtStake > 0 && (
-            <div style={{ fontSize: 11, color: 'var(--text-dim)' }}><span style={{ fontWeight: 800, color: 'var(--text)' }}>{fmtM(totalAtStake)}</span> at stake</div>
-          )}
-          {onNavigate && <button onClick={() => onNavigate('action')} style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}>Action plan ↗</button>}
-        </div>
-      </div>
-      {allClear ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e', fontSize: 13, fontWeight: 800, flexShrink: 0 }}>✓</div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>You're all caught up</div>
-            <div style={{ fontSize: 11, color: 'var(--muted)' }}>LunarLogic is handling everything — no action needed from you right now.</div>
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {items.map(item => (
-            <button key={item.key} onClick={item.onClick} style={{
-              display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
-              background: `${item.color}0d`, border: `1px solid ${item.color}30`, borderRadius: 8,
-              padding: isMobile ? '10px 12px' : '10px 14px', cursor: 'pointer', transition: 'background 0.12s, border-color 0.12s',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.background = `${item.color}1a`; e.currentTarget.style.borderColor = `${item.color}55`; }}
-              onMouseLeave={e => { e.currentTarget.style.background = `${item.color}0d`; e.currentTarget.style.borderColor = `${item.color}30`; }}>
-              <span style={{ fontSize: 9, fontWeight: 800, color: item.color, background: `${item.color}22`, borderRadius: 6, padding: '3px 7px', textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0, whiteSpace: 'nowrap' }}>{item.tag}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{item.title}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--text-dim)', lineHeight: 1.4 }}>{item.detail}</div>
-              </div>
-              <span style={{ fontSize: 16, color: item.color, flexShrink: 0, fontWeight: 700 }}>›</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }

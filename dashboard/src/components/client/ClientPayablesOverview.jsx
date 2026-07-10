@@ -1,6 +1,7 @@
 import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { PageHeader, Card, StatTile, BeforeAfter, tileGridStyle, fmtM } from './automationKit';
 import DPOProjection from './DPOProjection';
+import ActionQueue from './ActionQueue';
 
 function fmtFull(v) { return `$${Math.round(v).toLocaleString()}`; }
 function fmtDate(iso) {
@@ -42,6 +43,46 @@ export default function ClientPayablesOverview({ ap, currentDPO, isMobile, onNav
   const upcoming = ap.scheduledPayments.slice(0, 5);
   const cashRetained = Math.round((ap.targetDPO - ap.preLiveDPO) * (ap.annualPurchases / 365));
 
+  // ── Clearable action queue — the payables "what needs you today" ──────
+  const sum = arr => arr.reduce((s, b) => s + b.amount, 0);
+  const openBills   = ap.bills.filter(b => b.status !== 'paid');
+  const reviewBills = ap.bills.filter(b => b.status === 'review');
+  const approvedBills = ap.bills.filter(b => b.status === 'approved');
+  const pastDueBills  = openBills.filter(b => b.daysToDue < 0);
+  const missingW9   = ap.vendors.filter(v => v.needs1099 && !v.form1099Ready);
+
+  const apActions = [];
+  if (pastDueBills.length > 0) apActions.push({
+    key: 'pastdue', tag: 'Pay', color: '#ef4444', amount: sum(pastDueBills),
+    title: `Pay ${pastDueBills.length} bill${pastDueBills.length !== 1 ? 's' : ''} past due`,
+    detail: 'Past their due date — release payment now to avoid late fees and protect terms.',
+    actions: [{ label: 'Go to payments', primary: true, onClick: () => onNavigate('ap_payments') }],
+  });
+  if (reviewBills.length > 0) apActions.push({
+    key: 'review', tag: 'Review', color: '#f59e0b', amount: sum(reviewBills),
+    title: `Review & approve ${reviewBills.length} bill${reviewBills.length !== 1 ? 's' : ''}`,
+    detail: 'Captured and AI-coded — confirm the GL code and route for payment.',
+    actions: [{ label: 'Open bills', primary: true, onClick: () => onNavigate('ap_bills') }],
+  });
+  if (ap.discountsAvailable > 0) apActions.push({
+    key: 'discounts', tag: 'Capture', color: '#22c55e', amount: ap.discountsAvailable,
+    title: `Capture ${fmtM(ap.discountsAvailable)} in early-pay discounts`,
+    detail: 'Discount windows still open on scheduled bills — pay inside the window to bank the savings.',
+    actions: [{ label: 'Schedule', primary: true, onClick: () => onNavigate('ap_payments') }],
+  });
+  if (approvedBills.length > 0) apActions.push({
+    key: 'schedule', tag: 'Schedule', color: '#818CF8', amount: sum(approvedBills),
+    title: `Schedule ${approvedBills.length} approved bill${approvedBills.length !== 1 ? 's' : ''}`,
+    detail: 'Approved and ready — batch into the next payment run timed to your target DPO.',
+    actions: [{ label: 'Payments', primary: true, onClick: () => onNavigate('ap_payments') }],
+  });
+  if (missingW9.length > 0) apActions.push({
+    key: 'w9', tag: 'Compliance', color: '#f59e0b', amount: 0,
+    title: `Request a W-9 from ${missingW9.length} vendor${missingW9.length !== 1 ? 's' : ''}`,
+    detail: `Reportable vendor${missingW9.length !== 1 ? 's' : ''} missing a W-9 — collect now to stay 1099-ready.`,
+    actions: [{ label: 'Vendors', primary: true, onClick: () => onNavigate('ap_vendors') }],
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <PageHeader
@@ -54,6 +95,9 @@ export default function ClientPayablesOverview({ ap, currentDPO, isMobile, onNav
         <span style={{ fontSize: 8, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap', marginTop: 2 }}>Preview</span>
         <span>The Payables suite is shown here on illustrative data. Bill capture, approvals, and payment scheduling wire to your QuickBooks / Xero AP the same way the Receivables suite already does.</span>
       </div>
+
+      {/* Action plan — clearable queue of what needs you today */}
+      <ActionQueue items={apActions} accent="#818CF8" title="Action plan" isMobile={isMobile} />
 
       {/* Band status + key tiles */}
       <div style={tileGridStyle(isMobile, 4)}>

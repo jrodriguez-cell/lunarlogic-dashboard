@@ -15,24 +15,8 @@ import { useState, useRef, useEffect } from 'react';
  * `items` is [{ id, label, sublabel, code, accent }]; `current` is the active
  * suite id; `onSwitch(id)` changes suite.
  */
-export default function SuiteSwitcher({ current, items, onSwitch, variant = 'sidebar', align = 'left' }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const active = items.find(i => i.id === current) ?? items[0];
-
-  // Close on outside click / Escape.
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
-  }, [open]);
-
-  function pick(id) { if (id !== current) onSwitch(id); setOpen(false); }
-
-  const Badge = ({ code, accent, size = 26 }) => (
+function Badge({ code, accent, size = 26 }) {
+  return (
     <span style={{
       width: size, height: size, borderRadius: 7, flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -40,12 +24,16 @@ export default function SuiteSwitcher({ current, items, onSwitch, variant = 'sid
       color: accent, fontSize: size >= 24 ? 10 : 9, fontWeight: 800, letterSpacing: '0.02em',
     }}>{code}</span>
   );
+}
 
-  const Chevron = () => (
+function Chevron({ open }) {
+  return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}><path d="M6 9l6 6 6-6" /></svg>
   );
+}
 
-  const Menu = () => (
+function Menu({ items, current, align, variant, onPick }) {
+  return (
     <div role="listbox" style={{
       position: 'absolute', zIndex: 1200, top: 'calc(100% + 6px)',
       left: align === 'left' ? 0 : 'auto', right: align === 'right' ? 0 : 'auto',
@@ -57,7 +45,7 @@ export default function SuiteSwitcher({ current, items, onSwitch, variant = 'sid
       {items.map(it => {
         const isActive = it.id === current;
         return (
-          <button key={it.id} role="option" aria-selected={isActive} onClick={() => pick(it.id)} style={{
+          <button key={it.id} role="option" aria-selected={isActive} onClick={() => onPick(it.id)} style={{
             display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
             padding: '8px 8px', borderRadius: 8, cursor: 'pointer', border: 'none',
             background: isActive ? `${it.accent}14` : 'transparent',
@@ -77,6 +65,24 @@ export default function SuiteSwitcher({ current, items, onSwitch, variant = 'sid
       })}
     </div>
   );
+}
+
+export default function SuiteSwitcher({ current, items, onSwitch, variant = 'sidebar', align = 'left' }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const active = items.find(i => i.id === current) ?? items[0];
+
+  // Close on outside click / Escape.
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+
+  function pick(id) { if (id !== current) onSwitch(id); setOpen(false); }
 
   // ── Topbar pill variant ─────────────────────────────────────────────
   if (variant === 'topbar') {
@@ -88,9 +94,9 @@ export default function SuiteSwitcher({ current, items, onSwitch, variant = 'sid
         }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: active.accent, flexShrink: 0 }} />
           <span style={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>{active.label}</span>
-          <Chevron />
+          <Chevron open={open} />
         </button>
-        {open && <Menu />}
+        {open && <Menu items={items} current={current} align={align} variant={variant} onPick={pick} />}
       </div>
     );
   }
@@ -110,9 +116,9 @@ export default function SuiteSwitcher({ current, items, onSwitch, variant = 'sid
           <span style={{ display: 'block', fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Suite</span>
           <span style={{ display: 'block', fontSize: 13.5, fontWeight: 800, color: active.accent, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{active.label}</span>
         </span>
-        <span style={{ color: 'var(--muted)' }}><Chevron /></span>
+        <span style={{ color: 'var(--muted)' }}><Chevron open={open} /></span>
       </button>
-      {open && <Menu />}
+      {open && <Menu items={items} current={current} align={align} variant={variant} onPick={pick} />}
     </div>
   );
 }
