@@ -24,6 +24,7 @@ import ClientApprovals from '../components/client/ClientApprovals';
 import ClientPaymentSchedule from '../components/client/ClientPaymentSchedule';
 import ClientVendors from '../components/client/ClientVendors';
 import ClientFullSuite from '../components/client/ClientFullSuite';
+import SuiteSwitcher from '../components/client/SuiteSwitcher';
 import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
@@ -85,11 +86,14 @@ const FULL_NAV = [
 ];
 const NAV_SETTINGS = { id: 'settings', label: 'Settings', icon: 'cog' };
 
-// Per-suite config: nav list, landing tab, and the mobile bottom-bar tabs.
+// Per-suite config: nav list, landing tab, the mobile bottom-bar tabs, plus
+// the identity used by the suite switcher (code badge, one-line context, and
+// an accent colour that carries through the nav so you always know where you
+// are). AR = blue, AP = indigo, Full Suite = green (the combined/net view).
 const SUITES = {
-  ar:   { label: 'Receivables', short: 'AR',   nav: AR_NAV,   home: 'action',      bottom: ['action', 'overview', 'invoices', 'cashapp'] },
-  ap:   { label: 'Payables',    short: 'AP',   nav: AP_NAV,   home: 'ap_overview', bottom: ['ap_overview', 'ap_bills', 'ap_approvals', 'ap_payments'] },
-  full: { label: 'Full Suite',  short: 'Full', nav: FULL_NAV, home: 'full',        bottom: ['full'] },
+  ar:   { label: 'Receivables', short: 'AR',   code: 'AR', sublabel: 'Money in · get paid faster',   accent: '#60A5FA', nav: AR_NAV,   home: 'action',      bottom: ['action', 'overview', 'invoices', 'cashapp'] },
+  ap:   { label: 'Payables',    short: 'AP',   code: 'AP', sublabel: 'Money out · pay on purpose',    accent: '#818CF8', nav: AP_NAV,   home: 'ap_overview', bottom: ['ap_overview', 'ap_bills', 'ap_approvals', 'ap_payments'] },
+  full: { label: 'Full Suite',  short: 'Full', code: 'FS', sublabel: 'Both sides · cash conversion',  accent: '#34D399', nav: FULL_NAV, home: 'full',        bottom: ['full'] },
 };
 const SUITE_ORDER = ['ar', 'ap', 'full'];
 const HOME_TAB = SUITES.ar.home;
@@ -226,8 +230,11 @@ export default function ClientDashboardPage({ session, onLogout }) {
   // The nav list and mobile bottom tabs follow the active suite.
   const activeSuite  = SUITES[suite];
   const suiteNav     = activeSuite.nav;
+  const suiteAccent  = activeSuite.accent;
   const bottomIds    = activeSuite.bottom;
   const moreIds      = [...suiteNav.map(n => n.id).filter(id => !bottomIds.includes(id)), 'settings'];
+  // Options for the suite switcher (both sidebar and topbar variants).
+  const suiteItems   = SUITE_ORDER.map(id => ({ id, label: SUITES[id].label, sublabel: SUITES[id].sublabel, code: SUITES[id].code, accent: SUITES[id].accent }));
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
@@ -248,24 +255,11 @@ export default function ClientDashboardPage({ session, onLogout }) {
         </div>
 
         {/* Suite switcher — Receivables / Payables / Full Suite */}
-        <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3, marginBottom: 10 }}>
-          {SUITE_ORDER.map(id => {
-            const active = suite === id;
-            return (
-              <button key={id} onClick={() => switchSuite(id)} title={SUITES[id].label} style={{
-                flex: 1, padding: '5px 4px', borderRadius: 5, border: 'none', cursor: 'pointer',
-                fontSize: 10.5, fontWeight: active ? 700 : 600, letterSpacing: '0.01em',
-                background: active ? 'var(--bg-card)' : 'transparent',
-                color: active ? 'var(--teal)' : 'var(--muted)',
-                boxShadow: active ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
-              }}>{isMobile ? SUITES[id].short : SUITES[id].label}</button>
-            );
-          })}
-        </div>
+        <SuiteSwitcher current={suite} items={suiteItems} onSwitch={switchSuite} variant="sidebar" />
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflowY: 'auto' }}>
           {suiteNav.map(n => (
-            <NavItem key={n.id} item={n} active={activeTab === n.id} badge={n.id === 'action' ? urgentCount : n.id === 'ap_approvals' ? ap.counts.review : 0}
+            <NavItem key={n.id} item={n} active={activeTab === n.id} accent={suiteAccent} badge={n.id === 'action' ? urgentCount : n.id === 'ap_approvals' ? ap.counts.review : 0}
               compact={isMobile} onClick={() => setActiveTab(n.id)} />
           ))}
         </nav>
@@ -280,14 +274,17 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: `0 ${isMobile ? 16 : 24}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 52 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           {isMobile && (
             <svg onClick={() => setActiveTab(HOME_TAB)} width="20" height="20" viewBox="0 0 24 24" fill="url(#moonGradientTop)" style={{ flexShrink: 0, cursor: 'pointer' }}>
               <defs><linearGradient id="moonGradientTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#60A5FA" /><stop offset="100%" stopColor="#818CF8" /></linearGradient></defs>
               <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
             </svg>
           )}
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</div>
+          {!isMobile && <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{data.name}</div>}
+          {!isMobile && <div style={{ width: 1, height: 20, background: 'var(--border)', flexShrink: 0 }} />}
+          {/* Persistent, always-visible indicator of (and control for) the active suite */}
+          <SuiteSwitcher current={suite} items={suiteItems} onSwitch={switchSuite} variant="topbar" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {!isMobile && lastUpdated && (
@@ -309,24 +306,6 @@ export default function ClientDashboardPage({ session, onLogout }) {
           </button>
         </div>
       </div>
-
-      {/* Mobile suite switcher — the sidebar (with its switcher) is hidden on mobile */}
-      {isMobile && (
-        <div style={{ display: 'flex', gap: 2, background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: 8 }}>
-          {SUITE_ORDER.map(id => {
-            const active = suite === id;
-            return (
-              <button key={id} onClick={() => switchSuite(id)} style={{
-                flex: 1, padding: '7px 4px', borderRadius: 6, cursor: 'pointer',
-                fontSize: 11.5, fontWeight: active ? 700 : 600,
-                border: `1px solid ${active ? 'var(--teal)' : 'var(--border)'}`,
-                background: active ? 'rgba(0,212,232,0.1)' : 'transparent',
-                color: active ? 'var(--teal)' : 'var(--muted)',
-              }}>{SUITES[id].label}</button>
-            );
-          })}
-        </div>
-      )}
 
       {/* AP Hero — DPO + band (AP Dashboard tab only) */}
       {activeTab === 'ap_overview' && (
@@ -528,7 +507,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
                     return (
                       <button key={id} onClick={() => { setActiveTab(id); setMoreOpen(false); }} style={{
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '13px 4px', borderRadius: 10, cursor: 'pointer',
-                        border: `1px solid ${active ? 'var(--teal)' : 'var(--border)'}`, background: active ? 'rgba(0,212,232,0.1)' : 'var(--bg)', color: active ? 'var(--teal)' : 'var(--text-dim)',
+                        border: `1px solid ${active ? suiteAccent : 'var(--border)'}`, background: active ? `${suiteAccent}1a` : 'var(--bg)', color: active ? suiteAccent : 'var(--text-dim)',
                       }}>
                         <NavIcon name={item.icon} />
                         <span style={{ fontSize: 10, fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{item.label}</span>
@@ -546,7 +525,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
               return (
                 <button key={id} onClick={() => { setActiveTab(id); setMoreOpen(false); }} style={{
                   flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-                  background: 'none', border: 'none', cursor: 'pointer', color: active ? 'var(--teal)' : 'var(--muted)', position: 'relative',
+                  background: 'none', border: 'none', cursor: 'pointer', color: active ? suiteAccent : 'var(--muted)', position: 'relative',
                 }}>
                   <NavIcon name={item.icon} />
                   <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 500 }}>{BOTTOM_LABEL[id]}</span>
@@ -556,7 +535,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
             })}
             <button onClick={() => setMoreOpen(v => !v)} style={{
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-              background: 'none', border: 'none', cursor: 'pointer', color: (moreOpen || moreIds.includes(activeTab)) ? 'var(--teal)' : 'var(--muted)',
+              background: 'none', border: 'none', cursor: 'pointer', color: (moreOpen || moreIds.includes(activeTab)) ? suiteAccent : 'var(--muted)',
             }}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" /></svg>
               <span style={{ fontSize: 9.5, fontWeight: (moreOpen || moreIds.includes(activeTab)) ? 700 : 500 }}>More</span>
@@ -582,14 +561,14 @@ export default function ClientDashboardPage({ session, onLogout }) {
   );
 }
 
-function NavItem({ item, active, badge = 0, compact, onClick }) {
+function NavItem({ item, active, badge = 0, compact, onClick, accent = 'var(--teal)' }) {
   return (
     <button onClick={onClick} title={compact ? item.label : undefined} style={{
       display: 'flex', alignItems: 'center', gap: 10, width: '100%',
       textAlign: 'left', justifyContent: compact ? 'center' : 'flex-start', position: 'relative',
       padding: compact ? '9px 0' : '8px 10px', borderRadius: 8, cursor: 'pointer', border: 'none',
-      background: active ? 'rgba(0,212,232,0.12)' : 'none',
-      color: active ? 'var(--teal)' : 'var(--text-dim)',
+      background: active ? `${accent}1f` : 'none',
+      color: active ? accent : 'var(--text-dim)',
       fontSize: 13, fontWeight: active ? 700 : 500, transition: 'background 0.1s, color 0.1s',
     }}
       onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-hover)'; }}
