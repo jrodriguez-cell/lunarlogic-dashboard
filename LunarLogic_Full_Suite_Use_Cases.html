@@ -321,7 +321,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
       <div class="band-label" style="text-align:left;margin-top:6px;margin-bottom:10px">Part 1 &middot; AR Suite</div>
       <div style="display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 2px;border-bottom:1px solid var(--border-soft)">
-          <span style="font-size:12.5px;color:var(--slate300);font-weight:600">The Metric That Matters &middot; DSO</span>
+          <span style="font-size:12.5px;color:var(--slate300);font-weight:600">The Metric That Matters &middot; CCC &amp; DSO</span>
           <span style="font-size:12px;color:var(--blue-light);font-weight:700">04</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 2px;border-bottom:1px solid var(--border-soft)">
@@ -355,7 +355,7 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
       <div class="band-label" style="text-align:left;margin-top:6px;margin-bottom:10px">Part 2 &middot; AP Suite</div>
       <div style="display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 2px;border-bottom:1px solid var(--border-soft)">
-          <span style="font-size:12.5px;color:var(--slate300);font-weight:600">The Metric That Matters &middot; DPO</span>
+          <span style="font-size:12.5px;color:var(--slate300);font-weight:600">The Payables Half &middot; DPO</span>
           <span style="font-size:12px;color:var(--blue-light);font-weight:700">11</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 2px;border-bottom:1px solid var(--border-soft)">
@@ -473,10 +473,12 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
 
   <div class="dso-body">
     <div class="sec-head">
-      <div class="eyebrow" style="margin-bottom:12px">Part 1 &middot; The Metric That Matters</div>
-      <h2 class="section-title">Every one of those problems shows up as a single number</h2>
-      <p class="lead section-intro" style="margin-bottom:0">It's called <b style="color:var(--slate300)">Days Sales Outstanding (DSO)</b>: the average number of days between earning revenue and collecting the cash. Revenue is a promise; cash is the reality. DSO is the gap between them, and it's the leading indicator of financial health, not a lagging one.</p>
+      <div class="eyebrow" style="margin-bottom:12px">The Metric That Matters</div>
+      <h2 class="section-title">The health of your cash position comes down to one cycle</h2>
+      <p class="lead section-intro" style="margin-bottom:0">It's called the <b style="color:var(--slate300)">Cash Conversion Cycle (CCC)</b>: how many days cash is tied up between paying for the work and collecting for it. It has two halves, <b style="color:var(--slate300)">Days Sales Outstanding (DSO)</b>, how fast you collect, and <b style="color:var(--slate300)">Days Payable Outstanding (DPO)</b>, how you pay, and this suite compresses both, starting with receivables.</p>
     </div>
+
+    <div style="text-align:center;font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--blue-light);margin-bottom:-6px">The Receivables Half &middot; DSO</div>
 
     <div class="formula">
       <div class="eq">DSO&nbsp;=&nbsp;<span class="v">( Accounts Receivable ÷ Credit Sales )</span>&nbsp;×&nbsp;Days</div>
@@ -1050,10 +1052,12 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
 
   <div class="dso-body">
     <div class="sec-head">
-      <div class="eyebrow" style="margin-bottom:12px">Part 2 &middot; The Metric That Matters</div>
+      <div class="eyebrow" style="margin-bottom:12px">Part 2 &middot; The Payables Half</div>
       <h2 class="section-title">AP isn't about paying slower, it's about paying on purpose</h2>
-      <p class="lead section-intro" style="margin-bottom:0">It's called <b style="color:var(--slate300)">Days Payable Outstanding (DPO)</b>: the average number of days between receiving a bill and paying it. Unlike DSO, the goal isn't the lowest number, it's a controlled, consistent one, matched to your actual terms.</p>
+      <p class="lead section-intro" style="margin-bottom:0">This is the other half of the cash conversion cycle: <b style="color:var(--slate300)">Days Payable Outstanding (DPO)</b>, the average number of days between receiving a bill and paying it. Unlike DSO, the goal isn't the lowest number, it's a controlled, consistent one, matched to your actual terms.</p>
     </div>
+
+    <div style="text-align:center;font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--blue-light);margin-bottom:-6px">The Payables Half &middot; DPO</div>
 
     <div class="formula">
       <div class="eq">DPO&nbsp;=&nbsp;<span class="v">( Accounts Payable ÷ Total Purchases )</span>&nbsp;×&nbsp;Days</div>
@@ -1653,8 +1657,8 @@ h1,h2,h3{font-family:var(--serif);color:#f1f5f9;line-height:1.08;font-weight:600
 
     <div class="cta">
       <div>
-        <div class="big">Start with your own numbers.</div>
-        <div class="calc">Your DSO today: <code>AR balance ÷ last 30 days of revenue × 30</code>. Your DPO today: <code>AP balance ÷ last 30 days of purchases × 30</code>. The gap between them is cash you can recover.</div>
+        <div class="big">Start with your own number.</div>
+        <div class="calc">Your <b style="color:var(--slate300)">Cash Conversion Cycle</b> is DSO minus DPO: the days your cash sits tied up between paying and collecting. Your DSO: <code>AR balance ÷ last 30 days of revenue × 30</code>. Your DPO: <code>AP balance ÷ last 30 days of purchases × 30</code>. Subtract the second from the first, and that's the number to watch.</div>
       </div>
       <div class="contact">
         <div class="w wordmark" style="font-size:14px">lunarlogic<span class="ai">.ai</span></div>
