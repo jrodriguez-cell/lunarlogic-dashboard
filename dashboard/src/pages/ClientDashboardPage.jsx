@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
+import { getClientAPData } from '../data/apData';
 import { fetchDashboardData } from '../lib/quickbooks';
 import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
@@ -17,6 +18,12 @@ import ClientSubscriptions from '../components/client/ClientSubscriptions';
 import ClientEstimates from '../components/client/ClientEstimates';
 import ClientActivities from '../components/client/ClientActivities';
 import ClientReminders from '../components/client/ClientReminders';
+import ClientPayablesOverview from '../components/client/ClientPayablesOverview';
+import ClientBills from '../components/client/ClientBills';
+import ClientApprovals from '../components/client/ClientApprovals';
+import ClientPaymentSchedule from '../components/client/ClientPaymentSchedule';
+import ClientVendors from '../components/client/ClientVendors';
+import ClientFullSuite from '../components/client/ClientFullSuite';
 import AIAssistant from '../components/client/AIAssistant';
 import SourceTag from '../components/SourceTag';
 
@@ -51,9 +58,9 @@ function timeAgo(date, nowMs) {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-// Left-sidebar navigation. Items with `soon` are placeholders being built next.
-const HOME_TAB = 'action';
-const NAV = [
+// Left-sidebar navigation, split by suite. LunarLogic runs both sides of the
+// ledger: Receivables (AR), Payables (AP), and the combined Full Suite view.
+const AR_NAV = [
   { id: 'action',      label: 'Action Plan',  icon: 'check' },
   { id: 'overview',    label: 'Dashboard',    icon: 'grid' },
   { id: 'customers',   label: 'Customers',    icon: 'users' },
@@ -66,13 +73,34 @@ const NAV = [
   { id: 'report',      label: 'Reports',      icon: 'bars' },
   { id: 'cashflow',    label: 'Cash Flow',    icon: 'trend' },
 ];
+const AP_NAV = [
+  { id: 'ap_overview',  label: 'AP Dashboard', icon: 'grid' },
+  { id: 'ap_bills',     label: 'Bills',        icon: 'fileText' },
+  { id: 'ap_approvals', label: 'Approvals',    icon: 'check' },
+  { id: 'ap_payments',  label: 'Payments',     icon: 'card' },
+  { id: 'ap_vendors',   label: 'Vendors',      icon: 'users' },
+];
+const FULL_NAV = [
+  { id: 'full',         label: 'Cash Cycle',   icon: 'trend' },
+];
 const NAV_SETTINGS = { id: 'settings', label: 'Settings', icon: 'cog' };
 
-// Mobile bottom tab bar: the 4 core AR workflows + a "More" sheet for the rest.
-const BOTTOM_IDS = ['action', 'overview', 'invoices', 'cashapp'];
-const BOTTOM_LABEL = { action: 'Actions', overview: 'Dashboard', invoices: 'Invoices', cashapp: 'Payments' };
-const NAV_BY_ID = Object.fromEntries([...NAV, NAV_SETTINGS].map(n => [n.id, n]));
-const MORE_IDS = [...NAV.map(n => n.id).filter(id => !BOTTOM_IDS.includes(id)), 'settings'];
+// Per-suite config: nav list, landing tab, and the mobile bottom-bar tabs.
+const SUITES = {
+  ar:   { label: 'Receivables', short: 'AR',   nav: AR_NAV,   home: 'action',      bottom: ['action', 'overview', 'invoices', 'cashapp'] },
+  ap:   { label: 'Payables',    short: 'AP',   nav: AP_NAV,   home: 'ap_overview', bottom: ['ap_overview', 'ap_bills', 'ap_approvals', 'ap_payments'] },
+  full: { label: 'Full Suite',  short: 'Full', nav: FULL_NAV, home: 'full',        bottom: ['full'] },
+};
+const SUITE_ORDER = ['ar', 'ap', 'full'];
+const HOME_TAB = SUITES.ar.home;
+
+const ALL_NAV = [...AR_NAV, ...AP_NAV, ...FULL_NAV, NAV_SETTINGS];
+const NAV_BY_ID = Object.fromEntries(ALL_NAV.map(n => [n.id, n]));
+const BOTTOM_LABEL = {
+  action: 'Actions', overview: 'Dashboard', invoices: 'Invoices', cashapp: 'Payments',
+  ap_overview: 'AP', ap_bills: 'Bills', ap_approvals: 'Approvals', ap_payments: 'Payments',
+  full: 'Cash Cycle',
+};
 
 function NavIcon({ name }) {
   const p = {
@@ -94,6 +122,7 @@ function NavIcon({ name }) {
 }
 
 export default function ClientDashboardPage({ session, onLogout }) {
+  const [suite, setSuite]         = useState('ar');
   const [activeTab, setActiveTab] = useState(HOME_TAB);
   const [drill, setDrill]         = useState(null);
   const [actionInv, setActionInv] = useState(null);
@@ -102,6 +131,14 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const [actionPlanSort, setActionPlanSort] = useState(null);
   const isMobile = useMobile();
   const base = useMemo(() => getClientData(session.clientId), [session.clientId]);
+  const ap = useMemo(() => getClientAPData(session.clientId), [session.clientId]);
+
+  // Switch suite (Receivables / Payables / Full Suite) and land on its home tab.
+  const switchSuite = useCallback((next) => {
+    setSuite(next);
+    setActiveTab(SUITES[next].home);
+    setMoreOpen(false);
+  }, []);
   const [liveData, setLiveData] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [refreshing, setRefreshing]   = useState(false);
@@ -179,6 +216,19 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
   const bm = getDSOBenchmark(Math.round(currentDSO));
 
+  // Payables (AP) hero metric — DPO. Unlike DSO, the goal is a controlled
+  // number inside the target sweet spot, not the lowest.
+  const currentDPO = ap.currentDPO;
+  const dpoInBand  = currentDPO >= 26 && currentDPO <= 34;
+  const dpoLabel   = currentDPO < 26 ? 'Paying too early' : currentDPO > 34 ? 'Slipping past terms' : 'On target';
+  const dpoColor   = dpoInBand ? '#22c55e' : currentDPO < 26 ? '#f59e0b' : '#f97316';
+
+  // The nav list and mobile bottom tabs follow the active suite.
+  const activeSuite  = SUITES[suite];
+  const suiteNav     = activeSuite.nav;
+  const bottomIds    = activeSuite.bottom;
+  const moreIds      = [...suiteNav.map(n => n.id).filter(id => !bottomIds.includes(id)), 'settings'];
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
 
@@ -196,9 +246,26 @@ export default function ClientDashboardPage({ session, onLogout }) {
           </svg>
           {!isMobile && <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>}
         </div>
+
+        {/* Suite switcher — Receivables / Payables / Full Suite */}
+        <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3, marginBottom: 10 }}>
+          {SUITE_ORDER.map(id => {
+            const active = suite === id;
+            return (
+              <button key={id} onClick={() => switchSuite(id)} title={SUITES[id].label} style={{
+                flex: 1, padding: '5px 4px', borderRadius: 5, border: 'none', cursor: 'pointer',
+                fontSize: 10.5, fontWeight: active ? 700 : 600, letterSpacing: '0.01em',
+                background: active ? 'var(--bg-card)' : 'transparent',
+                color: active ? 'var(--teal)' : 'var(--muted)',
+                boxShadow: active ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
+              }}>{isMobile ? SUITES[id].short : SUITES[id].label}</button>
+            );
+          })}
+        </div>
+
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflowY: 'auto' }}>
-          {NAV.map(n => (
-            <NavItem key={n.id} item={n} active={activeTab === n.id} badge={n.id === 'action' ? urgentCount : 0}
+          {suiteNav.map(n => (
+            <NavItem key={n.id} item={n} active={activeTab === n.id} badge={n.id === 'action' ? urgentCount : n.id === 'ap_approvals' ? ap.counts.review : 0}
               compact={isMobile} onClick={() => setActiveTab(n.id)} />
           ))}
         </nav>
@@ -242,6 +309,63 @@ export default function ClientDashboardPage({ session, onLogout }) {
           </button>
         </div>
       </div>
+
+      {/* Mobile suite switcher — the sidebar (with its switcher) is hidden on mobile */}
+      {isMobile && (
+        <div style={{ display: 'flex', gap: 2, background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: 8 }}>
+          {SUITE_ORDER.map(id => {
+            const active = suite === id;
+            return (
+              <button key={id} onClick={() => switchSuite(id)} style={{
+                flex: 1, padding: '7px 4px', borderRadius: 6, cursor: 'pointer',
+                fontSize: 11.5, fontWeight: active ? 700 : 600,
+                border: `1px solid ${active ? 'var(--teal)' : 'var(--border)'}`,
+                background: active ? 'rgba(0,212,232,0.1)' : 'transparent',
+                color: active ? 'var(--teal)' : 'var(--muted)',
+              }}>{SUITES[id].label}</button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* AP Hero — DPO + band (AP Dashboard tab only) */}
+      {activeTab === 'ap_overview' && (
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: isMobile ? '14px 16px' : '14px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch', gap: isMobile ? 14 : 20 }}>
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: 4 }}>
+              Days Payable Outstanding
+              <SourceTag label="Days Payable Outstanding: average days between receiving a bill and paying it. Formula: (Total AP ÷ annual purchases) × 365. The goal is a controlled number in the target band (≈28–32d) matched to terms — not the lowest possible." />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: isMobile ? 44 : 52, fontWeight: 900, color: 'var(--teal)', lineHeight: 1, letterSpacing: -3 }}>{Math.round(currentDPO)}</span>
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 400, display: 'block', marginBottom: 4 }}>days</span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: dpoColor, background: `${dpoColor}18`, border: `1px solid ${dpoColor}35`, borderRadius: 20, padding: '2px 9px', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{dpoLabel}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>Was {ap.preLiveDPO}d</span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
+              <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ color: '#22c55e', fontWeight: 700 }}>{ap.targetDPO}d</span> target
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>·</span>
+              <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600 }}>
+                +{ap.targetDPO - ap.preLiveDPO}d controlled float
+              </span>
+            </div>
+          </div>
+
+          {!isMobile && <div style={{ width: 1, background: 'var(--border)', flexShrink: 0 }} />}
+
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 8 : 10, alignContent: 'center' }}>
+            <StatCard label="Total payables" value={fmtK(ap.totalPayable)} sub={`${ap.bills.filter(b => b.status !== 'paid').length} open bills`} color="var(--text)" />
+            <StatCard label="Discounts available" value={fmtK(ap.discountsAvailable)} sub="early-pay, still in window" color="#22c55e" clickable hint="tap to view schedule" onClick={() => setActiveTab('ap_payments')} />
+          </div>
+        </div>
+      </div>
+      )}
 
       {/* Hero — DSO + stat grid (Dashboard tab only) */}
       {activeTab === 'overview' && (
@@ -354,13 +478,23 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {activeTab === 'report'     && <ClientReportCard data={data} clientId={session.clientId} currentDSO={currentDSO} isMobile={isMobile} onDrill={setDrill} />}
           {activeTab === 'cashflow'   && <ClientCashForecast invoices={data.invoices} paymentBehavior={data.paymentBehavior} annualRevenue={data.annualRevenue} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'settings'   && <ClientSettings data={data} clientId={session.clientId} isMobile={isMobile} />}
+
+          {/* Payables (AP) suite */}
+          {activeTab === 'ap_overview'  && <ClientPayablesOverview ap={ap} currentDPO={currentDPO} isMobile={isMobile} onNavigate={setActiveTab} />}
+          {activeTab === 'ap_bills'     && <ClientBills ap={ap} isMobile={isMobile} />}
+          {activeTab === 'ap_approvals' && <ClientApprovals ap={ap} isMobile={isMobile} />}
+          {activeTab === 'ap_payments'  && <ClientPaymentSchedule ap={ap} isMobile={isMobile} />}
+          {activeTab === 'ap_vendors'   && <ClientVendors ap={ap} isMobile={isMobile} />}
+
+          {/* Full Suite — combined AR + AP */}
+          {activeTab === 'full'         && <ClientFullSuite data={data} ap={ap} currentDSO={currentDSO} currentDPO={currentDPO} isMobile={isMobile} onNavigate={id => (id === 'ar' || id === 'ap' || id === 'full') ? switchSuite(id) : setActiveTab(id)} />}
         </div>
       </div>
 
       </div>{/* /main column */}
 
-      {/* AI assistant — always available */}
-      {!assistantOpen && (
+      {/* AI assistant — AR suite only (its context + answer engine are AR-scoped) */}
+      {suite === 'ar' && !assistantOpen && (
         <button
           onClick={() => setAssistantOpen(true)}
           title="Ask the AR assistant"
@@ -375,7 +509,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M2 3.5h12v8H6.5L3 15v-3.5H2z" /></svg> Ask AI
         </button>
       )}
-      {assistantOpen && (
+      {suite === 'ar' && assistantOpen && (
         <AIAssistant data={data} currentDSO={currentDSO} clientId={session.clientId} isLive={data.isLive} onClose={() => setAssistantOpen(false)} />
       )}
 
@@ -388,7 +522,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
               <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 1151, background: '#151E31', borderTop: '1px solid var(--border)', borderRadius: '16px 16px 0 0', padding: '10px 12px calc(16px + env(safe-area-inset-bottom))', maxHeight: '72vh', overflowY: 'auto', boxShadow: '0 -8px 30px rgba(0,0,0,0.4)' }}>
                 <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '4px auto 14px' }} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-                  {MORE_IDS.map(id => {
+                  {moreIds.map(id => {
                     const item = NAV_BY_ID[id];
                     const active = activeTab === id;
                     return (
@@ -406,7 +540,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
             </>
           )}
           <nav style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 1100, height: 60, background: '#151E31', borderTop: '1px solid var(--border)', display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)', boxShadow: '0 -4px 20px rgba(0,0,0,0.35)' }}>
-            {BOTTOM_IDS.map(id => {
+            {bottomIds.map(id => {
               const item = NAV_BY_ID[id];
               const active = activeTab === id && !moreOpen;
               return (
@@ -422,10 +556,10 @@ export default function ClientDashboardPage({ session, onLogout }) {
             })}
             <button onClick={() => setMoreOpen(v => !v)} style={{
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-              background: 'none', border: 'none', cursor: 'pointer', color: (moreOpen || MORE_IDS.includes(activeTab)) ? 'var(--teal)' : 'var(--muted)',
+              background: 'none', border: 'none', cursor: 'pointer', color: (moreOpen || moreIds.includes(activeTab)) ? 'var(--teal)' : 'var(--muted)',
             }}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" /></svg>
-              <span style={{ fontSize: 9.5, fontWeight: (moreOpen || MORE_IDS.includes(activeTab)) ? 700 : 500 }}>More</span>
+              <span style={{ fontSize: 9.5, fontWeight: (moreOpen || moreIds.includes(activeTab)) ? 700 : 500 }}>More</span>
             </button>
           </nav>
         </>
@@ -469,7 +603,7 @@ function NavItem({ item, active, badge = 0, compact, onClick }) {
   );
 }
 
-function StatCard({ label, value, sub, color, onClick, clickable, span }) {
+function StatCard({ label, value, sub, color, onClick, clickable, span, hint = 'tap to view invoices' }) {
   return (
     <div
       onClick={onClick}
@@ -488,7 +622,7 @@ function StatCard({ label, value, sub, color, onClick, clickable, span }) {
       <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 900, color, letterSpacing: -0.5, lineHeight: 1, marginBottom: 3 }}>{value}</div>
       <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{sub}</div>
-      {clickable && <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 4 }}>tap to view invoices</div>}
+      {clickable && <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 4 }}>{hint}</div>}
     </div>
   );
 }
