@@ -3,7 +3,7 @@ import SourceTag from '../SourceTag';
 import DSOProjection from './DSOProjection';
 import InvoicedVsCollected from './InvoicedVsCollected';
 import ActionQueue from './ActionQueue';
-import { getPromises, isBroken } from '../../lib/promises';
+import FullActionList from './FullActionList';
 import { getEnabledWidgets, setEnabledWidgets } from '../../lib/dashboardLayout';
 
 // Canonical widget order + labels for the customizable Dashboard.
@@ -34,24 +34,12 @@ const INV_COLS = [
   { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: r => r.daysOverdue > 0 ? r.daysOverdue : '' },
 ];
 
-function getDisputeSuspects(invoices, paymentBehavior) {
-  const pbMap = Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p]));
-  return invoices.filter(inv => {
-    if (inv.status === 'Paid') return false;
-    const pb = pbMap[inv.customer];
-    if (inv.status === 'Viewed' && inv.daysOverdue > 7) return true;
-    if (pb && pb.riskLevel === 'low' && inv.daysOverdue > pb.avgDays * 1.5) return true;
-    if (pb && pb.riskLevel === 'medium' && inv.daysOverdue > pb.avgDays * 2) return true;
-    return false;
-  });
-}
-
 const TODAY = new Date('2026-06-11');
 function daysToDue(dueStr) {
   return Math.round((new Date(dueStr) - TODAY) / 86400000);
 }
 
-export default function ClientOverview({ data, clientId, currentDSO, dsoChange, bpdso, dsoGapDollars, onNavigate, isMobile, onDrill }) {
+export default function ClientOverview({ data, clientId, currentDSO, dsoChange, bpdso, dsoGapDollars, onNavigate, isMobile, onDrill, actions, cleared, onClearAction, onUnclearAction, onResetActions }) {
   const open    = data.invoices.filter(i => i.status !== 'Paid');
   const overdue = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0);
   const totalOpen    = open.reduce((s, i) => s + i.amount, 0);
@@ -59,11 +47,8 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
 
   const payments = data.payments ?? [];
   const paymentDataAvailable = data.isLive ? data.automationStatus?.wf3?.connected === true : true;
-  const pending = payments.filter(p => p.status === 'Pending Review');
 
-  const reminderDataAvailable = open.some(i => i.reminders !== undefined || i.nextReminder !== undefined);
-  const uncoveredInvs = open.filter(i => !((i.reminders?.length > 0) || i.nextReminder));
-  const disputeSuspects = getDisputeSuspects(data.invoices, data.paymentBehavior);
+  const [showAllActions, setShowAllActions] = useState(false);
 
   // ── AR aging buckets (for the health visual) ──────────────────────────
   const BUCKETS = [
@@ -91,77 +76,16 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
     return { ...w, amt };
   });
 
-  // ── "Needs you today" triage (dedup across categories) ────────────────
-  const sumAmt = arr => arr.reduce((s, i) => s + i.amount, 0);
-  const disputeSet = new Set(disputeSuspects.map(i => i.id));
-  const pendingAmt = pending.reduce((s, p) => s + p.amount, 0);
-  const agingRiskInvs = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 45 && !disputeSet.has(i.id));
-  const agingSet = new Set(agingRiskInvs.map(i => i.id));
-  const overdueUncovered = reminderDataAvailable
-    ? uncoveredInvs.filter(i => i.daysOverdue > 0 && !disputeSet.has(i.id) && !agingSet.has(i.id))
-    : [];
-
-  // Broken promises to pay — a customer committed to a date that has now passed.
-  const promises = getPromises(clientId);
-  const brokenPromiseInvs = open.filter(i => isBroken(promises[i.id]));
-
   function drillInvoices(title, rows, sub) {
     onDrill({ title, subtitle: sub, source: 'Invoice data from QuickBooks Online.', filename: title.toLowerCase().replace(/\s+/g, '_'), columns: INV_COLS, rows });
   }
-  function drillUnapplied() {
-    onDrill({
-      title: 'Unapplied Payments — Confirmation Needed',
-      subtitle: `${pending.length} payment${pending.length !== 1 ? 's' : ''} · ${fmtM(pendingAmt)} held pending review`,
-      source: 'LunarLogic auto-applies at ≥90% match confidence. Below that, your confirmation prevents misapplication.',
-      filename: 'unapplied_payments',
-      columns: [
-        { key: 'txId', label: 'Transaction' }, { key: 'matchedCustomer', label: 'Customer' },
-        { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: r => r.amount },
-        { key: 'confidence', label: 'Confidence', render: v => `${v}%` }, { key: 'rule', label: 'Why Held' },
-      ],
-      rows: pending,
-    });
-  }
-  function drillDisputes() {
-    drillInvoices('Possible Disputes — Anomalous Behavior', disputeSuspects, `${disputeSuspects.length} flagged · ${fmtM(sumAmt(disputeSuspects))}`);
-  }
 
-  const actionItems = [];
-  if (paymentDataAvailable && pending.length > 0) actionItems.push({
-    key: 'pending', color: '#f59e0b', tag: 'Confirm', weight: 100, amount: pendingAmt,
-    title: `Confirm ${pending.length} payment${pending.length !== 1 ? 's' : ''}`,
-    detail: `${fmtM(pendingAmt)} received but AI match was below 90% — tell LunarLogic which invoice it belongs to`, onClick: drillUnapplied,
-  });
-  if (brokenPromiseInvs.length > 0) actionItems.push({
-    key: 'broken-promises', color: '#ef4444', tag: 'Follow up', weight: 95, amount: sumAmt(brokenPromiseInvs),
-    title: `Chase ${brokenPromiseInvs.length} broken promise${brokenPromiseInvs.length !== 1 ? 's' : ''} to pay`,
-    detail: `${fmtM(sumAmt(brokenPromiseInvs))} — the promised pay date has passed and the invoice is still open`,
-    onClick: () => drillInvoices('Broken Promises to Pay', brokenPromiseInvs, `${fmtM(sumAmt(brokenPromiseInvs))} · ${brokenPromiseInvs.length} invoice${brokenPromiseInvs.length !== 1 ? 's' : ''}`),
-  });
-  if (disputeSuspects.length > 0) actionItems.push({
-    key: 'disputes', color: '#a78bfa', tag: 'Call', weight: 90, amount: sumAmt(disputeSuspects),
-    title: `Call ${disputeSuspects.length} customer${disputeSuspects.length !== 1 ? 's' : ''} about a possible dispute`,
-    detail: `${fmtM(sumAmt(disputeSuspects))} overdue off-pattern — a billing question may be stalling payment`, onClick: drillDisputes,
-  });
-  if (agingRiskInvs.length > 0) actionItems.push({
-    key: 'aging', color: '#f97316', tag: 'Escalate', weight: 80, amount: sumAmt(agingRiskInvs),
-    title: `Escalate ${agingRiskInvs.length} invoice${agingRiskInvs.length !== 1 ? 's' : ''} 45+ days overdue`,
-    detail: `${fmtM(sumAmt(agingRiskInvs))} at recovery risk — direct contact recommended before 90 days`,
-    onClick: () => drillInvoices('Aging Risk — 45+ Days Overdue', agingRiskInvs, `${fmtM(sumAmt(agingRiskInvs))} · ${agingRiskInvs.length} invoices`),
-  });
-  if (overdueUncovered.length > 0) actionItems.push({
-    key: 'uncovered', color: '#f59e0b', tag: 'Follow up', weight: 70, amount: sumAmt(overdueUncovered),
-    title: `Follow up on ${overdueUncovered.length} invoice${overdueUncovered.length !== 1 ? 's' : ''} outside automation`,
-    detail: `${fmtM(sumAmt(overdueUncovered))} overdue and not in an automated reminder sequence`,
-    onClick: () => drillInvoices('Overdue — Outside Automation', overdueUncovered, `${fmtM(sumAmt(overdueUncovered))} · ${overdueUncovered.length} invoices`),
-  });
-  actionItems.sort((a, b) => b.weight - a.weight);
-  // Map the grouped action items into the clearable ActionQueue shape. The
-  // primary button runs the item's review/drill tool; ActionQueue adds the
-  // Done control that clears it from the list.
-  const queueItems = actionItems.map(a => ({
+  // Action items come from the shared source (lib/actionItems) via the page, so
+  // the nav badge, this queue, and the full listing always agree. The primary
+  // button runs the item's drill; ActionQueue/FullActionList add Done + Assign.
+  const queueItems = (actions ?? []).map(a => ({
     key: a.key, tag: a.tag, color: a.color, title: a.title, detail: a.detail, amount: a.amount,
-    actions: [{ label: 'Review', primary: true, onClick: a.onClick }],
+    actions: [{ label: 'Review', primary: true, onClick: () => onDrill(a.drill) }],
   }));
 
   const target = Math.max(bpdso, Math.round(currentDSO * 0.6));
@@ -204,7 +128,19 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
       )}
 
       {/* Action plan — clearable queue of what needs you today */}
-      {on('needsToday') && <ActionQueue items={queueItems} accent="var(--teal)" title="Action plan" isMobile={isMobile} />}
+      {on('needsToday') && (
+        <ActionQueue
+          items={queueItems} cleared={cleared} accent="var(--teal)" title="Action plan" isMobile={isMobile}
+          onClear={onClearAction} onUnclear={onUnclearAction} onReset={onResetActions}
+          onViewAll={() => setShowAllActions(true)}
+        />
+      )}
+      {showAllActions && (
+        <FullActionList
+          items={actions ?? []} cleared={cleared} accent="var(--teal)" title="Receivables action items"
+          clientId={clientId} suite="ar" onClear={onClearAction} onUnclear={onUnclearAction} onClose={() => setShowAllActions(false)}
+        />
+      )}
 
       {/* AR Health */}
       {on('arHealth') && (

@@ -4,10 +4,10 @@ import { useState } from 'react';
  * Clearable action queue — the condensed "what needs you today" list that sits
  * at the top of each suite's Dashboard, directly under the metric banner.
  *
- * Each item carries one or more quick-action buttons (the fastest way to act)
- * plus a Done control that clears it from the list once handled. Clearing is
- * optimistic and local, with an Undo, so the user can blow through the queue
- * and the list visibly empties as they go.
+ * Cleared state is controlled by the parent (persisted per client) so the nav
+ * badge, this queue, and the full listing always agree. Each item has a quick
+ * primary action plus a Done control that clears it; "View all" opens the full
+ * listing where tasks can also be assigned to teammates.
  *
  * items: [{ key, tag, color, title, detail, amount, actions:[{label,onClick,primary}] }]
  */
@@ -18,25 +18,20 @@ function fmtM(v) {
   return `$${v}`;
 }
 
-export default function ActionQueue({ items, accent = 'var(--teal)', title = 'Action plan', isMobile }) {
-  const [cleared, setCleared] = useState(() => new Set());
+const CONDENSED_LIMIT = 3;
+
+export default function ActionQueue({ items, cleared, accent = 'var(--teal)', title = 'Action plan', isMobile, onClear, onUnclear, onReset, onViewAll }) {
   const [lastCleared, setLastCleared] = useState(null);
 
   const pending = items.filter(i => !cleared.has(i.key));
   const doneCount = items.filter(i => cleared.has(i.key)).length;
   const atStake = pending.reduce((s, i) => s + (i.amount || 0), 0);
   const allClear = pending.length === 0;
+  const shown = pending.slice(0, CONDENSED_LIMIT);
+  const moreCount = pending.length - shown.length;
 
-  function clear(key) {
-    setCleared(prev => new Set(prev).add(key));
-    setLastCleared(key);
-  }
-  function undo() {
-    if (!lastCleared) return;
-    setCleared(prev => { const n = new Set(prev); n.delete(lastCleared); return n; });
-    setLastCleared(null);
-  }
-  function reset() { setCleared(new Set()); setLastCleared(null); }
+  function clear(key) { onClear(key); setLastCleared(key); }
+  function undo() { if (lastCleared) { onUnclear(lastCleared); setLastCleared(null); } }
 
   return (
     <div style={{ background: allClear ? 'rgba(34,197,94,0.06)' : 'var(--bg-card)', border: `1px solid ${allClear ? 'rgba(34,197,94,0.25)' : 'var(--border)'}`, borderRadius: 12, padding: 16 }}>
@@ -51,10 +46,11 @@ export default function ActionQueue({ items, accent = 'var(--teal)', title = 'Ac
             <div style={{ fontSize: 11, color: 'var(--text-dim)' }}><span style={{ fontWeight: 800, color: 'var(--text)' }}>{fmtM(atStake)}</span> at stake</div>
           )}
           {doneCount > 0 && (
-            <button onClick={reset} style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 9px', cursor: 'pointer' }}>
+            <button onClick={onReset} style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 9px', cursor: 'pointer' }}>
               {doneCount} cleared · reset
             </button>
           )}
+          <button onClick={onViewAll} style={{ fontSize: 11, fontWeight: 700, color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}>View all &amp; assign →</button>
         </div>
       </div>
 
@@ -68,7 +64,7 @@ export default function ActionQueue({ items, accent = 'var(--teal)', title = 'Ac
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {pending.map(item => (
+          {shown.map(item => (
             <div key={item.key} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderLeft: `3px solid ${item.color}`, borderRadius: 8, padding: '11px 13px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 10 : 12, alignItems: isMobile ? 'stretch' : 'center' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
@@ -98,11 +94,16 @@ export default function ActionQueue({ items, accent = 'var(--teal)', title = 'Ac
               </div>
             </div>
           ))}
-          {lastCleared && (
-            <div style={{ fontSize: 10.5, color: 'var(--muted)', textAlign: 'right' }}>
-              Cleared an item · <button onClick={undo} style={{ fontSize: 10.5, fontWeight: 700, color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Undo</button>
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            {moreCount > 0
+              ? <button onClick={onViewAll} style={{ fontSize: 11, fontWeight: 700, color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>+ {moreCount} more — view all &amp; assign →</button>
+              : <span />}
+            {lastCleared && (
+              <span style={{ fontSize: 10.5, color: 'var(--muted)' }}>
+                Cleared an item · <button onClick={undo} style={{ fontSize: 10.5, fontWeight: 700, color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Undo</button>
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>

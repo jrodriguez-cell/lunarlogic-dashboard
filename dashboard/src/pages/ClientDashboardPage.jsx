@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { logout } from '../lib/auth';
 import { getClientData } from '../data/mockData';
 import { getClientAPData } from '../data/apData';
+import { getARActionItems, getAPActionItems } from '../lib/actionItems';
+import { getCleared, saveCleared } from '../lib/actionState';
 import { fetchDashboardData } from '../lib/quickbooks';
 import { useMobile } from '../lib/useMobile';
 import DrillDrawer from '../components/DrillDrawer';
@@ -140,6 +142,21 @@ export default function ClientDashboardPage({ session, onLogout }) {
     setActiveTab(SUITES[next].home);
     setMoreOpen(false);
   }, []);
+
+  // Cleared ("done") action items, persisted per client + suite. Held here so
+  // the nav badge, the Dashboard action queue, and the full listing all read
+  // the same source and stay in agreement.
+  // Seeded once from storage; the page always remounts on login/logout, so the
+  // client can't change under a live instance.
+  const [clearedAR, setClearedAR] = useState(() => getCleared(session.clientId, 'ar'));
+  const [clearedAP, setClearedAP] = useState(() => getCleared(session.clientId, 'ap'));
+  const mutateCleared = useCallback((suiteKey, fn) => {
+    const setter = suiteKey === 'ap' ? setClearedAP : setClearedAR;
+    setter(prev => { const next = fn(new Set(prev)); saveCleared(session.clientId, suiteKey, next); return next; });
+  }, [session.clientId]);
+  const clearAction   = useCallback((suiteKey, key) => mutateCleared(suiteKey, s => (s.add(key), s)), [mutateCleared]);
+  const unclearAction = useCallback((suiteKey, key) => mutateCleared(suiteKey, s => (s.delete(key), s)), [mutateCleared]);
+  const resetActions  = useCallback((suiteKey) => mutateCleared(suiteKey, () => new Set()), [mutateCleared]);
   const [liveData, setLiveData] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [refreshing, setRefreshing]   = useState(false);
@@ -201,7 +218,6 @@ export default function ClientDashboardPage({ session, onLogout }) {
   const currentDSOEntry = data.dsoTrend[data.dsoTrend.length - 1];
   const currentDSO  = currentDSOEntry?.dso ?? 0;
   const dsoChange   = data.preLiveDSO != null ? Math.round(currentDSO - data.preLiveDSO) : null;
-  const urgentCount = data.invoices.filter(i => i.status === 'Overdue' && i.daysOverdue > 0).length;
 
   const nonOverdueAR   = data.invoices.filter(i => i.status !== 'Paid' && i.daysOverdue <= 0).reduce((s, i) => s + i.amount, 0);
   const bpdso          = Math.round(nonOverdueAR / (data.annualRevenue / 365));
@@ -233,6 +249,14 @@ export default function ClientDashboardPage({ session, onLogout }) {
   // Options for the suite switcher (both sidebar and topbar variants).
   const suiteItems   = SUITE_ORDER.map(id => ({ id, label: SUITES[id].label, sublabel: SUITES[id].sublabel, code: SUITES[id].code, accent: SUITES[id].accent }));
 
+  // Action items (shared source) + the Dashboard badge counts derived from them,
+  // so the badge always equals the number of open action items in the queue.
+  const arActions = useMemo(() => getARActionItems(data, session.clientId), [data, session.clientId]);
+  const apActions = useMemo(() => getAPActionItems(ap), [ap]);
+  const arBadge = arActions.filter(a => !clearedAR.has(a.key)).length;
+  const apBadge = apActions.filter(a => !clearedAP.has(a.key)).length;
+  const badgeFor = (id) => id === 'overview' ? arBadge : id === 'ap_overview' ? apBadge : 0;
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
 
@@ -256,7 +280,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflowY: 'auto' }}>
           {suiteNav.map(n => (
-            <NavItem key={n.id} item={n} active={activeTab === n.id} accent={suiteAccent} badge={n.id === 'overview' ? urgentCount : n.id === 'ap_approvals' ? ap.counts.review : 0}
+            <NavItem key={n.id} item={n} active={activeTab === n.id} accent={suiteAccent} badge={badgeFor(n.id)}
               compact={isMobile} onClick={() => setActiveTab(n.id)} />
           ))}
         </nav>
@@ -450,7 +474,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: 940, margin: '0 auto', padding: isMobile ? '16px 16px 88px' : '24px' }}>
-          {activeTab === 'overview'   && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
+          {activeTab === 'overview'   && <ClientOverview data={data} clientId={session.clientId} currentDSO={currentDSO} dsoChange={dsoChange} bpdso={bpdso} dsoGapDollars={dsoGapDollars} onNavigate={setActiveTab} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} actions={arActions} cleared={clearedAR} onClearAction={k => clearAction('ar', k)} onUnclearAction={k => unclearAction('ar', k)} onResetActions={() => resetActions('ar')} />}
           {activeTab === 'customers'  && <ClientCustomers data={data} clientId={session.clientId} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
           {activeTab === 'estimates'  && <ClientEstimates data={data} />}
           {activeTab === 'invoices'   && <ClientInvoices data={data} clientId={session.clientId} invoices={data.invoices} paymentBehavior={data.paymentBehavior} isMobile={isMobile} onDrill={setDrill} onAction={setActionInv} />}
@@ -463,7 +487,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
           {activeTab === 'settings'   && <ClientSettings data={data} clientId={session.clientId} isMobile={isMobile} />}
 
           {/* Payables (AP) suite */}
-          {activeTab === 'ap_overview'  && <ClientPayablesOverview ap={ap} currentDPO={currentDPO} isMobile={isMobile} onNavigate={setActiveTab} />}
+          {activeTab === 'ap_overview'  && <ClientPayablesOverview ap={ap} currentDPO={currentDPO} isMobile={isMobile} onNavigate={setActiveTab} clientId={session.clientId} actions={apActions} cleared={clearedAP} onClearAction={k => clearAction('ap', k)} onUnclearAction={k => unclearAction('ap', k)} onResetActions={() => resetActions('ap')} />}
           {activeTab === 'ap_bills'     && <ClientBills ap={ap} isMobile={isMobile} />}
           {activeTab === 'ap_approvals' && <ClientApprovals ap={ap} isMobile={isMobile} />}
           {activeTab === 'ap_payments'  && <ClientPaymentSchedule ap={ap} isMobile={isMobile} />}
@@ -533,7 +557,7 @@ export default function ClientDashboardPage({ session, onLogout }) {
                 }}>
                   <NavIcon name={item.icon} />
                   <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 500 }}>{BOTTOM_LABEL[id]}</span>
-                  {id === 'overview' && urgentCount > 0 && <span style={{ position: 'absolute', top: 7, right: 'calc(50% - 17px)', width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />}
+                  {badgeFor(id) > 0 && <span style={{ position: 'absolute', top: 7, right: 'calc(50% - 17px)', width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />}
                 </button>
               );
             })}
