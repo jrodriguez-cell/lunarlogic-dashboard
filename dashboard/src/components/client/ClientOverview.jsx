@@ -82,10 +82,11 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
 
   // Action items come from the shared source (lib/actionItems) via the page, so
   // the nav badge, this queue, and the full listing always agree. The primary
-  // button runs the item's drill; ActionQueue/FullActionList add Done + Assign.
+  // button jumps to the section where the task is resolved; ActionQueue /
+  // FullActionList add the Done + Assign controls.
   const queueItems = (actions ?? []).map(a => ({
     key: a.key, tag: a.tag, color: a.color, title: a.title, detail: a.detail, amount: a.amount,
-    actions: [{ label: 'Review', primary: true, onClick: () => onDrill(a.drill) }],
+    actions: [{ label: a.actionLabel || 'Open', primary: true, onClick: () => onNavigate(a.navTo) }],
   }));
 
   const target = Math.max(bpdso, Math.round(currentDSO * 0.6));
@@ -138,7 +139,7 @@ export default function ClientOverview({ data, clientId, currentDSO, dsoChange, 
       {showAllActions && (
         <FullActionList
           items={actions ?? []} cleared={cleared} accent="var(--teal)" title="Receivables action items"
-          clientId={clientId} suite="ar" onClear={onClearAction} onUnclear={onUnclearAction} onClose={() => setShowAllActions(false)}
+          clientId={clientId} suite="ar" onClear={onClearAction} onUnclear={onUnclearAction} onNavigate={onNavigate} onClose={() => setShowAllActions(false)}
         />
       )}
 

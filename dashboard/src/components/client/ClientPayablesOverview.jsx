@@ -76,7 +76,7 @@ export default function ClientPayablesOverview({ ap, currentDPO, isMobile, onNav
       {showAllActions && (
         <FullActionList
           items={actions ?? []} cleared={cleared} accent="#818CF8" title="Payables action items"
-          clientId={clientId} suite="ap" onClear={onClearAction} onUnclear={onUnclearAction} onClose={() => setShowAllActions(false)}
+          clientId={clientId} suite="ap" onClear={onClearAction} onUnclear={onUnclearAction} onNavigate={onNavigate} onClose={() => setShowAllActions(false)}
         />
       )}
 

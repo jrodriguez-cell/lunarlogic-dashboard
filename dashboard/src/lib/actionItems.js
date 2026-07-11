@@ -17,16 +17,6 @@ function fmtM(v) {
   return `$${v}`;
 }
 
-const INV_COLS = [
-  { key: 'id', label: 'Invoice' },
-  { key: 'customer', label: 'Customer' },
-  { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: r => r.amount },
-  { key: 'issued', label: 'Issued' },
-  { key: 'due', label: 'Due Date' },
-  { key: 'status', label: 'Status' },
-  { key: 'daysOverdue', label: 'Days Overdue', render: v => v > 0 ? `${v}d` : '—', csvVal: r => r.daysOverdue > 0 ? r.daysOverdue : '' },
-];
-
 function getDisputeSuspects(invoices, paymentBehavior) {
   const pbMap = Object.fromEntries((paymentBehavior ?? []).map(p => [p.customer, p]));
   return invoices.filter(inv => {
@@ -72,46 +62,35 @@ export function getARActionItems(data, clientId) {
     title: `Confirm ${pending.length} payment${pending.length !== 1 ? 's' : ''}`,
     detail: `${fmtM(pendingAmt)} received but AI match was below 90% — tell LunarLogic which invoice it belongs to.`,
     rows: pending.map(p => ({ id: p.txId, label: p.matchedCustomer || 'Unmatched deposit', sub: `${p.confidence}% match`, amount: p.amount })),
-    drill: {
-      title: 'Unapplied Payments — Confirmation Needed',
-      subtitle: `${pending.length} payment${pending.length !== 1 ? 's' : ''} · ${fmtM(pendingAmt)} held pending review`,
-      source: 'LunarLogic auto-applies at ≥90% match confidence. Below that, your confirmation prevents misapplication.',
-      filename: 'unapplied_payments',
-      columns: [
-        { key: 'txId', label: 'Transaction' }, { key: 'matchedCustomer', label: 'Customer' },
-        { key: 'amount', label: 'Amount', render: v => `$${v.toLocaleString()}`, csvVal: r => r.amount },
-        { key: 'confidence', label: 'Confidence', render: v => `${v}%` }, { key: 'rule', label: 'Why Held' },
-      ],
-      rows: pending,
-    },
+    navTo: 'cashapp', actionLabel: 'Open Payments',
   });
   if (brokenPromiseInvs.length > 0) items.push({
     key: 'broken-promises', tag: 'Follow up', color: '#ef4444', weight: 95, amount: sum(brokenPromiseInvs),
     title: `Chase ${brokenPromiseInvs.length} broken promise${brokenPromiseInvs.length !== 1 ? 's' : ''} to pay`,
     detail: `${fmtM(sum(brokenPromiseInvs))} — the promised pay date has passed and the invoice is still open.`,
     rows: brokenPromiseInvs.map(invRow),
-    drill: { title: 'Broken Promises to Pay', subtitle: `${fmtM(sum(brokenPromiseInvs))} · ${brokenPromiseInvs.length} invoice${brokenPromiseInvs.length !== 1 ? 's' : ''}`, source: 'Invoice data from QuickBooks Online.', filename: 'broken_promises', columns: INV_COLS, rows: brokenPromiseInvs },
+    navTo: 'reminders', actionLabel: 'Open Reminders',
   });
   if (disputeSuspects.length > 0) items.push({
     key: 'disputes', tag: 'Call', color: '#a78bfa', weight: 90, amount: sum(disputeSuspects),
     title: `Call ${disputeSuspects.length} customer${disputeSuspects.length !== 1 ? 's' : ''} about a possible dispute`,
     detail: `${fmtM(sum(disputeSuspects))} overdue off-pattern — a billing question may be stalling payment.`,
     rows: disputeSuspects.map(invRow),
-    drill: { title: 'Possible Disputes — Anomalous Behavior', subtitle: `${disputeSuspects.length} flagged · ${fmtM(sum(disputeSuspects))}`, source: 'Invoice data from QuickBooks Online.', filename: 'possible_disputes', columns: INV_COLS, rows: disputeSuspects },
+    navTo: 'customers', actionLabel: 'Open Customers',
   });
   if (agingRiskInvs.length > 0) items.push({
     key: 'aging', tag: 'Escalate', color: '#f97316', weight: 80, amount: sum(agingRiskInvs),
     title: `Escalate ${agingRiskInvs.length} invoice${agingRiskInvs.length !== 1 ? 's' : ''} 45+ days overdue`,
     detail: `${fmtM(sum(agingRiskInvs))} at recovery risk — direct contact recommended before 90 days.`,
     rows: agingRiskInvs.map(invRow),
-    drill: { title: 'Aging Risk — 45+ Days Overdue', subtitle: `${fmtM(sum(agingRiskInvs))} · ${agingRiskInvs.length} invoices`, source: 'Invoice data from QuickBooks Online.', filename: 'aging_risk', columns: INV_COLS, rows: agingRiskInvs },
+    navTo: 'reminders', actionLabel: 'Open Reminders',
   });
   if (overdueUncovered.length > 0) items.push({
     key: 'uncovered', tag: 'Follow up', color: '#f59e0b', weight: 70, amount: sum(overdueUncovered),
     title: `Follow up on ${overdueUncovered.length} invoice${overdueUncovered.length !== 1 ? 's' : ''} outside automation`,
     detail: `${fmtM(sum(overdueUncovered))} overdue and not in an automated reminder sequence.`,
     rows: overdueUncovered.map(invRow),
-    drill: { title: 'Overdue — Outside Automation', subtitle: `${fmtM(sum(overdueUncovered))} · ${overdueUncovered.length} invoices`, source: 'Invoice data from QuickBooks Online.', filename: 'overdue_outside_automation', columns: INV_COLS, rows: overdueUncovered },
+    navTo: 'reminders', actionLabel: 'Open Reminders',
   });
 
   items.sort((a, b) => b.weight - a.weight);

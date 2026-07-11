@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { getSession } from './lib/auth';
 import { ToastProvider } from './lib/toast';
 import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
 import ClientDashboardPage from './pages/ClientDashboardPage';
 
 export default function App() {
@@ -12,9 +11,7 @@ export default function App() {
     return <ToastProvider><LoginPage onLogin={setSession} /></ToastProvider>;
   }
 
-  if (session.role === 'admin') {
-    return <ToastProvider><DashboardPage session={session} onLogout={() => setSession(null)} /></ToastProvider>;
-  }
-
+  // Every signed-in profile — including admin — gets the full consolidated
+  // dashboard (suite switcher, action plan, AR/AP/Full Suite).
   return <ToastProvider><ClientDashboardPage session={session} onLogout={() => setSession(null)} /></ToastProvider>;
 }

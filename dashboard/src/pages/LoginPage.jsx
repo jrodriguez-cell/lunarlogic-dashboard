@@ -48,7 +48,7 @@ export default function LoginPage({ onLogin }) {
           </svg>
           <span className="sidebar-wordmark-name"><span className="sidebar-wordmark-text">lunarlogic</span><span className="sidebar-wordmark-suffix">.ai</span></span>
         </div>
-        <div className="login-subtitle">AR Client Portal</div>
+        <div className="login-subtitle">Client Portal Login</div>
 
         <form onSubmit={handleSubmit}>
           {error && <div className="login-error">{error}</div>}

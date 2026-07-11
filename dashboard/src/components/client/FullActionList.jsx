@@ -13,7 +13,7 @@ function fmtM(v) {
  * its underlying invoices/bills, and controls to assign the task to a teammate
  * or mark it done. Opened from the "View all" button on the condensed queue.
  */
-export default function FullActionList({ items, cleared, accent = 'var(--teal)', title = 'Action items', clientId, suite, onClear, onUnclear, onClose }) {
+export default function FullActionList({ items, cleared, accent = 'var(--teal)', title = 'Action items', clientId, suite, onClear, onUnclear, onClose, onNavigate }) {
   const [assignments, setAssignments] = useState(() => getAssignments(clientId));
 
   function assign(itemKey, who) {
@@ -69,7 +69,10 @@ export default function FullActionList({ items, cleared, accent = 'var(--teal)',
                         assigned
                       </span>
                     )}
-                    <div style={{ marginLeft: 'auto' }}>
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {item.navTo && onNavigate && !isCleared && (
+                        <button onClick={() => { onNavigate(item.navTo); onClose(); }} style={{ fontSize: 11, fontWeight: 700, color: accent, background: `${accent}1f`, border: `1px solid ${accent}`, borderRadius: 6, padding: '6px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>{item.actionLabel || 'Open'} →</button>
+                      )}
                       {isCleared ? (
                         <button onClick={() => onUnclear(item.key)} style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 12px', cursor: 'pointer' }}>Undo</button>
                       ) : (
